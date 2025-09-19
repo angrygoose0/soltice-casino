@@ -1,0 +1,79 @@
+# Unity .gitignore
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+
+# Asset Store tools
+Assets/AssetStoreTools*
+
+# Visual Studio / Rider / IDEs
+.vs/
+.idea/
+.vscode/
+*.sln
+*.csproj
+*.unityproj
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity cache and artifacts
+sysinfo.txt
+*.stackdump
+
+# Crash and profiling logs
+*.mtl
+*.cginc.meta
+MemoryCaptures/
+
+# Build artifacts
+*.apk
+*.aab
+*.xcodeproj
+*.xcworkspace
+*.ipa
+*.app
+*.unitypackage
+
+# Gradle / Android
+.gradle/
+gradle/
+**/local.properties
+
+# Unity Addressables (generated)
+[Aa]sset[Bb]undles/
+[Aa]ddressables*/**/catalog_*.json
+[Aa]ddressables*/**/link.xml
+
+# Burst
+**/BurstCache/
+
+# JetBrains Rider user settings
+*.sln.DotSettings.user
+
+# Collaborate / Plastic
+.plastic/
+
+# Misc
+Recordings/
+
+
