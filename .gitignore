@@ -41,9 +41,7 @@ sysinfo.txt
 *.stackdump
 
 # Crash and profiling logs
-*.mtl
-*.cginc.meta
-MemoryCaptures/
+CrashReports/
 
 # Build artifacts
 *.apk
@@ -61,19 +59,30 @@ gradle/
 
 # Unity Addressables (generated)
 [Aa]sset[Bb]undles/
-[Aa]ddressables*/**/catalog_*.json
-[Aa]ddressables*/**/link.xml
+[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/**/addressables_content_state.bin
+[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/**/addressables_content_state.cached
+[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/**/catalog*.json
+[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/**/*.bin*
+[Aa]ssets/[Ss]treamingAssets/aa/**
 
 # Burst
 **/BurstCache/
 
 # JetBrains Rider user settings
 *.sln.DotSettings.user
+*.iml
 
 # Collaborate / Plastic
 .plastic/
 
 # Misc
 Recordings/
+ExportedObj/
+
+# Xcode / iOS
+*.xcuserstate
+*.xcuserdata/
+DerivedData/
+
 
 
