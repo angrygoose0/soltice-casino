@@ -1,0 +1,1 @@
+dotnet anchorgen -i Assets/Scripts/crash.json -o Assets/Scripts/Crash.cs
