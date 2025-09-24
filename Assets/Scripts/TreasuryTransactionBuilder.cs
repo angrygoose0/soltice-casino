@@ -9,6 +9,7 @@ using Solana.Unity.Programs;
 using Treasury;
 using Treasury.Program;
 using Treasury.Accounts;
+using Treasury.Types;
 using System;
 using System.Text;
 using System.Collections.Generic;
@@ -83,6 +84,15 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return pda;
     }
 
+    private static DelegateParams BuildDelegateParams(uint commitFrequencyMs, PublicKey validator)
+    {
+        return new DelegateParams
+        {
+            CommitFrequencyMs = commitFrequencyMs,
+            Validator = validator
+        };
+    }
+
     // Fetch helpers
     public async Task<PlayerBalance> GetPlayerBalance(PublicKey player)
     {
@@ -153,7 +163,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
     }
 
-    public async Task<string> DelegatePlayerBalance()
+    public async Task<string> DelegatePlayerBalance(uint commitFrequencyMs = 1000, PublicKey validator = null)
     {
         if (CurrentUser() == null || Client == null) return null;
 
@@ -171,7 +181,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             BufferPlayerBalance = delegationBuffer
         };
 
-        var ix = TreasuryProgram.DelegatePlayerBalance(accounts);
+        var @params = BuildDelegateParams(commitFrequencyMs, validator);
+        var ix = TreasuryProgram.DelegatePlayerBalance(accounts, @params);
         if (solanaManager == null)
         {
             Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
