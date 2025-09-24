@@ -18,6 +18,8 @@ using Solana.Unity.Rpc;
 using Newtonsoft.Json;
 using Crash.Program;
 using Crash;
+using Treasury.Program;
+using Treasury;
 
 public class SolanaManager : MonoBehaviour
 {
@@ -36,12 +38,15 @@ public class SolanaManager : MonoBehaviour
 
     // Crash Client properties
     private CrashClient _crashClient;
+    private TreasuryClient _treasuryClient;
+    private static PublicKey _crashProgramId = new PublicKey(CrashProgram.ID);
+    private static PublicKey _treasuryProgramId = new PublicKey(TreasuryProgram.ID);
 
-    private static PublicKey _programId = new PublicKey(CrashProgram.ID);
     private IRpcClient _rpcClient;
 
 
     public CrashClient GetCrashClient() => _crashClient;
+    public TreasuryClient GetTreasuryClient() => _treasuryClient;
 
     public PublicKey GetMintPublicKey()
     {
@@ -133,7 +138,13 @@ public class SolanaManager : MonoBehaviour
             _crashClient = new CrashClient(
                 _rpcClient,
                 streamingClient,
-                _programId
+                _crashProgramId
+            );
+
+            _treasuryClient = new TreasuryClient(
+                _rpcClient,
+                streamingClient,
+                _treasuryProgramId
             );
 
             

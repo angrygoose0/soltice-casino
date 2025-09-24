@@ -22,26 +22,52 @@ namespace Crash
 {
     namespace Accounts
     {
+        public partial class Authority
+        {
+            public static ulong ACCOUNT_DISCRIMINATOR => 2601832256989195300UL;
+            public static ReadOnlySpan<byte> ACCOUNT_DISCRIMINATOR_BYTES => new byte[]{36, 108, 254, 18, 167, 144, 27, 36};
+            public static string ACCOUNT_DISCRIMINATOR_B58 => "76NmvGVe5LX";
+            public PublicKey Admin { get; set; }
+
+            public bool Paused { get; set; }
+
+            public byte Bump { get; set; }
+
+            public static Authority Deserialize(ReadOnlySpan<byte> _data)
+            {
+                int offset = 0;
+                ulong accountHashValue = _data.GetU64(offset);
+                offset += 8;
+                if (accountHashValue != ACCOUNT_DISCRIMINATOR)
+                {
+                    return null;
+                }
+
+                Authority result = new Authority();
+                result.Admin = _data.GetPubKey(offset);
+                offset += 32;
+                result.Paused = _data.GetBool(offset);
+                offset += 1;
+                result.Bump = _data.GetU8(offset);
+                offset += 1;
+                return result;
+            }
+        }
+
         public partial class Game
         {
             public static ulong ACCOUNT_DISCRIMINATOR => 1331205435963103771UL;
             public static ReadOnlySpan<byte> ACCOUNT_DISCRIMINATOR_BYTES => new byte[]{27, 90, 166, 125, 74, 100, 121, 18};
             public static string ACCOUNT_DISCRIMINATOR_B58 => "5aNQXizG8jB";
-            public ulong Rconstant { get; set; }
-
             public byte State { get; set; }
 
-            public ulong Round { get; set; }
+            public ulong Tick { get; set; }
+
+            public ulong CrashTick { get; set; }
 
             public ulong GameNo { get; set; }
 
-            public PublicKey RandomnessAccount { get; set; }
-
-            public ulong CommitSlot { get; set; }
-
             public byte Bump { get; set; }
-
-            public byte TreasuryBump { get; set; }
 
             public static Game Deserialize(ReadOnlySpan<byte> _data)
             {
@@ -54,21 +80,15 @@ namespace Crash
                 }
 
                 Game result = new Game();
-                result.Rconstant = _data.GetU64(offset);
-                offset += 8;
                 result.State = _data.GetU8(offset);
                 offset += 1;
-                result.Round = _data.GetU64(offset);
+                result.Tick = _data.GetU64(offset);
+                offset += 8;
+                result.CrashTick = _data.GetU64(offset);
                 offset += 8;
                 result.GameNo = _data.GetU64(offset);
                 offset += 8;
-                result.RandomnessAccount = _data.GetPubKey(offset);
-                offset += 32;
-                result.CommitSlot = _data.GetU64(offset);
-                offset += 8;
                 result.Bump = _data.GetU8(offset);
-                offset += 1;
-                result.TreasuryBump = _data.GetU8(offset);
                 offset += 1;
                 return result;
             }
@@ -109,19 +129,56 @@ namespace Crash
                 return result;
             }
         }
+
+        public partial class SessionToken
+        {
+            public static ulong ACCOUNT_DISCRIMINATOR => 1081168673100727529UL;
+            public static ReadOnlySpan<byte> ACCOUNT_DISCRIMINATOR_BYTES => new byte[]{233, 4, 115, 14, 46, 21, 1, 15};
+            public static string ACCOUNT_DISCRIMINATOR_B58 => "fyZWTdUu1pS";
+            public PublicKey Authority { get; set; }
+
+            public PublicKey TargetProgram { get; set; }
+
+            public PublicKey SessionSigner { get; set; }
+
+            public long ValidUntil { get; set; }
+
+            public static SessionToken Deserialize(ReadOnlySpan<byte> _data)
+            {
+                int offset = 0;
+                ulong accountHashValue = _data.GetU64(offset);
+                offset += 8;
+                if (accountHashValue != ACCOUNT_DISCRIMINATOR)
+                {
+                    return null;
+                }
+
+                SessionToken result = new SessionToken();
+                result.Authority = _data.GetPubKey(offset);
+                offset += 32;
+                result.TargetProgram = _data.GetPubKey(offset);
+                offset += 32;
+                result.SessionSigner = _data.GetPubKey(offset);
+                offset += 32;
+                result.ValidUntil = _data.GetS64(offset);
+                offset += 8;
+                return result;
+            }
+        }
     }
 
     namespace Errors
     {
         public enum CrashErrorKind : uint
         {
-            RandomnessAlreadyRevealed = 6000U,
-            InvalidAmount = 6001U,
-            GameCrashed = 6002U,
-            InvalidGame = 6003U,
-            GameHasNotStarted = 6004U,
-            RandomnessExpired = 6005U,
-            RandomnessNotResolved = 6006U
+            InvalidAmount = 6000U,
+            GameCrashed = 6001U,
+            InvalidGame = 6002U,
+            GameHasNotStarted = 6003U,
+            GameAlreadyStarted = 6004U,
+            InsufficientBalance = 6005U,
+            ActiveBetInProgress = 6006U,
+            RandomnessNotResolved = 6007U
         }
     }
 
@@ -133,6 +190,17 @@ namespace Crash
     {
         public CrashClient(IRpcClient rpcClient, IStreamingRpcClient streamingRpcClient, PublicKey programId = null) : base(rpcClient, streamingRpcClient, programId ?? new PublicKey(CrashProgram.ID))
         {
+        }
+
+        public async Task<Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<Authority>>> GetAuthoritysAsync(string programAddress = CrashProgram.ID, Commitment commitment = Commitment.Confirmed)
+        {
+            var list = new List<Solana.Unity.Rpc.Models.MemCmp>{new Solana.Unity.Rpc.Models.MemCmp{Bytes = Authority.ACCOUNT_DISCRIMINATOR_B58, Offset = 0}};
+            var res = await RpcClient.GetProgramAccountsAsync(programAddress, commitment, memCmpList: list);
+            if (!res.WasSuccessful || !(res.Result?.Count > 0))
+                return new Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<Authority>>(res);
+            List<Authority> resultingAccounts = new List<Authority>(res.Result.Count);
+            resultingAccounts.AddRange(res.Result.Select(result => Authority.Deserialize(Convert.FromBase64String(result.Account.Data[0]))));
+            return new Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<Authority>>(res, resultingAccounts);
         }
 
         public async Task<Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<Game>>> GetGamesAsync(string programAddress = CrashProgram.ID, Commitment commitment = Commitment.Confirmed)
@@ -157,6 +225,26 @@ namespace Crash
             return new Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<PlayerBet>>(res, resultingAccounts);
         }
 
+        public async Task<Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<SessionToken>>> GetSessionTokensAsync(string programAddress = CrashProgram.ID, Commitment commitment = Commitment.Confirmed)
+        {
+            var list = new List<Solana.Unity.Rpc.Models.MemCmp>{new Solana.Unity.Rpc.Models.MemCmp{Bytes = SessionToken.ACCOUNT_DISCRIMINATOR_B58, Offset = 0}};
+            var res = await RpcClient.GetProgramAccountsAsync(programAddress, commitment, memCmpList: list);
+            if (!res.WasSuccessful || !(res.Result?.Count > 0))
+                return new Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<SessionToken>>(res);
+            List<SessionToken> resultingAccounts = new List<SessionToken>(res.Result.Count);
+            resultingAccounts.AddRange(res.Result.Select(result => SessionToken.Deserialize(Convert.FromBase64String(result.Account.Data[0]))));
+            return new Solana.Unity.Programs.Models.ProgramAccountsResultWrapper<List<SessionToken>>(res, resultingAccounts);
+        }
+
+        public async Task<Solana.Unity.Programs.Models.AccountResultWrapper<Authority>> GetAuthorityAsync(string accountAddress, Commitment commitment = Commitment.Finalized)
+        {
+            var res = await RpcClient.GetAccountInfoAsync(accountAddress, commitment);
+            if (!res.WasSuccessful)
+                return new Solana.Unity.Programs.Models.AccountResultWrapper<Authority>(res);
+            var resultingAccount = Authority.Deserialize(Convert.FromBase64String(res.Result.Value.Data[0]));
+            return new Solana.Unity.Programs.Models.AccountResultWrapper<Authority>(res, resultingAccount);
+        }
+
         public async Task<Solana.Unity.Programs.Models.AccountResultWrapper<Game>> GetGameAsync(string accountAddress, Commitment commitment = Commitment.Finalized)
         {
             var res = await RpcClient.GetAccountInfoAsync(accountAddress, commitment);
@@ -173,6 +261,27 @@ namespace Crash
                 return new Solana.Unity.Programs.Models.AccountResultWrapper<PlayerBet>(res);
             var resultingAccount = PlayerBet.Deserialize(Convert.FromBase64String(res.Result.Value.Data[0]));
             return new Solana.Unity.Programs.Models.AccountResultWrapper<PlayerBet>(res, resultingAccount);
+        }
+
+        public async Task<Solana.Unity.Programs.Models.AccountResultWrapper<SessionToken>> GetSessionTokenAsync(string accountAddress, Commitment commitment = Commitment.Finalized)
+        {
+            var res = await RpcClient.GetAccountInfoAsync(accountAddress, commitment);
+            if (!res.WasSuccessful)
+                return new Solana.Unity.Programs.Models.AccountResultWrapper<SessionToken>(res);
+            var resultingAccount = SessionToken.Deserialize(Convert.FromBase64String(res.Result.Value.Data[0]));
+            return new Solana.Unity.Programs.Models.AccountResultWrapper<SessionToken>(res, resultingAccount);
+        }
+
+        public async Task<SubscriptionState> SubscribeAuthorityAsync(string accountAddress, Action<SubscriptionState, Solana.Unity.Rpc.Messages.ResponseValue<Solana.Unity.Rpc.Models.AccountInfo>, Authority> callback, Commitment commitment = Commitment.Finalized)
+        {
+            SubscriptionState res = await StreamingRpcClient.SubscribeAccountInfoAsync(accountAddress, (s, e) =>
+            {
+                Authority parsingResult = null;
+                if (e.Value?.Data?.Count > 0)
+                    parsingResult = Authority.Deserialize(Convert.FromBase64String(e.Value.Data[0]));
+                callback(s, e, parsingResult);
+            }, commitment);
+            return res;
         }
 
         public async Task<SubscriptionState> SubscribeGameAsync(string accountAddress, Action<SubscriptionState, Solana.Unity.Rpc.Messages.ResponseValue<Solana.Unity.Rpc.Models.AccountInfo>, Game> callback, Commitment commitment = Commitment.Finalized)
@@ -199,42 +308,112 @@ namespace Crash
             return res;
         }
 
+        public async Task<SubscriptionState> SubscribeSessionTokenAsync(string accountAddress, Action<SubscriptionState, Solana.Unity.Rpc.Messages.ResponseValue<Solana.Unity.Rpc.Models.AccountInfo>, SessionToken> callback, Commitment commitment = Commitment.Finalized)
+        {
+            SubscriptionState res = await StreamingRpcClient.SubscribeAccountInfoAsync(accountAddress, (s, e) =>
+            {
+                SessionToken parsingResult = null;
+                if (e.Value?.Data?.Count > 0)
+                    parsingResult = SessionToken.Deserialize(Convert.FromBase64String(e.Value.Data[0]));
+                callback(s, e, parsingResult);
+            }, commitment);
+            return res;
+        }
+
         protected override Dictionary<uint, ProgramError<CrashErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessAlreadyRevealed, "Randomness already revealed for previous slot")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessExpired, "Randomness expired")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, };
+            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, };
         }
     }
 
     namespace Program
     {
-        public class AdvanceTickAccounts
+        public class CallbackRandomnessAccounts
         {
-            public PublicKey Signer { get; set; }
-
+            public PublicKey VrfProgramIdentity { get; set; } = new PublicKey("9irBy75QS2BN81FUgXuHcjqceJJRuc9oDkAe8TKVvvAw");
             public PublicKey Game { get; set; }
-
-            public PublicKey RandomnessAccountData { get; set; }
         }
 
         public class ClaimBetAccounts
         {
             public PublicKey Signer { get; set; }
 
+            public PublicKey PlayerBet { get; set; }
+
+            public PublicKey SessionToken { get; set; }
+
             public PublicKey Game { get; set; }
+
+            public PublicKey Authority { get; set; }
+
+            public PublicKey PlayerBalance { get; set; }
+
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv");
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
+        }
+
+        public class DelegateAuthorityAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey BufferAuthority { get; set; }
+
+            public PublicKey DelegationRecordAuthority { get; set; }
+
+            public PublicKey DelegationMetadataAuthority { get; set; }
+
+            public PublicKey Authority { get; set; }
+
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN");
+            public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+        }
+
+        public class DelegateGameAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey BufferGame { get; set; }
+
+            public PublicKey DelegationRecordGame { get; set; }
+
+            public PublicKey DelegationMetadataGame { get; set; }
+
+            public PublicKey Game { get; set; }
+
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN");
+            public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+        }
+
+        public class DelegatePlayerBetAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey BufferPlayerBet { get; set; }
+
+            public PublicKey DelegationRecordPlayerBet { get; set; }
+
+            public PublicKey DelegationMetadataPlayerBet { get; set; }
 
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey Treasury { get; set; }
-
-            public PublicKey TokenMint { get; set; } = new PublicKey("So11111111111111111111111111111111111111112");
-            public PublicKey UserTokenAccount { get; set; }
-
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN");
+            public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
-            public PublicKey AssociatedTokenProgram { get; set; } = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-            public PublicKey TokenProgram { get; set; }
         }
 
-        public class InitializeAccounts
+        public class InitializeAuthorityAccounts
+        {
+            public PublicKey Signer { get; set; } = new PublicKey("Fn1XAMy3qdqxkyTViJca2gBqTDjXJH6GYsthQggjweCP");
+            public PublicKey Authority { get; set; }
+
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+        }
+
+        public class InitializeGameAccounts
         {
             public PublicKey Game { get; set; }
 
@@ -243,58 +422,94 @@ namespace Crash
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
-        public class InitializeTreasuryAccounts
+        public class InitializePlayerBetAccounts
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("So11111111111111111111111111111111111111112");
-            public PublicKey Game { get; set; }
-
-            public PublicKey Treasury { get; set; }
+            public PublicKey PlayerBet { get; set; }
 
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
-            public PublicKey TokenProgram { get; set; }
         }
 
         public class PlaceBetAccounts
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey Game { get; set; }
-
-            public PublicKey TokenMint { get; set; } = new PublicKey("So11111111111111111111111111111111111111112");
-            public PublicKey UserTokenAccount { get; set; }
-
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey Treasury { get; set; }
+            public PublicKey SessionToken { get; set; }
 
+            public PublicKey Game { get; set; }
+
+            public PublicKey Authority { get; set; }
+
+            public PublicKey PlayerBalance { get; set; }
+
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
-            public PublicKey AssociatedTokenProgram { get; set; } = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-            public PublicKey TokenProgram { get; set; }
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
         }
 
-        public class SetupTickAccounts
+        public class ProcessUndelegationAccounts
+        {
+            public PublicKey BaseAccount { get; set; }
+
+            public PublicKey Buffer { get; set; }
+
+            public PublicKey Payer { get; set; }
+
+            public PublicKey SystemProgram { get; set; }
+        }
+
+        public class RequestRandomnessAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey OracleQueue { get; set; } = new PublicKey("5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc");
+            public PublicKey Game { get; set; }
+
+            public PublicKey ProgramIdentity { get; set; }
+
+            public PublicKey VrfProgram { get; set; } = new PublicKey("Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz");
+            public PublicKey SlotHashes { get; set; } = new PublicKey("SysvarS1otHashes111111111111111111111111111");
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+        }
+
+        public class StartGameAccounts
         {
             public PublicKey Signer { get; set; }
 
             public PublicKey Game { get; set; }
 
-            public PublicKey RandomnessAccountData { get; set; }
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
+        }
+
+        public class TickAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey Game { get; set; }
+
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
         }
 
         public static class CrashProgram
         {
             public const string ID = "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN";
-            public static Solana.Unity.Rpc.Models.TransactionInstruction AdvanceTick(AdvanceTickAccounts accounts, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackRandomness(CallbackRandomnessAccounts accounts, byte[] randomness, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.RandomnessAccountData, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.VrfProgramIdentity, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
-                _data.WriteU64(6590003246110228109UL, offset);
+                _data.WriteU64(3935360171388153382UL, offset);
                 offset += 8;
+                _data.WriteSpan(randomness, offset);
+                offset += randomness.Length;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
@@ -304,7 +519,7 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(9128365113323633980UL, offset);
@@ -314,28 +529,84 @@ namespace Crash
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction Initialize(InitializeAccounts accounts, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction DelegateAuthority(DelegateAuthorityAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferAuthority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordAuthority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataAuthority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
-                _data.WriteU64(17121445590508351407UL, offset);
+                _data.WriteU64(14854150585004134884UL, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction InitializeTreasury(InitializeTreasuryAccounts accounts, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction DelegateGame(DelegateGameAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferGame, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordGame, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataGame, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
-                _data.WriteU64(11998052670067948156UL, offset);
+                _data.WriteU64(15166680369052694388UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction DelegatePlayerBet(DelegatePlayerBetAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferPlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordPlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataPlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(7436920703093002937UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction InitializeAuthority(InitializeAuthorityAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(97425363375340045UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction InitializeGame(InitializeGameAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(15529203708862021164UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction InitializePlayerBet(InitializePlayerBetAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(17266688202344431813UL, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
@@ -346,7 +617,7 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(2413549243525709534UL, offset);
@@ -358,17 +629,69 @@ namespace Crash
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction SetupTick(SetupTickAccounts accounts, PublicKey randomness_account, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction ProcessUndelegation(ProcessUndelegationAccounts accounts, byte[][] account_seeds, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.RandomnessAccountData, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BaseAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Buffer, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Payer, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
-                _data.WriteU64(14541262023699551989UL, offset);
+                _data.WriteU64(12048014319693667524UL, offset);
                 offset += 8;
-                _data.WritePubKey(randomness_account, offset);
-                offset += 32;
+                _data.WriteS32(account_seeds.Length, offset);
+                offset += 4;
+                foreach (var account_seedsElement in account_seeds)
+                {
+                    _data.WriteS32(account_seedsElement.Length, offset);
+                    offset += 4;
+                    _data.WriteSpan(account_seedsElement, offset);
+                    offset += account_seedsElement.Length;
+                }
+
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction RequestRandomness(RequestRandomnessAccounts accounts, byte client_seed, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.OracleQueue, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.ProgramIdentity, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.VrfProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SlotHashes, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(1306022063415035349UL, offset);
+                offset += 8;
+                _data.WriteU8(client_seed, offset);
+                offset += 1;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction StartGame(StartGameAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(1077946599884992505UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction Tick(TickAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(1098685228960730972UL, offset);
+                offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};

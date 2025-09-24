@@ -8,22 +8,26 @@
   },
   "instructions": [
     {
-      "name": "advance_tick",
+      "name": "callback_randomness",
       "discriminator": [
-        141,
-        62,
-        18,
-        121,
-        9,
-        101,
-        116,
-        91
+        38,
+        174,
+        207,
+        182,
+        57,
+        53,
+        157,
+        54
       ],
       "accounts": [
         {
-          "name": "signer",
-          "writable": true,
-          "signer": true
+          "name": "vrf_program_identity",
+          "docs": [
+            "This check ensure that the vrf_program_identity (which is a PDA) is a singer",
+            "enforcing the callback is executed by the VRF program trough CPI"
+          ],
+          "signer": true,
+          "address": "9irBy75QS2BN81FUgXuHcjqceJJRuc9oDkAe8TKVvvAw"
         },
         {
           "name": "game",
@@ -41,12 +45,19 @@
               }
             ]
           }
-        },
-        {
-          "name": "randomness_account_data"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "randomness",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "claim_bet",
@@ -67,6 +78,37 @@
           "signer": true
         },
         {
+          "name": "player_bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  76,
+                  65,
+                  89,
+                  69,
+                  82,
+                  95,
+                  66,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        },
+        {
           "name": "game",
           "writable": true,
           "pda": {
@@ -81,6 +123,568 @@
                 ]
               }
             ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  85,
+                  84,
+                  72,
+                  79,
+                  82,
+                  73,
+                  84,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_balance",
+          "writable": true
+        },
+        {
+          "name": "treasury_program",
+          "address": "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delegate_authority",
+      "discriminator": [
+        228,
+        17,
+        85,
+        163,
+        65,
+        139,
+        36,
+        206
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buffer_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                150,
+                83,
+                243,
+                176,
+                106,
+                43,
+                236,
+                89,
+                119,
+                8,
+                156,
+                35,
+                145,
+                232,
+                6,
+                117,
+                36,
+                72,
+                183,
+                40,
+                116,
+                146,
+                82,
+                119,
+                177,
+                242,
+                86,
+                73,
+                228,
+                182,
+                143,
+                107
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  85,
+                  84,
+                  72,
+                  79,
+                  82,
+                  73,
+                  84,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner_program",
+          "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delegate_game",
+      "discriminator": [
+        116,
+        183,
+        70,
+        107,
+        112,
+        223,
+        122,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buffer_game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "game"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                150,
+                83,
+                243,
+                176,
+                106,
+                43,
+                236,
+                89,
+                119,
+                8,
+                156,
+                35,
+                145,
+                232,
+                6,
+                117,
+                36,
+                72,
+                183,
+                40,
+                116,
+                146,
+                82,
+                119,
+                177,
+                242,
+                86,
+                73,
+                228,
+                182,
+                143,
+                107
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "game"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "game"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  71,
+                  65,
+                  77,
+                  69
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner_program",
+          "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delegate_player_bet",
+      "discriminator": [
+        185,
+        82,
+        155,
+        26,
+        250,
+        63,
+        53,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buffer_player_bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player_bet"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                150,
+                83,
+                243,
+                176,
+                106,
+                43,
+                236,
+                89,
+                119,
+                8,
+                156,
+                35,
+                145,
+                232,
+                6,
+                117,
+                36,
+                72,
+                183,
+                40,
+                116,
+                146,
+                82,
+                119,
+                177,
+                242,
+                86,
+                73,
+                228,
+                182,
+                143,
+                107
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_player_bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player_bet"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_player_bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player_bet"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
           }
         },
         {
@@ -111,300 +715,151 @@
           }
         },
         {
-          "name": "treasury",
+          "name": "owner_program",
+          "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_authority",
+      "discriminator": [
+        13,
+        186,
+        25,
+        16,
+        218,
+        31,
+        90,
+        1
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true,
+          "address": "Fn1XAMy3qdqxkyTViJca2gBqTDjXJH6GYsthQggjweCP"
+        },
+        {
+          "name": "authority",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  65,
+                  85,
                   84,
+                  72,
                   79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
+                  82,
+                  73,
+                  84,
+                  89
                 ]
               }
             ]
           }
         },
         {
-          "name": "token_mint",
-          "address": "So11111111111111111111111111111111111111112"
-        },
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_game",
+      "discriminator": [
+        44,
+        62,
+        102,
+        247,
+        126,
+        208,
+        130,
+        215
+      ],
+      "accounts": [
         {
-          "name": "user_token_account",
+          "name": "game",
           "writable": true,
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  71,
+                  65,
+                  77,
+                  69
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_player_bet",
+      "discriminator": [
+        197,
+        0,
+        43,
+        236,
+        111,
+        153,
+        159,
+        239
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "player_bet",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  76,
+                  65,
+                  89,
+                  69,
+                  82,
+                  95,
+                  66,
+                  69,
+                  84
+                ]
+              },
               {
                 "kind": "account",
                 "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "token_program"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initialize",
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
-      "accounts": [
-        {
-          "name": "game",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  71,
-                  65,
-                  77,
-                  69
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initialize_treasury",
-      "discriminator": [
-        124,
-        186,
-        211,
-        195,
-        85,
-        165,
-        129,
-        166
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint",
-          "address": "So11111111111111111111111111111111111111112"
-        },
-        {
-          "name": "game",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  71,
-                  65,
-                  77,
-                  69
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
-                ]
               }
             ]
           }
@@ -412,9 +867,6 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program"
         }
       ],
       "args": []
@@ -438,117 +890,6 @@
           "signer": true
         },
         {
-          "name": "game",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  71,
-                  65,
-                  77,
-                  69
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint",
-          "address": "So11111111111111111111111111111111111111112"
-        },
-        {
-          "name": "user_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
           "name": "player_bet",
           "writable": true,
           "pda": {
@@ -576,70 +917,68 @@
           }
         },
         {
-          "name": "treasury",
+          "name": "session_token",
+          "optional": true
+        },
+        {
+          "name": "game",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  84,
-                  79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
+                  71,
+                  65,
+                  77,
+                  69
                 ]
               }
             ]
           }
         },
         {
+          "name": "authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  85,
+                  84,
+                  72,
+                  79,
+                  82,
+                  73,
+                  84,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_balance",
+          "writable": true
+        },
+        {
+          "name": "treasury_program",
+          "address": "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv"
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
         },
         {
-          "name": "token_program"
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
         }
       ],
       "args": [
@@ -650,16 +989,133 @@
       ]
     },
     {
-      "name": "setup_tick",
+      "name": "process_undelegation",
       "discriminator": [
-        245,
-        86,
-        125,
-        132,
         196,
-        240,
-        204,
-        201
+        28,
+        41,
+        206,
+        48,
+        37,
+        51,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "base_account",
+          "writable": true
+        },
+        {
+          "name": "buffer"
+        },
+        {
+          "name": "payer",
+          "writable": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "account_seeds",
+          "type": {
+            "vec": "bytes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "request_randomness",
+      "discriminator": [
+        213,
+        5,
+        173,
+        166,
+        37,
+        236,
+        31,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "oracle_queue",
+          "writable": true,
+          "address": "5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc"
+        },
+        {
+          "name": "game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  71,
+                  65,
+                  77,
+                  69
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "program_identity",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  100,
+                  101,
+                  110,
+                  116,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vrf_program",
+          "address": "Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz"
+        },
+        {
+          "name": "slot_hashes",
+          "address": "SysvarS1otHashes111111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "client_seed",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "start_game",
+      "discriminator": [
+        249,
+        47,
+        252,
+        172,
+        184,
+        162,
+        245,
+        14
       ],
       "accounts": [
         {
@@ -685,18 +1141,79 @@
           }
         },
         {
-          "name": "randomness_account_data"
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
         }
       ],
-      "args": [
+      "args": []
+    },
+    {
+      "name": "tick",
+      "discriminator": [
+        92,
+        79,
+        44,
+        8,
+        101,
+        80,
+        63,
+        15
+      ],
+      "accounts": [
         {
-          "name": "randomness_account",
-          "type": "pubkey"
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "game",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  71,
+                  65,
+                  77,
+                  69
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
         }
-      ]
+      ],
+      "args": []
     }
   ],
   "accounts": [
+    {
+      "name": "Authority",
+      "discriminator": [
+        36,
+        108,
+        254,
+        18,
+        167,
+        144,
+        27,
+        36
+      ]
+    },
     {
       "name": "Game",
       "discriminator": [
@@ -722,61 +1239,99 @@
         154,
         0
       ]
+    },
+    {
+      "name": "SessionToken",
+      "discriminator": [
+        233,
+        4,
+        115,
+        14,
+        46,
+        21,
+        1,
+        15
+      ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "RandomnessAlreadyRevealed",
-      "msg": "Randomness already revealed for previous slot"
-    },
-    {
-      "code": 6001,
       "name": "InvalidAmount",
       "msg": "Invalid bet amount"
     },
     {
-      "code": 6002,
+      "code": 6001,
       "name": "GameCrashed",
       "msg": "Game crashed"
     },
     {
-      "code": 6003,
+      "code": 6002,
       "name": "InvalidGame",
       "msg": "Invalid game"
     },
     {
-      "code": 6004,
+      "code": 6003,
       "name": "GameHasNotStarted",
       "msg": "Game has not started"
     },
     {
+      "code": 6004,
+      "name": "GameAlreadyStarted",
+      "msg": "Game already started"
+    },
+    {
       "code": 6005,
-      "name": "RandomnessExpired",
-      "msg": "Randomness expired"
+      "name": "InsufficientBalance",
+      "msg": "Insufficient balance"
     },
     {
       "code": 6006,
+      "name": "ActiveBetInProgress",
+      "msg": "Active bet in progress for current game"
+    },
+    {
+      "code": 6007,
       "name": "RandomnessNotResolved",
       "msg": "Randomness not resolved"
     }
   ],
   "types": [
     {
+      "name": "Authority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "Game",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "rconstant",
-            "type": "u64"
-          },
-          {
             "name": "state",
             "type": "u8"
           },
           {
-            "name": "round",
+            "name": "tick",
+            "type": "u64"
+          },
+          {
+            "name": "crash_tick",
             "type": "u64"
           },
           {
@@ -784,19 +1339,7 @@
             "type": "u64"
           },
           {
-            "name": "randomness_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "commit_slot",
-            "type": "u64"
-          },
-          {
             "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "treasury_bump",
             "type": "u8"
           }
         ]
@@ -822,6 +1365,30 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SessionToken",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "target_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "session_signer",
+            "type": "pubkey"
+          },
+          {
+            "name": "valid_until",
+            "type": "i64"
           }
         ]
       }
