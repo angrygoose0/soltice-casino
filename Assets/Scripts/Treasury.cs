@@ -95,6 +95,48 @@ namespace Treasury
 
     namespace Types
     {
+        public partial class DelegateParams
+        {
+            public uint CommitFrequencyMs { get; set; }
+
+            public PublicKey Validator { get; set; }
+
+            public int Serialize(byte[] _data, int initialOffset)
+            {
+                int offset = initialOffset;
+                _data.WriteU32(CommitFrequencyMs, offset);
+                offset += 4;
+                if (Validator != null)
+                {
+                    _data.WriteU8(1, offset);
+                    offset += 1;
+                    _data.WritePubKey(Validator, offset);
+                    offset += 32;
+                }
+                else
+                {
+                    _data.WriteU8(0, offset);
+                    offset += 1;
+                }
+
+                return offset - initialOffset;
+            }
+
+            public static int Deserialize(ReadOnlySpan<byte> _data, int initialOffset, out DelegateParams result)
+            {
+                int offset = initialOffset;
+                result = new DelegateParams();
+                result.CommitFrequencyMs = _data.GetU32(offset);
+                offset += 4;
+                if (_data.GetBool(offset++))
+                {
+                    result.Validator = _data.GetPubKey(offset);
+                    offset += 32;
+                }
+
+                return offset - initialOffset;
+            }
+        }
     }
 
     public partial class TreasuryClient : TransactionalBaseClient<TreasuryErrorKind>
@@ -332,7 +374,7 @@ namespace Treasury
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction DelegatePlayerBalance(DelegatePlayerBalanceAccounts accounts, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction DelegatePlayerBalance(DelegatePlayerBalanceAccounts accounts, DelegateParams @params, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -341,6 +383,7 @@ namespace Treasury
                 int offset = 0;
                 _data.WriteU64(15494976108273411052UL, offset);
                 offset += 8;
+                offset += @params.Serialize(_data, offset);
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};

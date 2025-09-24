@@ -1,5 +1,5 @@
 {
-  "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN",
+  "address": "5SrQX7Fmz29euPLRnbqeUYm27HkgEFJVuNfuMJ5yD2W",
   "metadata": {
     "name": "crash",
     "version": "0.1.0",
@@ -355,7 +355,16 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "DelegateParams"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "delegate_game",
@@ -536,7 +545,16 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "DelegateParams"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "delegate_player_bet",
@@ -727,7 +745,16 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "DelegateParams"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "initialize_authority",
@@ -1313,6 +1340,24 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DelegateParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "commit_frequency_ms",
+            "type": "u32"
+          },
+          {
+            "name": "validator",
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }

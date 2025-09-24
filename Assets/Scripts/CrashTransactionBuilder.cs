@@ -9,6 +9,7 @@ using Solana.Unity.Programs;
 using Crash;
 using Crash.Program;
 using Crash.Accounts;
+using Crash.Types;
 using Treasury.Program;
 using System;
 using System.Text;
@@ -183,7 +184,16 @@ public class CrashTransactionBuilder : MonoBehaviour
         return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
 	}
 
-	public async Task<string> DelegateAuthority()
+	private static DelegateParams BuildDelegateParams(uint commitFrequencyMs, PublicKey validator)
+	{
+		return new DelegateParams
+		{
+			CommitFrequencyMs = commitFrequencyMs,
+			Validator = validator
+		};
+	}
+
+	public async Task<string> DelegateAuthority(uint commitFrequencyMs = 1000, PublicKey validator = null)
 	{
 		if (Client == null || CurrentUser() == null) return null;
 		var user = CurrentUserPk();
@@ -199,7 +209,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			DelegationRecordAuthority = delegationRecord,
 			BufferAuthority = delegationBuffer
 		};
-		var ix = CrashProgram.DelegateAuthority(accounts);
+		var @params = BuildDelegateParams(commitFrequencyMs, validator);
+		var ix = CrashProgram.DelegateAuthority(accounts, @params);
 		if (solanaManager == null)
 		{
 			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
@@ -208,7 +219,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
 	}
 
-	public async Task<string> DelegateGame()
+	public async Task<string> DelegateGame(uint commitFrequencyMs = 1000, PublicKey validator = null)
 	{
 		if (Client == null || CurrentUser() == null) return null;
 		var user = CurrentUserPk();
@@ -224,7 +235,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			DelegationRecordGame = delegationRecord,
 			BufferGame = delegationBuffer
 		};
-		var ix = CrashProgram.DelegateGame(accounts);
+		var @params = BuildDelegateParams(commitFrequencyMs, validator);
+		var ix = CrashProgram.DelegateGame(accounts, @params);
 		if (solanaManager == null)
 		{
 			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
@@ -233,7 +245,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
 	}
 
-	public async Task<string> DelegatePlayerBet()
+	public async Task<string> DelegatePlayerBet(uint commitFrequencyMs = 1000, PublicKey validator = null)
 	{
 		if (Client == null || CurrentUser() == null) return null;
 		var user = CurrentUserPk();
@@ -249,7 +261,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			DelegationRecordPlayerBet = delegationRecord,
 			BufferPlayerBet = delegationBuffer
 		};
-		var ix = CrashProgram.DelegatePlayerBet(accounts);
+		var @params = BuildDelegateParams(commitFrequencyMs, validator);
+		var ix = CrashProgram.DelegatePlayerBet(accounts, @params);
 		if (solanaManager == null)
 		{
 			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
