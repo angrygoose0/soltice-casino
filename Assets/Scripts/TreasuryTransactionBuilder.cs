@@ -110,8 +110,6 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return res.ParsedResult;
     }
 
-    // No local send wrapper; call SolanaManager directly
-
     // High-level actions (Treasury IDL)
     public async Task<string> InitializeTreasury()
     {
