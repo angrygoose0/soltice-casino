@@ -10,6 +10,7 @@ public class TreasuryUI : MonoBehaviour
 {
     [Header("Builder")]
     [SerializeField] private TreasuryTransactionBuilder builder;
+    [SerializeField] private SolanaManager solanaManager;
 
     [Header("Initialize")]
     [SerializeField] private Button initializeTreasuryButton;
@@ -23,17 +24,7 @@ public class TreasuryUI : MonoBehaviour
 
     [Header("Funds")]
     [SerializeField] private Button depositButton;
-    [SerializeField] private InputField depositAmountInput;
     [SerializeField] private Button withdrawButton;
-    [SerializeField] private InputField withdrawAmountInput;
-
-    [Header("Authority Credits")]
-    [SerializeField] private Button creditPlayerButton;
-    [SerializeField] private InputField creditAmountInput;
-    [SerializeField] private InputField creditAuthorityPubkeyInput;
-    [SerializeField] private Button debitPlayerButton;
-    [SerializeField] private InputField debitAmountInput;
-    [SerializeField] private InputField debitAuthorityPubkeyInput;
 
     [Header("Fetch")]
     [SerializeField] private Button getPlayerBalanceButton;
@@ -51,6 +42,10 @@ public class TreasuryUI : MonoBehaviour
         if (builder == null)
         {
             builder = FindObjectOfType<TreasuryTransactionBuilder>();
+        }
+        if (solanaManager == null)
+        {
+            solanaManager = FindObjectOfType<SolanaManager>();
         }
         if (builder == null)
         {
@@ -71,9 +66,6 @@ public class TreasuryUI : MonoBehaviour
         if (depositButton != null) depositButton.onClick.AddListener(OnClickDeposit);
         if (withdrawButton != null) withdrawButton.onClick.AddListener(OnClickWithdraw);
 
-        if (creditPlayerButton != null) creditPlayerButton.onClick.AddListener(OnClickCreditPlayer);
-        if (debitPlayerButton != null) debitPlayerButton.onClick.AddListener(OnClickDebitPlayer);
-
         if (getPlayerBalanceButton != null) getPlayerBalanceButton.onClick.AddListener(OnClickGetPlayerBalance);
         if (getTreasuryDataButton != null) getTreasuryDataButton.onClick.AddListener(OnClickGetTreasuryData);
 
@@ -91,9 +83,6 @@ public class TreasuryUI : MonoBehaviour
 
         if (depositButton != null) depositButton.onClick.RemoveListener(OnClickDeposit);
         if (withdrawButton != null) withdrawButton.onClick.RemoveListener(OnClickWithdraw);
-
-        if (creditPlayerButton != null) creditPlayerButton.onClick.RemoveListener(OnClickCreditPlayer);
-        if (debitPlayerButton != null) debitPlayerButton.onClick.RemoveListener(OnClickDebitPlayer);
 
         if (getPlayerBalanceButton != null) getPlayerBalanceButton.onClick.RemoveListener(OnClickGetPlayerBalance);
         if (getTreasuryDataButton != null) getTreasuryDataButton.onClick.RemoveListener(OnClickGetTreasuryData);
@@ -113,8 +102,6 @@ public class TreasuryUI : MonoBehaviour
         SetInteractable(undelegatePlayerBalanceButton, true);
         SetInteractable(depositButton, true);
         SetInteractable(withdrawButton, true);
-        SetInteractable(creditPlayerButton, true);
-        SetInteractable(debitPlayerButton, true);
         SetInteractable(getPlayerBalanceButton, true);
         SetInteractable(getTreasuryDataButton, true);
     }
@@ -126,50 +113,66 @@ public class TreasuryUI : MonoBehaviour
 
     private async void OnClickInitializeTreasury()
     {
-        await RunAsync(initializeTreasuryButton, async () => await builder.InitializeTreasury());
+        await RunAsync(initializeTreasuryButton, async () =>
+        {
+            var ix = builder.InitializeTreasury();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickInitializePlayerBalance()
     {
-        await RunAsync(initializePlayerBalanceButton, async () => await builder.InitializePlayerBalance());
+        await RunAsync(initializePlayerBalanceButton, async () =>
+        {
+            var ix = builder.InitializePlayerBalance();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickDelegatePlayerBalance()
     {
         uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
         PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegatePlayerBalanceButton, async () => await builder.DelegatePlayerBalance(commitMs, validator));
+        await RunAsync(delegatePlayerBalanceButton, async () =>
+        {
+            var ix = builder.DelegatePlayerBalance(commitMs, validator);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickUndelegatePlayerBalance()
     {
-        await RunAsync(undelegatePlayerBalanceButton, async () => await builder.UndelegatePlayerBalance());
+        await RunAsync(undelegatePlayerBalanceButton, async () =>
+        {
+            var ix = builder.UndelegatePlayerBalance();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickDeposit()
     {
-        ulong amount = ParseUlong(depositAmountInput, 0ul);
-        await RunAsync(depositButton, async () => await builder.Deposit(amount));
+        const ulong amount = 1000000000ul; // 1 billion hard-coded
+        await RunAsync(depositButton, async () =>
+        {
+            var ix = builder.Deposit(amount);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickWithdraw()
     {
-        ulong amount = ParseUlong(withdrawAmountInput, 0ul);
-        await RunAsync(withdrawButton, async () => await builder.Withdraw(amount));
-    }
-
-    private async void OnClickCreditPlayer()
-    {
-        ulong amount = ParseUlong(creditAmountInput, 0ul);
-        PublicKey authority = ParsePublicKey(creditAuthorityPubkeyInput);
-        await RunAsync(creditPlayerButton, async () => await builder.CreditPlayer(amount, authority));
-    }
-
-    private async void OnClickDebitPlayer()
-    {
-        ulong amount = ParseUlong(debitAmountInput, 0ul);
-        PublicKey authority = ParsePublicKey(debitAuthorityPubkeyInput);
-        await RunAsync(debitPlayerButton, async () => await builder.DebitPlayer(amount, authority));
+        const ulong amount = 1000000000ul; // 1 billion hard-coded
+        await RunAsync(withdrawButton, async () =>
+        {
+            var ix = builder.Withdraw(amount);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickGetPlayerBalance()
@@ -206,8 +209,6 @@ public class TreasuryUI : MonoBehaviour
         CacheOriginalText(undelegatePlayerBalanceButton);
         CacheOriginalText(depositButton);
         CacheOriginalText(withdrawButton);
-        CacheOriginalText(creditPlayerButton);
-        CacheOriginalText(debitPlayerButton);
         CacheOriginalText(getPlayerBalanceButton);
         CacheOriginalText(getTreasuryDataButton);
     }
@@ -310,8 +311,6 @@ public class TreasuryUI : MonoBehaviour
         SetInteractable(undelegatePlayerBalanceButton, interactable);
         SetInteractable(depositButton, interactable);
         SetInteractable(withdrawButton, interactable);
-        SetInteractable(creditPlayerButton, interactable);
-        SetInteractable(debitPlayerButton, interactable);
         SetInteractable(getPlayerBalanceButton, interactable);
         SetInteractable(getTreasuryDataButton, interactable);
     }
@@ -322,12 +321,6 @@ public class TreasuryUI : MonoBehaviour
         else Debug.Log($"TreasuryUI: {message}");
     }
 
-    private static ulong ParseUlong(InputField input, ulong defaultValue)
-    {
-        if (input == null || string.IsNullOrWhiteSpace(input.text)) return defaultValue;
-        if (ulong.TryParse(input.text, out var result)) return result;
-        return defaultValue;
-    }
 
     private static uint ParseUint(InputField input, uint defaultValue)
     {

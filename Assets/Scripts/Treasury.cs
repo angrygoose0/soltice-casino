@@ -264,7 +264,7 @@ namespace Treasury
 
             public PublicKey PlayerBalance { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("So11111111111111111111111111111111111111112");
+            public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
             public PublicKey UserTokenAccount { get; set; }
 
             public PublicKey Treasury { get; set; }
@@ -291,7 +291,7 @@ namespace Treasury
 
             public PublicKey Treasury { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("So11111111111111111111111111111111111111112");
+            public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
             public PublicKey TreasuryTokenAccount { get; set; }
 
             public PublicKey TokenProgram { get; set; }
@@ -326,7 +326,7 @@ namespace Treasury
 
             public PublicKey PlayerBalance { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("So11111111111111111111111111111111111111112");
+            public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
             public PublicKey UserTokenAccount { get; set; }
 
             public PublicKey Treasury { get; set; }

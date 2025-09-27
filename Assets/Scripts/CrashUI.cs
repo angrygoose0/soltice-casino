@@ -10,6 +10,7 @@ public class CrashUI : MonoBehaviour
 {
     [Header("Builder")]
     [SerializeField] private CrashTransactionBuilder builder;
+    [SerializeField] private SolanaManager solanaManager;
 
     [Header("Initialize")]
     [SerializeField] private Button initializeAuthorityButton;
@@ -52,6 +53,10 @@ public class CrashUI : MonoBehaviour
         if (builder == null)
         {
             builder = FindObjectOfType<CrashTransactionBuilder>();
+        }
+        if (solanaManager == null)
+        {
+            solanaManager = FindObjectOfType<SolanaManager>();
         }
         if (builder == null)
         {
@@ -138,65 +143,120 @@ public class CrashUI : MonoBehaviour
 
     private async void OnClickInitializeAuthority()
     {
-        await RunAsync(initializeAuthorityButton, async () => await builder.InitializeAuthority());
+        await RunAsync(initializeAuthorityButton, async () =>
+        {
+            var ix = builder.InitializeAuthority();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickInitializeGame()
     {
-        await RunAsync(initializeGameButton, async () => await builder.InitializeGame());
+        await RunAsync(initializeGameButton, async () =>
+        {
+            var ix = builder.InitializeGame();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickInitializePlayerBet()
     {
-        await RunAsync(initializePlayerBetButton, async () => await builder.InitializePlayerBet());
+        await RunAsync(initializePlayerBetButton, async () =>
+        {
+            var ix = builder.InitializePlayerBet();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickStartGame()
     {
-        await RunAsync(startGameButton, async () => await builder.StartGame());
+        await RunAsync(startGameButton, async () =>
+        {
+            var ix = builder.StartGame();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickDelegateAuthority()
     {
         uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
         PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegateAuthorityButton, async () => await builder.DelegateAuthority(commitMs, validator));
+        await RunAsync(delegateAuthorityButton, async () =>
+        {
+            var ix = builder.DelegateAuthority(commitMs, validator);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickDelegateGame()
     {
         uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
         PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegateGameButton, async () => await builder.DelegateGame(commitMs, validator));
+        await RunAsync(delegateGameButton, async () =>
+        {
+            var ix = builder.DelegateGame(commitMs, validator);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickDelegatePlayerBet()
     {
         uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
         PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegatePlayerBetButton, async () => await builder.DelegatePlayerBet(commitMs, validator));
+        await RunAsync(delegatePlayerBetButton, async () =>
+        {
+            var ix = builder.DelegatePlayerBet(commitMs, validator);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickTick()
     {
-        await RunAsync(tickButton, async () => await builder.Tick());
+        await RunAsync(tickButton, async () =>
+        {
+            var ix = builder.Tick();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickRequestRandomness()
     {
         byte seed = ParseByte(requestRandomnessSeedInput, 0);
-        await RunAsync(requestRandomnessButton, async () => await builder.RequestRandomness(seed));
+        await RunAsync(requestRandomnessButton, async () =>
+        {
+            var ix = builder.RequestRandomness(seed);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickPlaceBet()
     {
         ulong amount = ParseUlong(placeBetAmountInput, 0ul);
-        await RunAsync(placeBetButton, async () => await builder.PlaceBet(amount));
+        await RunAsync(placeBetButton, async () =>
+        {
+            var ix = builder.PlaceBet(amount);
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickClaimBet()
     {
-        await RunAsync(claimBetButton, async () => await builder.ClaimBet());
+        await RunAsync(claimBetButton, async () =>
+        {
+            var ix = builder.ClaimBet();
+            if (ix == null) return null;
+            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        });
     }
 
     private async void OnClickGetGameData()

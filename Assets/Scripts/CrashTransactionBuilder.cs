@@ -21,7 +21,6 @@ public class CrashTransactionBuilder : MonoBehaviour
     public static readonly PublicKey SYSTEM_PROGRAM_ID = SystemProgram.ProgramIdKey;
     public static readonly PublicKey TOKEN_PROGRAM_ID = TokenProgram.ProgramIdKey;
     public static readonly PublicKey ASSOCIATED_TOKEN_PROGRAM_ID = AssociatedTokenAccountProgram.ProgramIdKey;
-    public static readonly PublicKey NATIVE_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 
     // References
     [SerializeField] private SolanaManager solanaManager;
@@ -29,6 +28,7 @@ public class CrashTransactionBuilder : MonoBehaviour
     // Clients
     private static PublicKey _programId = new PublicKey(CrashProgram.ID);
     private CrashClient Client => solanaManager?.GetCrashClient();
+    
 
 
     private void Awake()
@@ -105,9 +105,9 @@ public class CrashTransactionBuilder : MonoBehaviour
     }
 
     // High-level actions
-    public async Task<string> InitializeGame()
+    public TransactionInstruction InitializeGame()
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
         var game = DeriveGameAccount();
         var accounts = new InitializeGameAccounts
@@ -117,17 +117,12 @@ public class CrashTransactionBuilder : MonoBehaviour
             SystemProgram = SYSTEM_PROGRAM_ID
         };
         var ix = CrashProgram.InitializeGame(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-	public async Task<string> InitializeAuthority()
+    public TransactionInstruction InitializeAuthority()
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var authority = DeriveAuthorityAccount();
 		var accounts = new InitializeAuthorityAccounts
@@ -136,18 +131,13 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Authority = authority,
 			SystemProgram = SYSTEM_PROGRAM_ID
 		};
-		var ix = CrashProgram.InitializeAuthority(accounts);
-		if (solanaManager == null)
-		{
-			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-			return null;
-		}
-		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var ix = CrashProgram.InitializeAuthority(accounts);
+        return ix;
 	}
 
-	public async Task<string> InitializePlayerBet()
+    public TransactionInstruction InitializePlayerBet()
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var playerBet = DerivePlayerBetAccount(user);
 		var accounts = new InitializePlayerBetAccounts
@@ -156,18 +146,13 @@ public class CrashTransactionBuilder : MonoBehaviour
 			PlayerBet = playerBet,
 			SystemProgram = SYSTEM_PROGRAM_ID
 		};
-		var ix = CrashProgram.InitializePlayerBet(accounts);
-		if (solanaManager == null)
-		{
-			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-			return null;
-		}
-		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var ix = CrashProgram.InitializePlayerBet(accounts);
+        return ix;
 	}
 
-	public async Task<string> StartGame()
+    public TransactionInstruction StartGame()
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var accounts = new StartGameAccounts
@@ -176,12 +161,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Game = game
 		};
         var ix = CrashProgram.StartGame(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
 	}
 
 	private static DelegateParams BuildDelegateParams(uint commitFrequencyMs, PublicKey validator)
@@ -193,9 +173,9 @@ public class CrashTransactionBuilder : MonoBehaviour
 		};
 	}
 
-	public async Task<string> DelegateAuthority(uint commitFrequencyMs = 1000, PublicKey validator = null)
+    public TransactionInstruction DelegateAuthority(uint commitFrequencyMs = 1000, PublicKey validator = null)
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var authority = DeriveAuthorityAccount();
 		var delegationMetadata = DeriveDelegationMetadataAccount(authority);
@@ -209,19 +189,14 @@ public class CrashTransactionBuilder : MonoBehaviour
 			DelegationRecordAuthority = delegationRecord,
 			BufferAuthority = delegationBuffer
 		};
-		var @params = BuildDelegateParams(commitFrequencyMs, validator);
-		var ix = CrashProgram.DelegateAuthority(accounts, @params);
-		if (solanaManager == null)
-		{
-			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-			return null;
-		}
-		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var @params = BuildDelegateParams(commitFrequencyMs, validator);
+        var ix = CrashProgram.DelegateAuthority(accounts, @params);
+        return ix;
 	}
 
-	public async Task<string> DelegateGame(uint commitFrequencyMs = 1000, PublicKey validator = null)
+    public TransactionInstruction DelegateGame(uint commitFrequencyMs = 1000, PublicKey validator = null)
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var delegationMetadata = DeriveDelegationMetadataAccount(game);
@@ -235,19 +210,14 @@ public class CrashTransactionBuilder : MonoBehaviour
 			DelegationRecordGame = delegationRecord,
 			BufferGame = delegationBuffer
 		};
-		var @params = BuildDelegateParams(commitFrequencyMs, validator);
-		var ix = CrashProgram.DelegateGame(accounts, @params);
-		if (solanaManager == null)
-		{
-			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-			return null;
-		}
-		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var @params = BuildDelegateParams(commitFrequencyMs, validator);
+        var ix = CrashProgram.DelegateGame(accounts, @params);
+        return ix;
 	}
 
-	public async Task<string> DelegatePlayerBet(uint commitFrequencyMs = 1000, PublicKey validator = null)
+    public TransactionInstruction DelegatePlayerBet(uint commitFrequencyMs = 1000, PublicKey validator = null)
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var playerBet = DerivePlayerBetAccount(user);
 		var delegationMetadata = DeriveDelegationMetadataAccount(playerBet);
@@ -261,19 +231,14 @@ public class CrashTransactionBuilder : MonoBehaviour
 			DelegationRecordPlayerBet = delegationRecord,
 			BufferPlayerBet = delegationBuffer
 		};
-		var @params = BuildDelegateParams(commitFrequencyMs, validator);
-		var ix = CrashProgram.DelegatePlayerBet(accounts, @params);
-		if (solanaManager == null)
-		{
-			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-			return null;
-		}
-		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var @params = BuildDelegateParams(commitFrequencyMs, validator);
+        var ix = CrashProgram.DelegatePlayerBet(accounts, @params);
+        return ix;
 	}
 
-	public async Task<string> Tick()
+    public TransactionInstruction Tick()
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var accounts = new TickAccounts
@@ -282,17 +247,12 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Game = game
 		};
         var ix = CrashProgram.Tick(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
 	}
 
-	public async Task<string> RequestRandomness(byte clientSeed)
+    public TransactionInstruction RequestRandomness(byte clientSeed)
 	{
-		if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var programIdentity = DeriveProgramIdentity();
@@ -302,18 +262,13 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Game = game,
 			ProgramIdentity = programIdentity
 		};
-		var ix = CrashProgram.RequestRandomness(accounts, clientSeed);
-		if (solanaManager == null)
-		{
-			Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-			return null;
-		}
-		return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var ix = CrashProgram.RequestRandomness(accounts, clientSeed);
+        return ix;
 	}
 
-    public async Task<string> PlaceBet(ulong amountTokens)
+    public TransactionInstruction PlaceBet(ulong amountTokens)
     {
-        if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var playerBet = DerivePlayerBetAccount(user);
@@ -331,18 +286,13 @@ public class CrashTransactionBuilder : MonoBehaviour
 			SystemProgram = SYSTEM_PROGRAM_ID
 		};
 
-		var ix = CrashProgram.PlaceBet(accounts, amountTokens);
-        if (solanaManager == null)
-        {
-            Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var ix = CrashProgram.PlaceBet(accounts, amountTokens);
+        return ix;
     }
 
-    public async Task<string> ClaimBet()
+    public TransactionInstruction ClaimBet()
     {
-        if (Client == null || CurrentUser() == null) return null;
+        if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var playerBet = DerivePlayerBetAccount(user);
@@ -359,13 +309,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			PlayerBalance = playerBalance,
 			SystemProgram = SYSTEM_PROGRAM_ID
 		};
-		var ix = CrashProgram.ClaimBet(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("CrashTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        var ix = CrashProgram.ClaimBet(accounts);
+        return ix;
     }
 }
 

@@ -20,7 +20,6 @@ public class TreasuryTransactionBuilder : MonoBehaviour
     public static readonly PublicKey SYSTEM_PROGRAM_ID = SystemProgram.ProgramIdKey;
     public static readonly PublicKey TOKEN_PROGRAM_ID = TokenProgram.ProgramIdKey;
     public static readonly PublicKey ASSOCIATED_TOKEN_PROGRAM_ID = AssociatedTokenAccountProgram.ProgramIdKey;
-    public static readonly PublicKey NATIVE_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 
     // References
     [SerializeField] private SolanaManager solanaManager;
@@ -28,6 +27,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
     // Clients
     private static PublicKey _programId = new PublicKey(TreasuryProgram.ID);
     private TreasuryClient Client => solanaManager?.GetTreasuryClient();
+    
 
     private void Awake()
     {
@@ -111,9 +111,9 @@ public class TreasuryTransactionBuilder : MonoBehaviour
     }
 
     // High-level actions (Treasury IDL)
-    public async Task<string> InitializeTreasury()
+    public TransactionInstruction InitializeTreasury()
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var treasury = DeriveTreasuryAccount();
@@ -123,24 +123,19 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         {
             Signer = signer,
             Treasury = treasury,
-            TokenMint = NATIVE_MINT,
+            TokenMint = solanaManager.GetMintPublicKey(),
             TreasuryTokenAccount = treasuryTokenAccount,
             TokenProgram = TOKEN_PROGRAM_ID,
             SystemProgram = SYSTEM_PROGRAM_ID
         };
 
         var ix = TreasuryProgram.InitializeTreasury(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> InitializePlayerBalance()
+    public TransactionInstruction InitializePlayerBalance()
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
@@ -153,17 +148,12 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         };
 
         var ix = TreasuryProgram.InitializePlayerBalance(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> DelegatePlayerBalance(uint commitFrequencyMs = 1000, PublicKey validator = null)
+    public TransactionInstruction DelegatePlayerBalance(uint commitFrequencyMs = 1000, PublicKey validator = null)
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
@@ -181,17 +171,12 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
         var @params = BuildDelegateParams(commitFrequencyMs, validator);
         var ix = TreasuryProgram.DelegatePlayerBalance(accounts, @params);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> UndelegatePlayerBalance()
+    public TransactionInstruction UndelegatePlayerBalance()
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
@@ -203,21 +188,16 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         };
 
         var ix = TreasuryProgram.UndelegatePlayerBalance(accounts);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> Deposit(ulong amount)
+    public TransactionInstruction Deposit(ulong amount)
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
-        var userAta = DeriveUserTokenAccount(signer, NATIVE_MINT);
+        var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
 
@@ -225,7 +205,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         {
             Signer = signer,
             PlayerBalance = playerBalance,
-            TokenMint = NATIVE_MINT,
+            TokenMint = solanaManager.GetMintPublicKey(),
             UserTokenAccount = userAta,
             Treasury = treasury,
             TreasuryTokenAccount = treasuryTokenAccount,
@@ -235,21 +215,16 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         };
 
         var ix = TreasuryProgram.Deposit(accounts, amount);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> Withdraw(ulong amount)
+    public TransactionInstruction Withdraw(ulong amount)
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
-        var userAta = DeriveUserTokenAccount(signer, NATIVE_MINT);
+        var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
 
@@ -257,7 +232,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         {
             Signer = signer,
             PlayerBalance = playerBalance,
-            TokenMint = NATIVE_MINT,
+            TokenMint = solanaManager.GetMintPublicKey(),
             UserTokenAccount = userAta,
             Treasury = treasury,
             TreasuryTokenAccount = treasuryTokenAccount,
@@ -267,17 +242,12 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         };
 
         var ix = TreasuryProgram.Withdraw(accounts, amount);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> CreditPlayer(ulong amount, PublicKey authority)
+    public TransactionInstruction CreditPlayer(ulong amount, PublicKey authority)
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
@@ -291,17 +261,12 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         };
 
         var ix = TreasuryProgram.CreditPlayer(accounts, amount);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 
-    public async Task<string> DebitPlayer(ulong amount, PublicKey authority)
+    public TransactionInstruction DebitPlayer(ulong amount, PublicKey authority)
     {
-        if (CurrentUser() == null || Client == null) return null;
+        if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
@@ -315,12 +280,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         };
 
         var ix = TreasuryProgram.DebitPlayer(accounts, amount);
-        if (solanaManager == null)
-        {
-            Debug.LogError("TreasuryTransactionBuilder: SolanaManager reference is missing");
-            return null;
-        }
-        return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+        return ix;
     }
 }
 
