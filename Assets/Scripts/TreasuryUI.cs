@@ -18,8 +18,6 @@ public class TreasuryUI : MonoBehaviour
 
     [Header("Delegation")]
     [SerializeField] private Button delegatePlayerBalanceButton;
-    [SerializeField] private InputField delegateCommitFrequencyMsInput; // optional
-    [SerializeField] private InputField delegateValidatorPubkeyInput;   // optional
     [SerializeField] private Button undelegatePlayerBalanceButton;
 
     [Header("Funds")]
@@ -31,29 +29,12 @@ public class TreasuryUI : MonoBehaviour
     [SerializeField] private Button getTreasuryDataButton;
 
     [Header("Feedback (optional)")]
-    [SerializeField] private TMP_Text statusTMPText;
+    [SerializeField] private TextMeshProUGUI statusTMPText;
 
     // Cached data from fetches
     private Treasury.Accounts.PlayerBalance _cachedPlayerBalance;
     private Treasury.Accounts.Treasury _cachedTreasury;
 
-    private void Awake()
-    {
-        if (builder == null)
-        {
-            builder = FindObjectOfType<TreasuryTransactionBuilder>();
-        }
-        if (solanaManager == null)
-        {
-            solanaManager = FindObjectOfType<SolanaManager>();
-        }
-        if (builder == null)
-        {
-            Debug.LogError("TreasuryUI: TreasuryTransactionBuilder reference is missing; disabling UI");
-            enabled = false;
-            return;
-        }
-    }
 
     private void OnEnable()
     {
@@ -69,6 +50,7 @@ public class TreasuryUI : MonoBehaviour
         if (getPlayerBalanceButton != null) getPlayerBalanceButton.onClick.AddListener(OnClickGetPlayerBalance);
         if (getTreasuryDataButton != null) getTreasuryDataButton.onClick.AddListener(OnClickGetTreasuryData);
 
+        InitializeButtonTexts();
         CacheOriginalButtonTexts();
         RefreshButtons();
     }
@@ -88,27 +70,28 @@ public class TreasuryUI : MonoBehaviour
         if (getTreasuryDataButton != null) getTreasuryDataButton.onClick.RemoveListener(OnClickGetTreasuryData);
     }
 
-    public void SetBuilder(TreasuryTransactionBuilder newBuilder)
+    private void InitializeButtonTexts()
     {
-        builder = newBuilder;
-        RefreshButtons();
+        SetButtonText(initializeTreasuryButton, "Initialize Treasury");
+        SetButtonText(initializePlayerBalanceButton, "Initialize Player Balance");
+        SetButtonText(delegatePlayerBalanceButton, "Delegate Player Balance");
+        SetButtonText(undelegatePlayerBalanceButton, "Undelegate Player Balance");
+        SetButtonText(depositButton, "Deposit");
+        SetButtonText(withdrawButton, "Withdraw");
+        SetButtonText(getPlayerBalanceButton, "Get Player Balance");
+        SetButtonText(getTreasuryDataButton, "Get Treasury Data");
     }
 
     public void RefreshButtons()
     {
-        SetInteractable(initializeTreasuryButton, true);
-        SetInteractable(initializePlayerBalanceButton, true);
-        SetInteractable(delegatePlayerBalanceButton, true);
-        SetInteractable(undelegatePlayerBalanceButton, true);
-        SetInteractable(depositButton, true);
-        SetInteractable(withdrawButton, true);
-        SetInteractable(getPlayerBalanceButton, true);
-        SetInteractable(getTreasuryDataButton, true);
-    }
-
-    private static void SetInteractable(Button button, bool interactable)
-    {
-        if (button != null) button.interactable = interactable;
+        if (initializeTreasuryButton != null) initializeTreasuryButton.interactable = true;
+        if (initializePlayerBalanceButton != null) initializePlayerBalanceButton.interactable = true;
+        if (delegatePlayerBalanceButton != null) delegatePlayerBalanceButton.interactable = true;
+        if (undelegatePlayerBalanceButton != null) undelegatePlayerBalanceButton.interactable = true;
+        if (depositButton != null) depositButton.interactable = true;
+        if (withdrawButton != null) withdrawButton.interactable = true;
+        if (getPlayerBalanceButton != null) getPlayerBalanceButton.interactable = true;
+        if (getTreasuryDataButton != null) getTreasuryDataButton.interactable = true;
     }
 
     private async void OnClickInitializeTreasury()
@@ -133,8 +116,11 @@ public class TreasuryUI : MonoBehaviour
 
     private async void OnClickDelegatePlayerBalance()
     {
-        uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
-        PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
+        // Hardcoded delegate parameters
+        const uint commitMs = 30000u; // 30 seconds commit frequency
+        const string validatorPubkeyString = "mAGicPQYBMvcYveUZA5F5UNNwyHvfYh5xkLS2Fr1mev"; // Oracle queue validator
+        var validator = new PublicKey(validatorPubkeyString);
+        
         await RunAsync(delegatePlayerBalanceButton, async () =>
         {
             var ix = builder.DelegatePlayerBalance(commitMs, validator);
@@ -149,7 +135,7 @@ public class TreasuryUI : MonoBehaviour
         {
             var ix = builder.UndelegatePlayerBalance();
             if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
+            return await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, ix);
         });
     }
 
@@ -179,22 +165,48 @@ public class TreasuryUI : MonoBehaviour
     {
         if (Web3.Account == null)
         {
-            SetStatus("Wallet not connected");
+            if (statusTMPText != null) statusTMPText.text = "Wallet not connected";
+            else Debug.Log("TreasuryUI: Wallet not connected");
             return;
         }
         var userPk = Web3.Account.PublicKey;
+        var playerBalancePda = TreasuryTransactionBuilder.DerivePlayerBalanceAccount(userPk);
         await RunFetchAsync(getPlayerBalanceButton, async () => await builder.GetPlayerBalance(userPk), result =>
         {
             _cachedPlayerBalance = result;
+            if (result != null)
+            {
+                Debug.Log($"TreasuryUI: Fetched PlayerBalance:");
+                Debug.Log($"  - PubKey: {playerBalancePda}");
+                Debug.Log($"  - Balance: {result.Balance}");
+                Debug.Log($"  - Player: {result.Player}");
+                Debug.Log($"  - Bump: {result.Bump}");
+            }
+            else
+            {
+                Debug.Log($"TreasuryUI: PlayerBalance not found (PubKey: {playerBalancePda})");
+            }
             return result != null ? "Fetched PlayerBalance" : "PlayerBalance not found";
         });
     }
 
     private async void OnClickGetTreasuryData()
     {
+        var treasuryPda = TreasuryTransactionBuilder.DeriveTreasuryAccount();
         await RunFetchAsync(getTreasuryDataButton, async () => await builder.GetTreasuryData(), result =>
         {
             _cachedTreasury = result;
+            if (result != null)
+            {
+                Debug.Log($"TreasuryUI: Fetched Treasury:");
+                Debug.Log($"  - PubKey: {treasuryPda}");
+                Debug.Log($"  - Bump: {result.Bump}");
+                Debug.Log($"  - TreasuryTokenAccountBump: {result.TreasuryTokenAccountBump}");
+            }
+            else
+            {
+                Debug.Log($"TreasuryUI: Treasury not found (PubKey: {treasuryPda})");
+            }
             return result != null ? "Fetched Treasury" : "Treasury not found";
         });
     }
@@ -217,32 +229,21 @@ public class TreasuryUI : MonoBehaviour
     {
         if (button == null) return;
         if (_originalButtonText.ContainsKey(button)) return;
-        var textComp = FindChildTMPText(button);
+        var textComp = button.GetComponentInChildren<TextMeshProUGUI>();
         if (textComp != null)
         {
             _originalButtonText[button] = textComp.text;
         }
     }
 
-    private TMP_Text FindChildTMPText(Button button)
-    {
-        if (button == null) return null;
-        return button.GetComponentInChildren<TMP_Text>();
-    }
-
-    private string GetCurrentButtonText(Button button)
-    {
-        var tmp = FindChildTMPText(button);
-        if (tmp != null) return tmp.text;
-        return null;
-    }
-
     private void SetButtonText(Button button, string newText)
     {
         if (button == null) return;
-        var textComp = FindChildTMPText(button);
-        if (textComp == null) return;
-        textComp.text = newText;
+        var textComp = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (textComp != null)
+        {
+            textComp.text = newText;
+        }
     }
 
     private async Task RunAsync(Button contextButton, System.Func<Task<string>> func)
@@ -259,7 +260,8 @@ public class TreasuryUI : MonoBehaviour
         {
             string signature = await func();
             var message = string.IsNullOrEmpty(signature) ? "Transaction failed" : $"Tx: {signature}";
-            SetStatus(message);
+            if (statusTMPText != null) statusTMPText.text = message;
+            else Debug.Log($"TreasuryUI: {message}");
         }
         finally
         {
@@ -288,7 +290,8 @@ public class TreasuryUI : MonoBehaviour
         {
             T result = await fetch();
             string message = makeMessage != null ? makeMessage(result) : (result != null ? "Fetch succeeded" : "Fetch failed");
-            SetStatus(message);
+            if (statusTMPText != null) statusTMPText.text = message;
+            else Debug.Log($"TreasuryUI: {message}");
         }
         finally
         {
@@ -305,44 +308,17 @@ public class TreasuryUI : MonoBehaviour
 
     private void SetAllButtonsInteractable(bool interactable)
     {
-        SetInteractable(initializeTreasuryButton, interactable);
-        SetInteractable(initializePlayerBalanceButton, interactable);
-        SetInteractable(delegatePlayerBalanceButton, interactable);
-        SetInteractable(undelegatePlayerBalanceButton, interactable);
-        SetInteractable(depositButton, interactable);
-        SetInteractable(withdrawButton, interactable);
-        SetInteractable(getPlayerBalanceButton, interactable);
-        SetInteractable(getTreasuryDataButton, interactable);
-    }
-
-    private void SetStatus(string message)
-    {
-        if (statusTMPText != null) statusTMPText.text = message;
-        else Debug.Log($"TreasuryUI: {message}");
+        if (initializeTreasuryButton != null) initializeTreasuryButton.interactable = interactable;
+        if (initializePlayerBalanceButton != null) initializePlayerBalanceButton.interactable = interactable;
+        if (delegatePlayerBalanceButton != null) delegatePlayerBalanceButton.interactable = interactable;
+        if (undelegatePlayerBalanceButton != null) undelegatePlayerBalanceButton.interactable = interactable;
+        if (depositButton != null) depositButton.interactable = interactable;
+        if (withdrawButton != null) withdrawButton.interactable = interactable;
+        if (getPlayerBalanceButton != null) getPlayerBalanceButton.interactable = interactable;
+        if (getTreasuryDataButton != null) getTreasuryDataButton.interactable = interactable;
     }
 
 
-    private static uint ParseUint(InputField input, uint defaultValue)
-    {
-        if (input == null || string.IsNullOrWhiteSpace(input.text)) return defaultValue;
-        if (uint.TryParse(input.text, out var result)) return result;
-        return defaultValue;
-    }
-
-    private static PublicKey ParsePublicKey(InputField input)
-    {
-        if (input == null) return null;
-        var value = input.text;
-        if (string.IsNullOrWhiteSpace(value)) return null;
-        try
-        {
-            return new PublicKey(value.Trim());
-        }
-        catch
-        {
-            return null;
-        }
-    }
 }
 
 

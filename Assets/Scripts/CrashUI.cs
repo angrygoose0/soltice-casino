@@ -42,29 +42,12 @@ public class CrashUI : MonoBehaviour
     [SerializeField] private Button getPlayerBetButton;
 
     [Header("Feedback (optional)")]
-    [SerializeField] private TMP_Text statusTMPText;
+    [SerializeField] private TextMeshProUGUI statusTMPText;
 
     // Cached data from fetches
     private Crash.Accounts.Game _cachedGame;
     private Crash.Accounts.PlayerBet _cachedPlayerBet;
 
-    private void Awake()
-    {
-        if (builder == null)
-        {
-            builder = FindObjectOfType<CrashTransactionBuilder>();
-        }
-        if (solanaManager == null)
-        {
-            solanaManager = FindObjectOfType<SolanaManager>();
-        }
-        if (builder == null)
-        {
-            Debug.LogError("CrashUI: CrashTransactionBuilder reference is missing; disabling UI");
-            enabled = false;
-            return;
-        }
-    }
 
     private void OnEnable()
     {
@@ -314,10 +297,10 @@ public class CrashUI : MonoBehaviour
         }
     }
 
-    private TMP_Text FindChildTMPText(Button button)
+    private TextMeshProUGUI FindChildTMPText(Button button)
     {
         if (button == null) return null;
-        return button.GetComponentInChildren<TMP_Text>();
+        return button.GetComponentInChildren<TextMeshProUGUI>();
     }
 
     private void SetButtonText(Button button, string newText)

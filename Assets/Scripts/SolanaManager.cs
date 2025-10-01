@@ -20,6 +20,7 @@ using Crash.Program;
 using Crash;
 using Treasury.Program;
 using Treasury;
+using SolsticeCasino.Utils;
 
 public class SolanaManager : MonoBehaviour
 {
@@ -43,6 +44,11 @@ public class SolanaManager : MonoBehaviour
     private static PublicKey _treasuryProgramId = new PublicKey(TreasuryProgram.ID);
 
     private IRpcClient _rpcClient;
+    private IRpcClient _ephemeralRpcClient;
+
+    private WalletBase _walletBase;
+    private WalletBase _ephemeralWalletBase;
+
 
 
     public CrashClient GetCrashClient() => _crashClient;
@@ -121,11 +127,10 @@ public class SolanaManager : MonoBehaviour
         {
             // Initialize main client
             _rpcClient = Web3.Instance.WalletBase.ActiveRpcClient;
-            if (_rpcClient == null)
-            {
-                Debug.LogWarning("ActiveRpcClient is null");
-                return;
-            }
+            _ephemeralRpcClient = Web3Utils.EphemeralWallet?.ActiveRpcClient;
+
+            _walletBase = Web3.Instance.WalletBase;
+            _ephemeralWalletBase = Web3Utils.EphemeralWallet;
 
             var streamingClient = Web3.Instance.WalletBase.ActiveStreamingRpcClient;
             if (streamingClient == null)
@@ -133,7 +138,6 @@ public class SolanaManager : MonoBehaviour
                 Debug.LogWarning("ActiveStreamingRpcClient is null");
                 return;
             }
-
 
             _crashClient = new CrashClient(
                 _rpcClient,
@@ -237,7 +241,7 @@ public class SolanaManager : MonoBehaviour
         await System.Threading.Tasks.Task.Delay(300);
         try
         {
-            Web3.UpdateBalance();
+            await Web3.UpdateBalance();
             if (Web3.Instance?.WalletBase != null)
             {
                 var sol = await Web3.Instance.WalletBase.GetBalance();
@@ -447,25 +451,24 @@ public class SolanaManager : MonoBehaviour
     }
 
     public async Task<string> SendAndConfirmTransaction(
-        bool reservedFlag = false,
+        bool ephemeralFlag = false, // if true, tx is happening on ER.
         uint computeUnitLimit = 0,
         ulong computeUnitPrice = 0,
         params TransactionInstruction[] additionalInstructions)
     {
         try
         {
-            var primaryEndpoint = Web3.Instance != null ? Web3.Instance.customRpc : null;
-            Debug.Log($"SendAndConfirmTransaction using RPC: {primaryEndpoint ?? "<unknown>"}");
-            var blockHashResult = await Web3.Rpc.GetLatestBlockHashAsync(Commitment.Confirmed);
-            if (blockHashResult.Result == null)
-            {
-                throw new Exception("Failed to get recent block hash");
-            }
+            var baseWallet = Web3Utils.SessionWallet?.Account?.PublicKey == null
+                ? Web3.Wallet
+                : Web3Utils.SessionWallet;
 
-            // Build the transaction
-            var transaction = new TransactionBuilder()
-                .SetRecentBlockHash(blockHashResult.Result.Value.Blockhash)
-                .SetFeePayer(Web3.Account);
+            Debug.Log($"baseWallet: {baseWallet.Account.PublicKey}");
+
+            // Determine fee payer and recent blockhash depending on wallet type
+            var feePayer = ephemeralFlag ? Web3Utils.EphemeralWallet.Account : baseWallet.Account;
+            var blockHash = ephemeralFlag
+                ? await Web3Utils.EphemeralWallet.GetBlockHash(commitment: Commitment.Confirmed, useCache: false)
+                : await Web3.BlockHash(commitment: Commitment.Confirmed, useCache: false);
 
             // Create a list to store our instructions
             var instructions = new List<TransactionInstruction>();
@@ -474,13 +477,11 @@ public class SolanaManager : MonoBehaviour
             if (computeUnitLimit > 0)
             {
                 var computeLimitInstruction = ComputeBudgetProgram.SetComputeUnitLimit(computeUnitLimit);
-                transaction.AddInstruction(computeLimitInstruction);
                 instructions.Add(computeLimitInstruction);
             }
             if (computeUnitPrice > 0)
             {
                 var computePriceInstruction = ComputeBudgetProgram.SetComputeUnitPrice(computeUnitPrice);
-                transaction.AddInstruction(computePriceInstruction);
                 instructions.Add(computePriceInstruction);
             }
 
@@ -489,7 +490,6 @@ public class SolanaManager : MonoBehaviour
             {
                 foreach (var instruction in additionalInstructions)
                 {
-                    transaction.AddInstruction(instruction);
                     instructions.Add(instruction);
                 }
             }
@@ -497,75 +497,41 @@ public class SolanaManager : MonoBehaviour
             // Create the transaction object
             var unsignedTransaction = new Transaction
             {
-                RecentBlockHash = blockHashResult.Result.Value.Blockhash,
-                FeePayer = Web3.Account.PublicKey,
+                RecentBlockHash = blockHash,
+                FeePayer = feePayer,
                 Instructions = instructions,
                 Signatures = new List<SignaturePubKeyPair>()
             };
             
+
             // Sign the transaction using the wallet
-            var signedTransaction = await Web3.Instance.WalletBase.SignTransaction(unsignedTransaction);
+            var signedTransaction = await baseWallet.SignTransaction(unsignedTransaction);
 
             // Convert signed transaction to byte array for sending
             var serializedTransaction = signedTransaction.Serialize();
 
-            // Simulate the transaction first
-            var rpcClient = Web3.Rpc;
-            var simulationResult = await rpcClient.SimulateTransactionAsync(
+            var simulationResult = await Web3.Rpc.SimulateTransactionAsync(
                 serializedTransaction,
                 commitment: Commitment.Confirmed
             );
 
             Debug.Log($"Full simulation result: {JsonConvert.SerializeObject(simulationResult.Result, Formatting.Indented)}");
+            
 
             // Send and confirm the transaction
-            var result = await rpcClient.SendTransactionAsync(
-                serializedTransaction,
+            var result = await baseWallet.SignAndSendTransaction(
+                unsignedTransaction,
                 commitment: Commitment.Confirmed,
                 skipPreflight: false
             );
 
             if (result.Result == null)
             {
-                var reason = result.Reason ?? "<no reason>";
-                Debug.LogWarning($"Primary RPC send failed. Reason: {reason}");
-
-                // If RPC returned an invalid JSON error (often proxy/HTML), retry against official devnet as fallback
-                if (reason.IndexOf("Unable to parse json", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    var fallbackUrl = "https://api.devnet.solana.com";
-                    Debug.LogWarning($"Retrying SendTransaction against fallback RPC: {fallbackUrl}");
-                    var fallbackClient = ClientFactory.GetClient(fallbackUrl);
-
-                    var fallbackSend = await fallbackClient.SendTransactionAsync(
-                        serializedTransaction,
-                        commitment: Commitment.Confirmed,
-                        skipPreflight: false
-                    );
-
-                    if (fallbackSend.Result == null)
-                    {
-                        throw new Exception($"Transaction failed on fallback as well: {fallbackSend.Reason}");
-                    }
-
-                    bool confirmedFallback = await fallbackClient.ConfirmTransaction(
-                        fallbackSend.Result,
-                        Commitment.Confirmed
-                    );
-
-                    if (!confirmedFallback)
-                    {
-                        throw new Exception("Transaction confirmation failed on fallback RPC");
-                    }
-
-                    return fallbackSend.Result;
-                }
-
-                throw new Exception($"Transaction failed: {reason}");
+                throw new Exception($"Transaction sending failed: {result.Reason}");
             }
 
             // Wait for confirmation
-            bool confirmed = await rpcClient.ConfirmTransaction(
+            bool confirmed = await _rpcClient.ConfirmTransaction(
                 result.Result,
                 Commitment.Confirmed
             );
