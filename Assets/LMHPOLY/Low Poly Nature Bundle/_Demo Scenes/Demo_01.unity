@@ -2688,6 +2688,7 @@ MonoBehaviour:
   - {fileID: 1336433430}
   mintAddress: D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos
   tokenDecimals: 6
+  editorTestPrivateKey: 49TKMqd86ahgLd89czoG8ivghW63qqJkMTB97mCvvNFM4i9Jw53wRfqWVFoGcPWW22ruFWyqmc3G7QVC6gr2Wbmd
   publicKeyTexts:
   - {fileID: 1214632015}
   balanceTexts:

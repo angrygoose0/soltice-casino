@@ -62,7 +62,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
     public static PublicKey DeriveDelegationMetadataAccount(PublicKey delegatedAccount)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation_metadata"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation-metadata"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
         return pda;
     }
 
@@ -74,7 +74,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
     public static PublicKey DeriveDelegationBufferAccount(PublicKey delegatedAccount)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("buffer"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("buffer"), delegatedAccount.KeyBytes }, _programId, out PublicKey pda, out _);
         return pda;
     }
 
@@ -174,11 +174,12 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
         var signer = CurrentUserPk();
         var playerBalance = DerivePlayerBalanceAccount(signer);
+        var delegationBuffer = DeriveDelegationBufferAccount(playerBalance);
 
         var accounts = new UndelegatePlayerBalanceAccounts
         {
             Signer = signer,
-            PlayerBalance = playerBalance
+            PlayerBalance = playerBalance,
         };
 
         var ix = TreasuryProgram.UndelegatePlayerBalance(accounts);

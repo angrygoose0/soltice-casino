@@ -66,7 +66,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 
     public static PublicKey DeriveDelegationMetadataAccount(PublicKey delegatedAccount)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation_metadata"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation-metadata"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
         return pda;
     }
 
@@ -78,8 +78,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 
     public static PublicKey DeriveDelegationBufferAccount(PublicKey delegatedAccount)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("buffer"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
-        return pda;
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("buffer"), delegatedAccount.KeyBytes }, _programId, out PublicKey pda, out _);
+		return pda;
     }
 
     // Fetch helpers
