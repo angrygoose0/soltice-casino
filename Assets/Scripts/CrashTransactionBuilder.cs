@@ -267,7 +267,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var game = DeriveGameAccount();
 		var playerBet = DerivePlayerBetAccount(user);
 		var authority = DeriveAuthorityAccount();
-		var playerBalance = TreasuryTransactionBuilder.DerivePlayerBalanceAccount(user);
+		var ephemeralPlayerBalance = TreasuryTransactionBuilder.DeriveEphemeralPlayerBalanceAccount(user);
+		var solanaPlayerBalance = TreasuryTransactionBuilder.DeriveSolanaPlayerBalanceAccount(user);
 
 		var accounts = new PlaceBetAccounts
 		{
@@ -276,8 +277,10 @@ public class CrashTransactionBuilder : MonoBehaviour
 			SessionToken = null,
 			Game = game,
 			Authority = authority,
-			PlayerBalance = playerBalance,
+			EphemeralPlayerBalance = ephemeralPlayerBalance,
+			SolanaPlayerBalance = solanaPlayerBalance,
 			SystemProgram = SYSTEM_PROGRAM_ID
+			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
 
         var ix = CrashProgram.PlaceBet(accounts, amountTokens);
@@ -291,7 +294,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var game = DeriveGameAccount();
 		var playerBet = DerivePlayerBetAccount(user);
 		var authority = DeriveAuthorityAccount();
-		var playerBalance = TreasuryTransactionBuilder.DerivePlayerBalanceAccount(user);
+		var ephemeralPlayerBalance = TreasuryTransactionBuilder.DeriveEphemeralPlayerBalanceAccount(user);
+		var solanaPlayerBalance = TreasuryTransactionBuilder.DeriveSolanaPlayerBalanceAccount(user);
 
 		var accounts = new ClaimBetAccounts
 		{
@@ -300,8 +304,10 @@ public class CrashTransactionBuilder : MonoBehaviour
 			SessionToken = null,
 			Game = game,
 			Authority = authority,
-			PlayerBalance = playerBalance,
+			EphemeralPlayerBalance = ephemeralPlayerBalance,
+			SolanaPlayerBalance = solanaPlayerBalance,
 			SystemProgram = SYSTEM_PROGRAM_ID
+			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
         var ix = CrashProgram.ClaimBet(accounts);
         return ix;

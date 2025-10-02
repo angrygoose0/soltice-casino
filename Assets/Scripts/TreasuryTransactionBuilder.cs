@@ -35,9 +35,15 @@ public class TreasuryTransactionBuilder : MonoBehaviour
     private PublicKey CurrentUserPk() => CurrentUser()?.PublicKey;
 
     // PDA helpers (match Treasury IDL)
-    public static PublicKey DerivePlayerBalanceAccount(PublicKey player)
+    public static PublicKey DeriveSolanaPlayerBalanceAccount(PublicKey player)
     {
         PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("PLAYER_BALANCE"), player.KeyBytes }, _programId, out PublicKey pda, out _);
+        return pda;
+    }
+
+    public static PublicKey DeriveEphemeralPlayerBalanceAccount(PublicKey player)
+    {
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("EPHEMERAL_PLAYER_BALANCE"), player.KeyBytes }, _programId, out PublicKey pda, out _);
         return pda;
     }
 
@@ -88,10 +94,18 @@ public class TreasuryTransactionBuilder : MonoBehaviour
     }
 
     // Fetch helpers
-    public async Task<PlayerBalance> GetPlayerBalance(PublicKey player)
+    public async Task<PlayerBalance> GetSolanaPlayerBalance(PublicKey player)
     {
         if (Client == null) return null;
-        var pda = DerivePlayerBalanceAccount(player);
+        var pda = DeriveSolanaPlayerBalanceAccount(player);
+        var res = await Client.GetPlayerBalanceAsync(pda.ToString(), Commitment.Confirmed);
+        return res.ParsedResult;
+    }
+
+    public async Task<PlayerBalance> GetEphemeralPlayerBalance(PublicKey player)
+    {
+        if (Client == null) return null;
+        var pda = DeriveEphemeralPlayerBalanceAccount(player);
         var res = await Client.GetPlayerBalanceAsync(pda.ToString(), Commitment.Confirmed);
         return res.ParsedResult;
     }
@@ -132,13 +146,15 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
+        var solanaPlayerBalance = DeriveSolanaPlayerBalanceAccount(signer);
+        var ephemeralPlayerBalance = DeriveEphemeralPlayerBalanceAccount(signer);
 
         var accounts = new InitializePlayerBalanceAccounts
         {
             Signer = signer,
             SystemProgram = SYSTEM_PROGRAM_ID,
-            PlayerBalance = playerBalance
+            EphemeralPlayerBalance = ephemeralPlayerBalance,
+            SolanaPlayerBalance = solanaPlayerBalance
         };
 
         var ix = TreasuryProgram.InitializePlayerBalance(accounts);
@@ -150,39 +166,23 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
-        var delegationMetadata = DeriveDelegationMetadataAccount(playerBalance);
-        var delegationRecord = DeriveDelegationRecordAccount(playerBalance);
-        var delegationBuffer = DeriveDelegationBufferAccount(playerBalance);
+        var ephemeralPlayerBalance = DeriveEphemeralPlayerBalanceAccount(signer);
+        var delegationMetadata = DeriveDelegationMetadataAccount(ephemeralPlayerBalance);
+        var delegationRecord = DeriveDelegationRecordAccount(ephemeralPlayerBalance);
+        var delegationBuffer = DeriveDelegationBufferAccount(ephemeralPlayerBalance);
+        
         var accounts = new DelegatePlayerBalanceAccounts
         {
             Signer = signer,
-            PlayerBalance = playerBalance,
-            DelegationMetadataPlayerBalance = delegationMetadata,
-            DelegationRecordPlayerBalance = delegationRecord,
-            BufferPlayerBalance = delegationBuffer
+            EphemeralPlayerBalance = ephemeralPlayerBalance,
+            DelegationMetadataEphemeralPlayerBalance = delegationMetadata,
+            DelegationRecordEphemeralPlayerBalance = delegationRecord,
+            BufferEphemeralPlayerBalance = delegationBuffer
+            // OwnerProgram, DelegationProgram, SystemProgram use defaults from generated client
         };
 
         var @params = BuildDelegateParams(commitFrequencyMs, validator);
         var ix = TreasuryProgram.DelegatePlayerBalance(accounts, @params);
-        return ix;
-    }
-
-    public TransactionInstruction UndelegatePlayerBalance()
-    {
-        if (CurrentUser() == null) return null;
-
-        var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
-        var delegationBuffer = DeriveDelegationBufferAccount(playerBalance);
-
-        var accounts = new UndelegatePlayerBalanceAccounts
-        {
-            Signer = signer,
-            PlayerBalance = playerBalance,
-        };
-
-        var ix = TreasuryProgram.UndelegatePlayerBalance(accounts);
         return ix;
     }
 
@@ -191,7 +191,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
+        var solanaPlayerBalance = DeriveSolanaPlayerBalanceAccount(signer);
+        var ephemeralPlayerBalance = DeriveEphemeralPlayerBalanceAccount(signer);
         var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
@@ -199,7 +200,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var accounts = new DepositAccounts
         {
             Signer = signer,
-            PlayerBalance = playerBalance,
+            SolanaPlayerBalance = solanaPlayerBalance,
+            EphemeralPlayerBalance = ephemeralPlayerBalance,
             TokenMint = solanaManager.GetMintPublicKey(),
             UserTokenAccount = userAta,
             Treasury = treasury,
@@ -218,7 +220,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
+        var solanaPlayerBalance = DeriveSolanaPlayerBalanceAccount(signer);
+        var ephemeralPlayerBalance = DeriveEphemeralPlayerBalanceAccount(signer);
         var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
@@ -226,7 +229,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var accounts = new WithdrawAccounts
         {
             Signer = signer,
-            PlayerBalance = playerBalance,
+            SolanaPlayerBalance = solanaPlayerBalance,
+            EphemeralPlayerBalance = ephemeralPlayerBalance,
             TokenMint = solanaManager.GetMintPublicKey(),
             UserTokenAccount = userAta,
             Treasury = treasury,
@@ -245,12 +249,14 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
+        var solanaPlayerBalance = DeriveSolanaPlayerBalanceAccount(signer);
+        var ephemeralPlayerBalance = DeriveEphemeralPlayerBalanceAccount(signer);
 
         var accounts = new CreditPlayerAccounts
         {
             Signer = signer,
-            PlayerBalance = playerBalance,
+            SolanaPlayerBalance = solanaPlayerBalance,
+            EphemeralPlayerBalance = ephemeralPlayerBalance,
             Authority = authority
             // MagicProgram and MagicContext use defaults from generated client
         };
@@ -264,12 +270,14 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var playerBalance = DerivePlayerBalanceAccount(signer);
+        var solanaPlayerBalance = DeriveSolanaPlayerBalanceAccount(signer);
+        var ephemeralPlayerBalance = DeriveEphemeralPlayerBalanceAccount(signer);
 
         var accounts = new DebitPlayerAccounts
         {
             Signer = signer,
-            PlayerBalance = playerBalance,
+            SolanaPlayerBalance = solanaPlayerBalance,
+            EphemeralPlayerBalance = ephemeralPlayerBalance,
             Authority = authority
             // MagicProgram and MagicContext use defaults from generated client
         };
