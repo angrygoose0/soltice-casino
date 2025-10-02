@@ -1,5 +1,5 @@
 {
-  "address": "5SrQX7Fmz29euPLRnbqeUYm27HkgEFJVuNfuMJ5yD2W",
+  "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U",
   "metadata": {
     "name": "crash",
     "version": "0.1.0",
@@ -148,12 +148,16 @@
           }
         },
         {
-          "name": "player_balance",
+          "name": "ephemeral_player_balance",
+          "writable": true
+        },
+        {
+          "name": "solana_player_balance",
           "writable": true
         },
         {
           "name": "treasury_program",
-          "address": "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv"
+          "address": "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy"
         },
         {
           "name": "system_program",
@@ -213,38 +217,38 @@
             "program": {
               "kind": "const",
               "value": [
-                150,
-                83,
-                243,
-                176,
-                106,
-                43,
-                236,
-                89,
-                119,
-                8,
-                156,
-                35,
-                145,
-                232,
-                6,
-                117,
-                36,
-                72,
-                183,
-                40,
-                116,
-                146,
-                82,
-                119,
-                177,
-                242,
+                196,
+                34,
+                111,
+                46,
+                25,
+                28,
+                254,
+                79,
+                70,
+                66,
+                188,
+                187,
+                202,
+                141,
+                169,
                 86,
-                73,
-                228,
-                182,
-                143,
-                107
+                19,
+                64,
+                37,
+                31,
+                106,
+                224,
+                27,
+                53,
+                32,
+                177,
+                124,
+                205,
+                91,
+                179,
+                134,
+                129
               ]
             }
           }
@@ -344,7 +348,7 @@
         },
         {
           "name": "owner_program",
-          "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN"
+          "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U"
         },
         {
           "name": "delegation_program",
@@ -408,38 +412,38 @@
             "program": {
               "kind": "const",
               "value": [
-                150,
-                83,
-                243,
-                176,
-                106,
-                43,
-                236,
-                89,
-                119,
-                8,
-                156,
-                35,
-                145,
-                232,
-                6,
-                117,
-                36,
-                72,
-                183,
-                40,
-                116,
-                146,
-                82,
-                119,
-                177,
-                242,
+                196,
+                34,
+                111,
+                46,
+                25,
+                28,
+                254,
+                79,
+                70,
+                66,
+                188,
+                187,
+                202,
+                141,
+                169,
                 86,
-                73,
-                228,
-                182,
-                143,
-                107
+                19,
+                64,
+                37,
+                31,
+                106,
+                224,
+                27,
+                53,
+                32,
+                177,
+                124,
+                205,
+                91,
+                179,
+                134,
+                129
               ]
             }
           }
@@ -534,7 +538,7 @@
         },
         {
           "name": "owner_program",
-          "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN"
+          "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U"
         },
         {
           "name": "delegation_program",
@@ -598,38 +602,38 @@
             "program": {
               "kind": "const",
               "value": [
-                150,
-                83,
-                243,
-                176,
-                106,
-                43,
-                236,
-                89,
-                119,
-                8,
-                156,
-                35,
-                145,
-                232,
-                6,
-                117,
-                36,
-                72,
-                183,
-                40,
-                116,
-                146,
-                82,
-                119,
-                177,
-                242,
+                196,
+                34,
+                111,
+                46,
+                25,
+                28,
+                254,
+                79,
+                70,
+                66,
+                188,
+                187,
+                202,
+                141,
+                169,
                 86,
-                73,
-                228,
-                182,
-                143,
-                107
+                19,
+                64,
+                37,
+                31,
+                106,
+                224,
+                27,
+                53,
+                32,
+                177,
+                124,
+                205,
+                91,
+                179,
+                134,
+                129
               ]
             }
           }
@@ -734,7 +738,7 @@
         },
         {
           "name": "owner_program",
-          "address": "B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN"
+          "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U"
         },
         {
           "name": "delegation_program",
@@ -987,12 +991,16 @@
           }
         },
         {
-          "name": "player_balance",
+          "name": "ephemeral_player_balance",
+          "writable": true
+        },
+        {
+          "name": "solana_player_balance",
           "writable": true
         },
         {
           "name": "treasury_program",
-          "address": "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv"
+          "address": "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy"
         },
         {
           "name": "system_program",

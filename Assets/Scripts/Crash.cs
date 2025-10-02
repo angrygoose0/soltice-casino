@@ -388,9 +388,11 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv");
+            public PublicKey SolanaPlayerBalance { get; set; }
+
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -408,7 +410,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -425,7 +427,7 @@ namespace Crash
 
             public PublicKey Game { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -442,7 +444,7 @@ namespace Crash
 
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B7pQKs9hCqpamjHBnJZY2w2oAKjMLy8XXSdovSwrsZxN");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -485,9 +487,11 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv");
+            public PublicKey SolanaPlayerBalance { get; set; }
+
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -540,7 +544,7 @@ namespace Crash
 
         public static class CrashProgram
         {
-            public const string ID = "5SrQX7Fmz29euPLRnbqeUYm27HkgEFJVuNfuMJ5yD2W";
+            public const string ID = "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackRandomness(CallbackRandomnessAccounts accounts, byte[] randomness, PublicKey programId = null)
             {
                 programId ??= new(ID);
@@ -561,7 +565,7 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(9128365113323633980UL, offset);
@@ -662,7 +666,7 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(2413549243525709534UL, offset);

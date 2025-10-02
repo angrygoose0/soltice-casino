@@ -1,5 +1,5 @@
 {
-  "address": "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv",
+  "address": "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy",
   "metadata": {
     "name": "treasury",
     "version": "0.1.0",
@@ -26,13 +26,60 @@
           "signer": true
         },
         {
-          "name": "player_balance",
+          "name": "solana_player_balance",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
+                  95,
+                  80,
+                  76,
+                  65,
+                  89,
+                  69,
+                  82,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
                   80,
                   76,
                   65,
@@ -95,13 +142,60 @@
           "signer": true
         },
         {
-          "name": "player_balance",
+          "name": "solana_player_balance",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
+                  95,
+                  80,
+                  76,
+                  65,
+                  89,
+                  69,
+                  82,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
                   80,
                   76,
                   65,
@@ -164,7 +258,7 @@
           "signer": true
         },
         {
-          "name": "buffer_player_balance",
+          "name": "buffer_ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -181,50 +275,50 @@
               },
               {
                 "kind": "account",
-                "path": "player_balance"
+                "path": "ephemeral_player_balance"
               }
             ],
             "program": {
               "kind": "const",
               "value": [
-                109,
-                231,
-                134,
-                158,
-                163,
-                30,
-                141,
-                220,
-                82,
-                253,
-                9,
-                94,
-                239,
-                25,
-                240,
-                153,
-                110,
-                4,
-                18,
-                192,
-                175,
-                104,
-                102,
-                16,
-                76,
-                42,
-                79,
                 62,
-                128,
-                109,
-                99,
-                223
+                139,
+                92,
+                75,
+                104,
+                144,
+                110,
+                130,
+                158,
+                172,
+                76,
+                101,
+                19,
+                123,
+                252,
+                153,
+                187,
+                251,
+                244,
+                103,
+                236,
+                176,
+                242,
+                84,
+                120,
+                172,
+                215,
+                106,
+                120,
+                2,
+                220,
+                192
               ]
             }
           }
         },
         {
-          "name": "delegation_record_player_balance",
+          "name": "delegation_record_ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -245,7 +339,7 @@
               },
               {
                 "kind": "account",
-                "path": "player_balance"
+                "path": "ephemeral_player_balance"
               }
             ],
             "program": {
@@ -255,7 +349,7 @@
           }
         },
         {
-          "name": "delegation_metadata_player_balance",
+          "name": "delegation_metadata_ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -285,7 +379,7 @@
               },
               {
                 "kind": "account",
-                "path": "player_balance"
+                "path": "ephemeral_player_balance"
               }
             ],
             "program": {
@@ -295,13 +389,23 @@
           }
         },
         {
-          "name": "player_balance",
+          "name": "ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
                   80,
                   76,
                   65,
@@ -327,7 +431,7 @@
         },
         {
           "name": "owner_program",
-          "address": "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv"
+          "address": "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy"
         },
         {
           "name": "delegation_program",
@@ -368,13 +472,60 @@
           "signer": true
         },
         {
-          "name": "player_balance",
+          "name": "solana_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
+                  95,
+                  80,
+                  76,
+                  65,
+                  89,
+                  69,
+                  82,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ephemeral_player_balance",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
                   80,
                   76,
                   65,
@@ -610,13 +761,61 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "player_balance",
+          "name": "ephemeral_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
+                  80,
+                  76,
+                  65,
+                  89,
+                  69,
+                  82,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "solana_player_balance",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
+                  95,
                   80,
                   76,
                   65,
@@ -789,16 +988,16 @@
       ]
     },
     {
-      "name": "undelegate_player_balance",
+      "name": "withdraw",
       "discriminator": [
-        152,
-        86,
-        36,
-        147,
-        171,
-        233,
-        236,
-        109
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
       ],
       "accounts": [
         {
@@ -807,13 +1006,20 @@
           "signer": true
         },
         {
-          "name": "player_balance",
+          "name": "solana_player_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
+                  95,
                   80,
                   76,
                   65,
@@ -838,47 +1044,22 @@
           }
         },
         {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "magic_program",
-          "address": "Magic11111111111111111111111111111111111111"
-        },
-        {
-          "name": "magic_context",
-          "writable": true,
-          "address": "MagicContext1111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "withdraw",
-      "discriminator": [
-        183,
-        18,
-        70,
-        156,
-        148,
-        109,
-        161,
-        34
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "player_balance",
-          "writable": true,
+          "name": "ephemeral_player_balance",
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
                   80,
                   76,
                   65,
@@ -1135,6 +1316,11 @@
       "code": 6002,
       "name": "InvalidOwner",
       "msg": "Invalid owner for balance account"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidPlayerBalanceType",
+      "msg": "Invalid player balance type"
     }
   ],
   "types": [
@@ -1162,12 +1348,16 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "balance",
+            "name": "balance_change",
             "type": "u64"
           },
           {
             "name": "player",
             "type": "pubkey"
+          },
+          {
+            "name": "ephemeral",
+            "type": "bool"
           },
           {
             "name": "bump",

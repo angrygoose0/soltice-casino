@@ -27,9 +27,11 @@ namespace Treasury
             public static ulong ACCOUNT_DISCRIMINATOR => 8055460702809784564UL;
             public static ReadOnlySpan<byte> ACCOUNT_DISCRIMINATOR_BYTES => new byte[]{244, 128, 24, 93, 212, 190, 202, 111};
             public static string ACCOUNT_DISCRIMINATOR_B58 => "htxg38No8W2";
-            public ulong Balance { get; set; }
+            public ulong BalanceChange { get; set; }
 
             public PublicKey Player { get; set; }
+
+            public bool Ephemeral { get; set; }
 
             public byte Bump { get; set; }
 
@@ -44,10 +46,12 @@ namespace Treasury
                 }
 
                 PlayerBalance result = new PlayerBalance();
-                result.Balance = _data.GetU64(offset);
+                result.BalanceChange = _data.GetU64(offset);
                 offset += 8;
                 result.Player = _data.GetPubKey(offset);
                 offset += 32;
+                result.Ephemeral = _data.GetBool(offset);
+                offset += 1;
                 result.Bump = _data.GetU8(offset);
                 offset += 1;
                 return result;
@@ -89,7 +93,8 @@ namespace Treasury
         {
             InsufficientBalance = 6000U,
             UnauthorizedCaller = 6001U,
-            InvalidOwner = 6002U
+            InvalidOwner = 6002U,
+            InvalidPlayerBalanceType = 6003U
         }
     }
 
@@ -211,7 +216,7 @@ namespace Treasury
 
         protected override Dictionary<uint, ProgramError<TreasuryErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<TreasuryErrorKind>>{{6000U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientBalance, "Insufficient balance")}, {6001U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedCaller, "Unauthorized caller")}, {6002U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidOwner, "Invalid owner for balance account")}, };
+            return new Dictionary<uint, ProgramError<TreasuryErrorKind>>{{6000U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientBalance, "Insufficient balance")}, {6001U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedCaller, "Unauthorized caller")}, {6002U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidOwner, "Invalid owner for balance account")}, {6003U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidPlayerBalanceType, "Invalid player balance type")}, };
         }
     }
 
@@ -221,7 +226,9 @@ namespace Treasury
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey SolanaPlayerBalance { get; set; }
+
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
             public PublicKey Authority { get; set; }
 
@@ -233,7 +240,9 @@ namespace Treasury
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey SolanaPlayerBalance { get; set; }
+
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
             public PublicKey Authority { get; set; }
 
@@ -245,15 +254,15 @@ namespace Treasury
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey BufferPlayerBalance { get; set; }
+            public PublicKey BufferEphemeralPlayerBalance { get; set; }
 
-            public PublicKey DelegationRecordPlayerBalance { get; set; }
+            public PublicKey DelegationRecordEphemeralPlayerBalance { get; set; }
 
-            public PublicKey DelegationMetadataPlayerBalance { get; set; }
+            public PublicKey DelegationMetadataEphemeralPlayerBalance { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -262,7 +271,9 @@ namespace Treasury
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey SolanaPlayerBalance { get; set; }
+
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
             public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
             public PublicKey UserTokenAccount { get; set; }
@@ -282,7 +293,9 @@ namespace Treasury
             public PublicKey Signer { get; set; }
 
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey EphemeralPlayerBalance { get; set; }
+
+            public PublicKey SolanaPlayerBalance { get; set; }
         }
 
         public class InitializeTreasuryAccounts
@@ -310,22 +323,13 @@ namespace Treasury
             public PublicKey SystemProgram { get; set; }
         }
 
-        public class UndelegatePlayerBalanceAccounts
-        {
-            public PublicKey Signer { get; set; }
-
-            public PublicKey PlayerBalance { get; set; }
-
-            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
-            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
-            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
-        }
-
         public class WithdrawAccounts
         {
             public PublicKey Signer { get; set; }
 
-            public PublicKey PlayerBalance { get; set; }
+            public PublicKey SolanaPlayerBalance { get; set; }
+
+            public PublicKey EphemeralPlayerBalance { get; set; }
 
             public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
             public PublicKey UserTokenAccount { get; set; }
@@ -342,12 +346,12 @@ namespace Treasury
 
         public static class TreasuryProgram
         {
-            public const string ID = "8Q2ChWpCZRicGnQogd4sQQ2zTT6kLmcyUPSUczaMMApv";
+            public const string ID = "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, ulong amount, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(8012807824712303984UL, offset);
@@ -363,7 +367,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(14427466938512022116UL, offset);
@@ -379,7 +383,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferEphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordEphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataEphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(15494976108273411052UL, offset);
@@ -394,7 +398,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(13182846803881894898UL, offset);
@@ -410,7 +414,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(6623160639733847745UL, offset);
@@ -458,25 +462,11 @@ namespace Treasury
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction UndelegatePlayerBalance(UndelegatePlayerBalanceAccounts accounts, PublicKey programId = null)
-            {
-                programId ??= new(ID);
-                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
-                byte[] _data = new byte[1200];
-                int offset = 0;
-                _data.WriteU64(7920962767755171480UL, offset);
-                offset += 8;
-                byte[] resultData = new byte[offset];
-                Array.Copy(_data, resultData, offset);
-                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
-            }
-
             public static Solana.Unity.Rpc.Models.TransactionInstruction Withdraw(WithdrawAccounts accounts, ulong amount, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(2495396153584390839UL, offset);
