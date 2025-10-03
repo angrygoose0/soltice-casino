@@ -131,17 +131,15 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         {
             Signer = signer,
             Treasury = treasury,
-            TokenMint = solanaManager.GetMintPublicKey(),
             TreasuryTokenAccount = treasuryTokenAccount,
             TokenProgram = TOKEN_PROGRAM_ID,
-            SystemProgram = SYSTEM_PROGRAM_ID
         };
 
         var ix = TreasuryProgram.InitializeTreasury(accounts);
         return ix;
     }
 
-    public TransactionInstruction InitializePlayerBalance()
+    public TransactionInstruction InitializeBalance()
     {
         if (CurrentUser() == null) return null;
 
@@ -152,7 +150,6 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var accounts = new InitializeBalanceAccounts
         {
             Signer = signer,
-            SystemProgram = SYSTEM_PROGRAM_ID,
             EphemeralBalance = ephemeralBalance,
             SolanaBalance = solanaBalance
         };
@@ -161,7 +158,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return ix;
     }
 
-    public TransactionInstruction DelegatePlayerBalance(uint commitFrequencyMs = 1000, PublicKey validator = null)
+    public TransactionInstruction DelegateEphemeralBalance(uint commitFrequencyMs = 1000, PublicKey validator = null)
     {
         if (CurrentUser() == null) return null;
 
@@ -178,9 +175,6 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             DelegationRecordEphemeralBalance = delegationRecord,
             DelegationMetadataEphemeralBalance = delegationMetadata,
             EphemeralBalance = ephemeralBalance,
-            OwnerProgram = _programId,
-            DelegationProgram = DELEGATION_PROGRAM_ID,
-            SystemProgram = SYSTEM_PROGRAM_ID
         };
 
         var @params = BuildDelegateParams(commitFrequencyMs, validator);
@@ -188,7 +182,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return ix;
     }
 
-    public TransactionInstruction Deposit(ulong amount)
+    public TransactionInstruction UserDeposit(ulong amount)
     {
         if (CurrentUser() == null) return null;
 
@@ -202,20 +196,52 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         {
             Signer = signer,
             SolanaBalance = solanaBalance,
-            TokenMint = solanaManager.GetMintPublicKey(),
             UserTokenAccount = userAta,
             Treasury = treasury,
             TreasuryTokenAccount = treasuryTokenAccount,
-            AssociatedTokenProgram = ASSOCIATED_TOKEN_PROGRAM_ID,
             TokenProgram = TOKEN_PROGRAM_ID,
-            SystemProgram = SYSTEM_PROGRAM_ID
         };
 
         var ix = TreasuryProgram.UserDeposit(accounts, amount);
         return ix;
     }
 
-    public TransactionInstruction Withdraw(ulong amount)
+    public TransactionInstruction EphemeralDeposit()
+    {
+        if (CurrentUser() == null) return null;
+
+        var signer = CurrentUserPk();
+        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
+        var solanaBalance = DeriveSolanaBalanceAccount(signer);
+
+        var accounts = new EphemeralDepositAccounts
+        {
+            Signer = signer,
+            EphemeralBalance = ephemeralBalance,
+            SolanaBalance = solanaBalance,
+        };
+
+        var ix = TreasuryProgram.EphemeralDeposit(accounts);
+        return ix;
+    }
+
+    public TransactionInstruction EphemeralWithdraw(ulong amount)
+    {
+        if (CurrentUser() == null) return null;
+
+        var signer = CurrentUserPk();
+        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
+
+        var accounts = new EphemeralWithdrawAccounts
+        {
+            Signer = signer,
+            EphemeralBalance = ephemeralBalance,
+        };
+        var ix = TreasuryProgram.EphemeralWithdraw(accounts, amount);
+        return ix;
+    }
+
+    public TransactionInstruction UserWithdraw()
     {
         if (CurrentUser() == null) return null;
 
@@ -231,55 +257,14 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             Signer = signer,
             EphemeralBalance = ephemeralBalance,
             SolanaBalance = solanaBalance,
-            TokenMint = solanaManager.GetMintPublicKey(),
             UserTokenAccount = userAta,
             Treasury = treasury,
             TreasuryTokenAccount = treasuryTokenAccount,
-            AssociatedTokenProgram = ASSOCIATED_TOKEN_PROGRAM_ID,
             TokenProgram = TOKEN_PROGRAM_ID,
-            SystemProgram = SYSTEM_PROGRAM_ID
         };
 
         // amount is ignored for UserWithdraw in updated IDL
         var ix = TreasuryProgram.UserWithdraw(accounts);
-        return ix;
-    }
-
-    public TransactionInstruction CreditPlayer(ulong amount, PublicKey authority)
-    {
-        if (CurrentUser() == null) return null;
-
-        var signer = CurrentUserPk();
-        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
-
-        var accounts = new CreditPlayerAccounts
-        {
-            Signer = signer,
-            EphemeralBalance = ephemeralBalance,
-            Authority = authority
-            // MagicProgram and MagicContext use defaults from generated client
-        };
-
-        var ix = TreasuryProgram.CreditPlayer(accounts, amount);
-        return ix;
-    }
-
-    public TransactionInstruction DebitPlayer(ulong amount, PublicKey authority)
-    {
-        if (CurrentUser() == null) return null;
-
-        var signer = CurrentUserPk();
-        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
-
-        var accounts = new DebitPlayerAccounts
-        {
-            Signer = signer,
-            EphemeralBalance = ephemeralBalance,
-            Authority = authority
-            // MagicProgram and MagicContext use defaults from generated client
-        };
-
-        var ix = TreasuryProgram.DebitPlayer(accounts, amount);
         return ix;
     }
 }
