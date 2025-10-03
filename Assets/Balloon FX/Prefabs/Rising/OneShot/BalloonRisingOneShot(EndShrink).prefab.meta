@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c51baf33319ac294183baa4ee1fcd79f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Rising/OneShot/BalloonRisingOneShot(EndShrink).prefab
+  uploadId: 750157

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d64ba04b3bfd40745ad7a0dfd3c0b85d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Models/SimpleBalloon.prefab
+  uploadId: 750157

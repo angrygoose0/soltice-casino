@@ -148,11 +148,7 @@
           }
         },
         {
-          "name": "ephemeral_player_balance",
-          "writable": true
-        },
-        {
-          "name": "solana_player_balance",
+          "name": "ephemeral_balance",
           "writable": true
         },
         {
@@ -991,11 +987,7 @@
           }
         },
         {
-          "name": "ephemeral_player_balance",
-          "writable": true
-        },
-        {
-          "name": "solana_player_balance",
+          "name": "ephemeral_balance",
           "writable": true
         },
         {

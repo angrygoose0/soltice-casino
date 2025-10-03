@@ -1,0 +1,57 @@
+--------------------------
+Balloon FX by Archanor VFX
+--------------------------
+
+The effect prefabs can simply be dragged and dropped into the scene, or instantiated and they will start playing automatically.
+
+There are three model types (Detailed, HighDetailed and Simple balloons) that you can use depending on how detailed/optimized you want them.
+
+Also includes two material types depending on the style you like.
+
+--------------------------
+Recoloring
+--------------------------
+
+To recolor the balloons, you'll need to change the Start Color in the parent particle system. You can change to Color if you just want one color, otherwise you need to adjust the color gradient. You can also set the Start Color to white and add a gradient to the Color over Lifetime if you want to animate the color.
+
+--------------------------
+Effect types
+--------------------------
+
+Included in the pack you'll find prefabs with different settings
+
+* Falling and Rising balloons
+* One-shot and Looping effects
+* (EndPop) and (EndShrink)
+
+Here's what that means:
+
+- The one-shot effects will release a bundle of balloons at once.
+
+- The looping effects will loop indefinitely
+
+- EndPop means that the balloons will pop at the end of their lifetimes
+
+- EndShrink means that the balloons will shrink out of existence at the end of their lifetimes
+
+
+Rising Balloons will (more or less) realistically bump into things on their path upwards if Collission remains enabled. They will also point in the direction they are moving. Disable the Trail if you don't want the string effect.
+
+Falling balloons will randomly rotate and bounce when they hit the floor, they do not have strings attached as it's difficult to get a realistic effect with the base particle trails.
+
+--------------------------
+Scripts
+--------------------------
+
+The 'ParticleDeathSound' script lets you play a sound when a particle dies, useful for when a balloon pops. Sound effects are included. This script lets you set the pop sound, volume, pitch variance and chance that the sound will play.
+
+--------------------------
+URP Upgrade
+--------------------------
+
+Double-click and import the URP upgrade in the 'Balloon FX/Upgrades' folder.
+
+--------------------------
+
+Twitter: @archanor
+Support: https://archanor.com/support.html

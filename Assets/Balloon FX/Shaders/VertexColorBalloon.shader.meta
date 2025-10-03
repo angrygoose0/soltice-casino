@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 04fff7a4ec1978d42a9501f3cdb532ac
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Shaders/VertexColorBalloon.shader
+  uploadId: 750157

@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: c6a3cde78d8314b4a80824b356a5091e
+timeCreated: 1507039304
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Demo/Scripts/BalloonFXSceneSelect.cs
+  uploadId: 750157

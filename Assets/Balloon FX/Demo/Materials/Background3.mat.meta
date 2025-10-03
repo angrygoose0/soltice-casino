@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3911fbda0211c7643b2f24a0848166f3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Demo/Materials/Background3.mat
+  uploadId: 750157

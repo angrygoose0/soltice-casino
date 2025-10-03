@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: db010780bce8eaf4885ef3d03a821302
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Models/BalloonBackground.prefab
+  uploadId: 750157

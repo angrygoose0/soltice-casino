@@ -26,44 +26,7 @@
           "signer": true
         },
         {
-          "name": "solana_player_balance",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  79,
-                  76,
-                  65,
-                  78,
-                  65,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
-                  95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
-                  67,
-                  69
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              }
-            ]
-          }
-        },
-        {
-          "name": "ephemeral_player_balance",
+          "name": "ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -79,13 +42,6 @@
                   82,
                   65,
                   76,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
                   95,
                   66,
                   65,
@@ -142,44 +98,7 @@
           "signer": true
         },
         {
-          "name": "solana_player_balance",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  79,
-                  76,
-                  65,
-                  78,
-                  65,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
-                  95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
-                  67,
-                  69
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              }
-            ]
-          }
-        },
-        {
-          "name": "ephemeral_player_balance",
+          "name": "ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -195,13 +114,6 @@
                   82,
                   65,
                   76,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
                   95,
                   66,
                   65,
@@ -240,16 +152,16 @@
       ]
     },
     {
-      "name": "delegate_player_balance",
+      "name": "delegate_ephemeral_balance",
       "discriminator": [
-        236,
-        35,
-        205,
-        176,
-        172,
-        54,
-        9,
-        215
+        31,
+        72,
+        92,
+        159,
+        179,
+        242,
+        101,
+        107
       ],
       "accounts": [
         {
@@ -258,7 +170,7 @@
           "signer": true
         },
         {
-          "name": "buffer_ephemeral_player_balance",
+          "name": "buffer_ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -275,7 +187,7 @@
               },
               {
                 "kind": "account",
-                "path": "ephemeral_player_balance"
+                "path": "ephemeral_balance"
               }
             ],
             "program": {
@@ -318,7 +230,7 @@
           }
         },
         {
-          "name": "delegation_record_ephemeral_player_balance",
+          "name": "delegation_record_ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -339,7 +251,7 @@
               },
               {
                 "kind": "account",
-                "path": "ephemeral_player_balance"
+                "path": "ephemeral_balance"
               }
             ],
             "program": {
@@ -349,7 +261,7 @@
           }
         },
         {
-          "name": "delegation_metadata_ephemeral_player_balance",
+          "name": "delegation_metadata_ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -379,7 +291,7 @@
               },
               {
                 "kind": "account",
-                "path": "ephemeral_player_balance"
+                "path": "ephemeral_balance"
               }
             ],
             "program": {
@@ -389,7 +301,7 @@
           }
         },
         {
-          "name": "ephemeral_player_balance",
+          "name": "ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -405,13 +317,6 @@
                   82,
                   65,
                   76,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
                   95,
                   66,
                   65,
@@ -454,16 +359,16 @@
       ]
     },
     {
-      "name": "deposit",
+      "name": "ephemeral_deposit",
       "discriminator": [
-        242,
-        35,
-        198,
-        137,
-        82,
-        225,
-        242,
-        182
+        24,
+        126,
+        203,
+        241,
+        127,
+        217,
+        109,
+        91
       ],
       "accounts": [
         {
@@ -472,45 +377,8 @@
           "signer": true
         },
         {
-          "name": "solana_player_balance",
+          "name": "ephemeral_balance",
           "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  79,
-                  76,
-                  65,
-                  78,
-                  65,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
-                  95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
-                  67,
-                  69
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              }
-            ]
-          }
-        },
-        {
-          "name": "ephemeral_player_balance",
           "pda": {
             "seeds": [
               {
@@ -526,12 +394,35 @@
                   65,
                   76,
                   95,
-                  80,
+                  66,
+                  65,
                   76,
                   65,
-                  89,
-                  69,
-                  82,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "solana_balance",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
                   95,
                   66,
                   65,
@@ -550,185 +441,77 @@
           }
         },
         {
-          "name": "token_mint",
-          "address": "D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos"
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
         },
         {
-          "name": "user_token_account",
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ephemeral_withdraw",
+      "discriminator": [
+        191,
+        176,
+        2,
+        224,
+        216,
+        20,
+        131,
+        35
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
               {
                 "kind": "account",
                 "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "treasury",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  82,
-                  69,
-                  65,
-                  83,
-                  85,
-                  82,
-                  89
-                ]
               }
             ]
           }
         },
         {
-          "name": "treasury_token_account",
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
           "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "MagicContext1111111111111111111111111111111"
         }
       ],
       "args": [
@@ -739,16 +522,16 @@
       ]
     },
     {
-      "name": "initialize_player_balance",
+      "name": "initialize_balance",
       "discriminator": [
-        193,
-        86,
-        175,
-        197,
-        130,
-        49,
-        234,
-        91
+        43,
+        149,
+        254,
+        230,
+        40,
+        2,
+        185,
+        145
       ],
       "accounts": [
         {
@@ -761,7 +544,7 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "ephemeral_player_balance",
+          "name": "ephemeral_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -777,13 +560,6 @@
                   82,
                   65,
                   76,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
                   95,
                   66,
                   65,
@@ -802,7 +578,7 @@
           }
         },
         {
-          "name": "solana_player_balance",
+          "name": "solana_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -815,13 +591,6 @@
                   65,
                   78,
                   65,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
                   95,
                   66,
                   65,
@@ -988,16 +757,16 @@
       ]
     },
     {
-      "name": "withdraw",
+      "name": "user_deposit",
       "discriminator": [
-        183,
-        18,
-        70,
-        156,
-        148,
-        109,
-        161,
-        34
+        186,
+        198,
+        140,
+        233,
+        129,
+        39,
+        98,
+        153
       ],
       "accounts": [
         {
@@ -1006,7 +775,7 @@
           "signer": true
         },
         {
-          "name": "solana_player_balance",
+          "name": "solana_balance",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1019,53 +788,6 @@
                   65,
                   78,
                   65,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
-                  95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
-                  67,
-                  69
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              }
-            ]
-          }
-        },
-        {
-          "name": "ephemeral_player_balance",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  69,
-                  80,
-                  72,
-                  69,
-                  77,
-                  69,
-                  82,
-                  65,
-                  76,
-                  95,
-                  80,
-                  76,
-                  65,
-                  89,
-                  69,
-                  82,
                   95,
                   66,
                   65,
@@ -1271,20 +993,299 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "user_withdraw",
+      "discriminator": [
+        53,
+        254,
+        26,
+        242,
+        119,
+        237,
+        73,
+        33
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ephemeral_balance",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  69,
+                  80,
+                  72,
+                  69,
+                  77,
+                  69,
+                  82,
+                  65,
+                  76,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "solana_balance",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "address": "D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos"
+        },
+        {
+          "name": "user_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "signer"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  79,
+                  75,
+                  69,
+                  78
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  50,
+                  98,
+                  49,
+                  97,
+                  102,
+                  55,
+                  57,
+                  50,
+                  50,
+                  55,
+                  50,
+                  51,
+                  101,
+                  49,
+                  54,
+                  51,
+                  54,
+                  97,
+                  48,
+                  54,
+                  49,
+                  52,
+                  101,
+                  48,
+                  99,
+                  50,
+                  52,
+                  97,
+                  53,
+                  101,
+                  98
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
     {
-      "name": "PlayerBalance",
+      "name": "EphemeralBalance",
       "discriminator": [
-        244,
-        128,
-        24,
-        93,
-        212,
-        190,
-        202,
-        111
+        116,
+        243,
+        194,
+        176,
+        241,
+        235,
+        207,
+        25
+      ]
+    },
+    {
+      "name": "SolanaBalance",
+      "discriminator": [
+        33,
+        159,
+        208,
+        187,
+        253,
+        183,
+        84,
+        93
       ]
     },
     {
@@ -1321,6 +1322,11 @@
       "code": 6003,
       "name": "InvalidPlayerBalanceType",
       "msg": "Invalid player balance type"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
     }
   ],
   "types": [
@@ -1343,21 +1349,41 @@
       }
     },
     {
-      "name": "PlayerBalance",
+      "name": "EphemeralBalance",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "balance_change",
+            "name": "balance",
             "type": "u64"
           },
           {
-            "name": "player",
-            "type": "pubkey"
+            "name": "withdraw",
+            "type": "u64"
           },
           {
-            "name": "ephemeral",
-            "type": "bool"
+            "name": "deposit",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SolanaBalance",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdraw",
+            "type": "u64"
+          },
+          {
+            "name": "deposit",
+            "type": "u64"
           },
           {
             "name": "bump",

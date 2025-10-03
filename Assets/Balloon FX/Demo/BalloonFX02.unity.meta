@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0e32f5473ef6a6640bfbaa3d2a186658
+timeCreated: 1505931816
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Demo/BalloonFX02.unity
+  uploadId: 750157

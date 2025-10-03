@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: dc2ca4dab39042547b8d470d70c4ca14
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Scripts/ParticleDeathSound.cs
+  uploadId: 750157

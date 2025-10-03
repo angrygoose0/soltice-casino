@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c6d25ab1edc4c0e4cafb628af0b6a217
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Falling/OneShot/BalloonFallingOneShot(EndPop).prefab
+  uploadId: 750157

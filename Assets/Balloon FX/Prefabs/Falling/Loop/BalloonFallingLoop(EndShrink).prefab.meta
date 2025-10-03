@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ff18dadfda1b51b4fb099052f169d663
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Falling/Loop/BalloonFallingLoop(EndShrink).prefab
+  uploadId: 750157

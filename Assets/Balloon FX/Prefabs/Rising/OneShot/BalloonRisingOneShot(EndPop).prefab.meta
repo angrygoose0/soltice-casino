@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f7d8d03087517634bae7f09eccc31da3
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Rising/OneShot/BalloonRisingOneShot(EndPop).prefab
+  uploadId: 750157

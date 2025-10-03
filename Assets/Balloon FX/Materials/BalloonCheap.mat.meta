@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1664adc7a5b77e14ea99cb04f1c57135
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Materials/BalloonCheap.mat
+  uploadId: 750157

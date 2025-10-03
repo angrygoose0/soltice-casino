@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 2d01ebf978a89c646815679aedb89f5a
+timeCreated: 1505931739
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Legacy/Looping/Single-Color/BalloonLoopYellow.prefab
+  uploadId: 750157

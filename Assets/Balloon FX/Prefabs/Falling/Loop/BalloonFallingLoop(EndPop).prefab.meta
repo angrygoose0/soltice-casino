@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1481ef6e4c65d0b4ebc67d93c1f6f4aa
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Prefabs/Falling/Loop/BalloonFallingLoop(EndPop).prefab
+  uploadId: 750157

@@ -388,9 +388,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey EphemeralPlayerBalance { get; set; }
-
-            public PublicKey SolanaPlayerBalance { get; set; }
+            public PublicKey EphemeralBalance { get; set; }
 
             public PublicKey TreasuryProgram { get; set; } = new PublicKey("5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
@@ -487,9 +485,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey EphemeralPlayerBalance { get; set; }
-
-            public PublicKey SolanaPlayerBalance { get; set; }
+            public PublicKey EphemeralBalance { get; set; }
 
             public PublicKey TreasuryProgram { get; set; } = new PublicKey("5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
@@ -565,7 +561,7 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(9128365113323633980UL, offset);
@@ -666,7 +662,7 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.SolanaPlayerBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.PlayerBet, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SessionToken == null ? programId : accounts.SessionToken, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(2413549243525709534UL, offset);

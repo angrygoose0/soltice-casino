@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 42b014fa2a4cfee489711fc783daddd9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 101797
+  packageName: Balloon FX
+  packageVersion: 1.2
+  assetPath: Assets/Balloon FX/Materials/BalloonFancy.mat
+  uploadId: 750157
