@@ -323,7 +323,7 @@ namespace Treasury
 
             public PublicKey EphemeralBalance { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -427,7 +427,7 @@ namespace Treasury
 
         public static class TreasuryProgram
         {
-            public const string ID = "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy";
+            public const string ID = "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, ulong amount, PublicKey programId = null)
             {
                 programId ??= new(ID);

@@ -87,6 +87,13 @@ public class SubscriptionManager : MonoBehaviour
 
         // Determine if account is delegated
         bool isDelegated = forceDelegated ?? await CheckIfDelegated(accountAddress);
+        
+        // If forceDelegated is true but account isn't actually delegated, fail
+        if (forceDelegated == true && !isDelegated)
+        {
+            Debug.LogError($"Account {accountAddress} is not delegated but forceDelegated is true. Subscription failed.");
+            return null;
+        }
 
         // Create subscription object
         var subscription = new AccountSubscription
@@ -156,6 +163,14 @@ public class SubscriptionManager : MonoBehaviour
         bool? forceDelegated = null)
     {
         bool isDelegated = forceDelegated ?? await CheckIfDelegated(accountAddress);
+        
+        // If forceDelegated is true but account isn't actually delegated, fail
+        if (forceDelegated == true && !isDelegated)
+        {
+            Debug.LogError($"Account {accountAddress} is not delegated but forceDelegated is true. LoadAccountData failed.");
+            return default;
+        }
+        
         var rpcClient = GetRpcClient(isDelegated);
 
         var result = await rpcClient.GetAccountInfoAsync(accountAddress, Commitment.Confirmed);
@@ -205,14 +220,6 @@ public class SubscriptionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Unsubscribe from an account by PublicKey.
-    /// </summary>
-    public async Task<bool> Unsubscribe(PublicKey accountAddress)
-    {
-        return await Unsubscribe(accountAddress.ToString());
-    }
-
-    /// <summary>
     /// Unsubscribe from all active subscriptions.
     /// </summary>
     public async Task UnsubscribeAll()
@@ -244,27 +251,6 @@ public class SubscriptionManager : MonoBehaviour
             Debug.LogWarning($"Failed to check delegation status for {accountAddress}: {ex.Message}");
             return false;
         }
-    }
-
-    /// <summary>
-    /// Migrate subscription from mainnet to delegated or vice versa.
-    /// Useful after delegating/undelegating an account.
-    /// </summary>
-    public async Task<bool> MigrateSubscription<T>(
-        PublicKey accountAddress,
-        bool toDelegated,
-        Action<T> callback,
-        Func<byte[], T> deserializer = null,
-        Commitment commitment = Commitment.Processed)
-    {
-        string subscriptionId = accountAddress.ToString();
-
-        // Unsubscribe from current endpoint
-        await Unsubscribe(subscriptionId);
-
-        // Resubscribe to new endpoint
-        var newId = await Subscribe(accountAddress, callback, deserializer, commitment, toDelegated);
-        return newId != null;
     }
 
     /// <summary>

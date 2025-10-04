@@ -8,6 +8,7 @@ using Solana.Unity.SDK;
 
 public class TreasuryUI : MonoBehaviour
 {
+    /*
     [Header("Builder")]
     [SerializeField] private TreasuryTransactionBuilder builder;
     [SerializeField] private SolanaManager solanaManager;
@@ -186,6 +187,7 @@ public class TreasuryUI : MonoBehaviour
         if (depositButton != null) depositButton.interactable = interactable;
         if (withdrawButton != null) withdrawButton.interactable = interactable;
     }
+    */
 
 
 }

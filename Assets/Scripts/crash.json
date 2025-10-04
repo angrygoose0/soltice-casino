@@ -1,5 +1,5 @@
 {
-  "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U",
+  "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf",
   "metadata": {
     "name": "crash",
     "version": "0.1.0",
@@ -153,7 +153,7 @@
         },
         {
           "name": "treasury_program",
-          "address": "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy"
+          "address": "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv"
         },
         {
           "name": "system_program",
@@ -213,38 +213,38 @@
             "program": {
               "kind": "const",
               "value": [
-                196,
+                55,
+                218,
+                56,
+                222,
+                116,
+                94,
+                101,
+                16,
+                227,
+                71,
                 34,
-                111,
-                46,
-                25,
-                28,
-                254,
-                79,
-                70,
-                66,
                 188,
-                187,
-                202,
-                141,
-                169,
-                86,
-                19,
-                64,
-                37,
-                31,
-                106,
-                224,
-                27,
+                57,
+                163,
+                138,
+                56,
+                61,
                 53,
-                32,
-                177,
-                124,
-                205,
-                91,
-                179,
-                134,
-                129
+                63,
+                10,
+                15,
+                33,
+                54,
+                126,
+                219,
+                234,
+                252,
+                232,
+                212,
+                128,
+                247,
+                164
               ]
             }
           }
@@ -344,7 +344,7 @@
         },
         {
           "name": "owner_program",
-          "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U"
+          "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf"
         },
         {
           "name": "delegation_program",
@@ -408,38 +408,38 @@
             "program": {
               "kind": "const",
               "value": [
-                196,
+                55,
+                218,
+                56,
+                222,
+                116,
+                94,
+                101,
+                16,
+                227,
+                71,
                 34,
-                111,
-                46,
-                25,
-                28,
-                254,
-                79,
-                70,
-                66,
                 188,
-                187,
-                202,
-                141,
-                169,
-                86,
-                19,
-                64,
-                37,
-                31,
-                106,
-                224,
-                27,
+                57,
+                163,
+                138,
+                56,
+                61,
                 53,
-                32,
-                177,
-                124,
-                205,
-                91,
-                179,
-                134,
-                129
+                63,
+                10,
+                15,
+                33,
+                54,
+                126,
+                219,
+                234,
+                252,
+                232,
+                212,
+                128,
+                247,
+                164
               ]
             }
           }
@@ -534,7 +534,7 @@
         },
         {
           "name": "owner_program",
-          "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U"
+          "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf"
         },
         {
           "name": "delegation_program",
@@ -598,38 +598,38 @@
             "program": {
               "kind": "const",
               "value": [
-                196,
+                55,
+                218,
+                56,
+                222,
+                116,
+                94,
+                101,
+                16,
+                227,
+                71,
                 34,
-                111,
-                46,
-                25,
-                28,
-                254,
-                79,
-                70,
-                66,
                 188,
-                187,
-                202,
-                141,
-                169,
-                86,
-                19,
-                64,
-                37,
-                31,
-                106,
-                224,
-                27,
+                57,
+                163,
+                138,
+                56,
+                61,
                 53,
-                32,
-                177,
-                124,
-                205,
-                91,
-                179,
-                134,
-                129
+                63,
+                10,
+                15,
+                33,
+                54,
+                126,
+                219,
+                234,
+                252,
+                232,
+                212,
+                128,
+                247,
+                164
               ]
             }
           }
@@ -734,7 +734,7 @@
         },
         {
           "name": "owner_program",
-          "address": "ECdN2t7BougUL67eufGfttzLYh7We53EhVkZR4AVE54U"
+          "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf"
         },
         {
           "name": "delegation_program",
@@ -892,6 +892,22 @@
           }
         },
         {
+          "name": "game",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  71,
+                  65,
+                  77,
+                  69
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -992,7 +1008,7 @@
         },
         {
           "name": "treasury_program",
-          "address": "5D9XebQjX1dH6ckcox8XWSV6ftcfM32zGbPZ3sj6iUBy"
+          "address": "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv"
         },
         {
           "name": "system_program",
@@ -1395,6 +1411,10 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "game",
+            "type": "pubkey"
+          },
           {
             "name": "amount",
             "type": "u64"

@@ -134,10 +134,12 @@ public class CrashTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var playerBet = DerivePlayerBetAccount(user);
+		var game = DeriveGameAccount();
 		var accounts = new InitializePlayerBetAccounts
 		{
 			Signer = user,
 			PlayerBet = playerBet,
+			Game = game,
 			SystemProgram = SYSTEM_PROGRAM_ID
 		};
         var ix = CrashProgram.InitializePlayerBet(accounts);
