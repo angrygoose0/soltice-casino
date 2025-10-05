@@ -411,36 +411,6 @@
           }
         },
         {
-          "name": "solana_balance",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  79,
-                  76,
-                  65,
-                  78,
-                  65,
-                  95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
-                  67,
-                  69
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              }
-            ]
-          }
-        },
-        {
           "name": "magic_program",
           "address": "Magic11111111111111111111111111111111111111"
         },

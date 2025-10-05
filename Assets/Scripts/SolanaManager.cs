@@ -462,13 +462,9 @@ public class SolanaManager : MonoBehaviour
                 ? Web3.Wallet
                 : Web3Utils.SessionWallet;
 
-            Debug.Log($"baseWallet: {baseWallet.Account.PublicKey}");
+            var rpcClient = ephemeralFlag ? _ephemeralRpcClient : _rpcClient;
 
-            // Determine fee payer and recent blockhash depending on wallet type
-            var feePayer = ephemeralFlag ? Web3Utils.EphemeralWallet.Account : baseWallet.Account;
-            var blockHash = ephemeralFlag
-                ? await Web3Utils.EphemeralWallet.GetBlockHash(commitment: Commitment.Confirmed, useCache: false)
-                : await Web3.BlockHash(commitment: Commitment.Confirmed, useCache: false);
+            var blockHashResult = await rpcClient.GetLatestBlockHashAsync(Commitment.Confirmed);
 
             // Create a list to store our instructions
             var instructions = new List<TransactionInstruction>();
@@ -495,34 +491,34 @@ public class SolanaManager : MonoBehaviour
             }
 
             // Create the transaction object
-            var unsignedTransaction = new Transaction
-            {
-                RecentBlockHash = blockHash,
-                FeePayer = feePayer,
-                Instructions = instructions,
-                Signatures = new List<SignaturePubKeyPair>()
-            };
-            
+            var transaction = new Transaction();
 
-            // Sign the transaction using the wallet
-            var signedTransaction = await baseWallet.SignTransaction(unsignedTransaction);
+            transaction.FeePayer = baseWallet.Account.PublicKey;
+            transaction.RecentBlockHash = blockHashResult.Result.Value.Blockhash;
+            transaction.Signatures = new List<SignaturePubKeyPair>();
+            transaction.Instructions = new List<TransactionInstruction>();
+
+            foreach (var instruction in instructions)
+            {
+                transaction.Instructions.Add(instruction);
+            }
+            
+            var signedTransaction = await baseWallet.SignTransaction(transaction);
 
             // Convert signed transaction to byte array for sending
             var serializedTransaction = signedTransaction.Serialize();
 
-            var simulationResult = await Web3.Rpc.SimulateTransactionAsync(
+            var simulationResult = await rpcClient.SimulateTransactionAsync(
                 serializedTransaction,
                 commitment: Commitment.Confirmed
             );
 
             Debug.Log($"Full simulation result: {JsonConvert.SerializeObject(simulationResult.Result, Formatting.Indented)}");
             
-
-            // Send and confirm the transaction
-            var result = await baseWallet.SignAndSendTransaction(
-                unsignedTransaction,
-                commitment: Commitment.Confirmed,
-                skipPreflight: false
+            var result = await rpcClient.SendTransactionAsync(
+                Convert.ToBase64String(serializedTransaction),
+                true,
+                Commitment.Confirmed
             );
 
             if (result.Result == null)
@@ -530,8 +526,8 @@ public class SolanaManager : MonoBehaviour
                 throw new Exception($"Transaction sending failed: {result.Reason}");
             }
 
-            // Wait for confirmation
-            bool confirmed = await _rpcClient.ConfirmTransaction(
+            // Wait for confirmation using the appropriate RPC client
+            var confirmed = await rpcClient.ConfirmTransaction(
                 result.Result,
                 Commitment.Confirmed
             );

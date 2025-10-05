@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/LMHPOLY/Low Poly Nature Bundle/_Demo Scenes/Demo_01.unity
     guid: 624637455d08ab8479a436ea4d84e14b
+  - enabled: 1
+    path: Assets/Scenes/solstice #1.unity
+    guid: b72636a2beacf45ab92ff8b668019dff
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

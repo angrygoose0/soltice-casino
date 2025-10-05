@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Crash.Accounts;
 using Treasury.Accounts;
 using Solana.Unity.SDK;
+using TMPro;
 
 public class UserUI : MonoBehaviour
 {
@@ -36,6 +37,12 @@ public class UserUI : MonoBehaviour
     public ulong withdrawAmount = 1000;
     public ulong betAmount = 1000;
     public byte clientSeed = 42;
+
+    // Account Data Display
+    [Header("Account Data Display")]
+    [SerializeField] private TextMeshProUGUI gameAccountTMP;
+    [SerializeField] private TextMeshProUGUI playerBetAccountTMP;
+    [SerializeField] private TextMeshProUGUI ephemeralBalanceAccountTMP;
 
     private void Start()
     {
@@ -243,6 +250,10 @@ public class UserUI : MonoBehaviour
     private void OnPlayerBetUpdate(PlayerBet newData)
     {
         _playerBetCache = newData;
+        if (playerBetAccountTMP != null)
+        {
+            playerBetAccountTMP.text = newData != null ? newData.ToString() : "No PlayerBet Data";
+        }
         if (newData == null)
         {
             Debug.Log("Player bet account update: null");
@@ -254,6 +265,10 @@ public class UserUI : MonoBehaviour
     private void OnEphemeralBalanceUpdate(EphemeralBalance newData)
     {
         _ephemeralBalanceCache = newData;
+        if (ephemeralBalanceAccountTMP != null)
+        {
+            ephemeralBalanceAccountTMP.text = newData != null ? newData.ToString() : "No EphemeralBalance Data";
+        }
         if (newData == null)
         {
             Debug.Log("Ephemeral balance account update: null");
@@ -265,6 +280,10 @@ public class UserUI : MonoBehaviour
     private void OnGameUpdate(Game newData)
     {
         _gameCache = newData;
+        if (gameAccountTMP != null)
+        {
+            gameAccountTMP.text = newData != null ? newData.ToString() : "No Game Data";
+        }
         if (newData == null)
         {
             Debug.Log("Game account update: null");

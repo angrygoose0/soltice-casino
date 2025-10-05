@@ -41,9 +41,10 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return pda;
     }
 
-    public static PublicKey DeriveEphemeralBalanceAccount(PublicKey player)
+    public static PublicKey DeriveEphemeralBalanceAccount(PublicKey player, bool ephemeral = false)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("EPHEMERAL_BALANCE"), player.KeyBytes }, _programId, out PublicKey pda, out _);
+        var programId = ephemeral ? DELEGATION_PROGRAM_ID : _programId;
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("EPHEMERAL_BALANCE"), player.KeyBytes }, programId, out PublicKey pda, out _);
         return pda;
     }
 
@@ -211,14 +212,18 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
-        var solanaBalance = DeriveSolanaBalanceAccount(signer);
+        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer, true);
+        //var solanaBalance = DeriveSolanaBalanceAccount(signer);
+        var ephemeralBalanceDONT = DeriveEphemeralBalanceAccount(signer);
+
+        Debug.Log($"EphemeralDeposit delegated: {ephemeralBalance}");
+        Debug.Log($"EphemeralDeposit undelegated: {ephemeralBalanceDONT}");
 
         var accounts = new EphemeralDepositAccounts
         {
             Signer = signer,
-            EphemeralBalance = ephemeralBalance,
-            SolanaBalance = solanaBalance,
+            EphemeralBalance = ephemeralBalanceDONT,
+            //SolanaBalance = solanaBalance,
         };
 
         var ix = TreasuryProgram.EphemeralDeposit(accounts);
@@ -230,7 +235,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
-        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
+        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer, true);
 
         var accounts = new EphemeralWithdrawAccounts
         {
@@ -247,7 +252,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
         var signer = CurrentUserPk();
         var solanaBalance = DeriveSolanaBalanceAccount(signer);
-        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
+        var ephemeralBalance = DeriveEphemeralBalanceAccount(signer, true);
         var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();

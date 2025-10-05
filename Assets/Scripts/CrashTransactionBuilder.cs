@@ -39,21 +39,24 @@ public class CrashTransactionBuilder : MonoBehaviour
     private PublicKey CurrentUserPk() => CurrentUser()?.PublicKey;
 
     // PDA helpers
-    public static PublicKey DeriveGameAccount()
+    public static PublicKey DeriveGameAccount(bool ephemeral = false)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("GAME") }, _programId, out PublicKey pda, out _);
+		var programId = ephemeral ? DELEGATION_PROGRAM_ID : _programId;
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("GAME") }, programId, out PublicKey pda, out _);
         return pda;
     }
 
-    public static PublicKey DerivePlayerBetAccount(PublicKey player)
+    public static PublicKey DerivePlayerBetAccount(PublicKey player, bool ephemeral = false)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("PLAYER_BET"), player.KeyBytes }, _programId, out PublicKey pda, out _);
+        var programId = ephemeral ? DELEGATION_PROGRAM_ID : _programId;
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("PLAYER_BET"), player.KeyBytes }, programId, out PublicKey pda, out _);
         return pda;
     }
 
-	public static PublicKey DeriveAuthorityAccount()
+	public static PublicKey DeriveAuthorityAccount(bool ephemeral = false)
 	{
-		PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("AUTHORITY") }, _programId, out PublicKey pda, out _);
+		var programId = ephemeral ? DELEGATION_PROGRAM_ID : _programId;
+		PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("AUTHORITY") }, programId, out PublicKey pda, out _);
 		return pda;
 	}
 
@@ -118,7 +121,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 	{
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
-		var authority = DeriveAuthorityAccount();
+		var authority = DeriveAuthorityAccount(true);
 		var accounts = new InitializeAuthorityAccounts
 		{
 			Signer = user,
@@ -134,7 +137,7 @@ public class CrashTransactionBuilder : MonoBehaviour
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var playerBet = DerivePlayerBetAccount(user);
-		var game = DeriveGameAccount();
+		var game = DeriveGameAccount(true);
 		var accounts = new InitializePlayerBetAccounts
 		{
 			Signer = user,
@@ -150,7 +153,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 	{
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
-		var game = DeriveGameAccount();
+		var game = DeriveGameAccount(true);
 		var accounts = new StartGameAccounts
 		{
 			Signer = user,
@@ -173,7 +176,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 	{
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
-		var authority = DeriveAuthorityAccount();
+		var authority = DeriveAuthorityAccount(true);
 		var delegationMetadata = DeriveDelegationMetadataAccount(authority);
 		var delegationRecord = DeriveDelegationRecordAccount(authority);
 		var delegationBuffer = DeriveDelegationBufferAccount(authority);
@@ -236,7 +239,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 	{
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
-		var game = DeriveGameAccount();
+		var game = DeriveGameAccount(true);
 		var accounts = new TickAccounts
 		{
 			Signer = user,
@@ -250,7 +253,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 	{
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
-		var game = DeriveGameAccount();
+		var game = DeriveGameAccount(true);
 		var programIdentity = DeriveProgramIdentity();
 		var accounts = new RequestRandomnessAccounts
 		{
@@ -266,9 +269,9 @@ public class CrashTransactionBuilder : MonoBehaviour
     {
         if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
-		var game = DeriveGameAccount();
-		var playerBet = DerivePlayerBetAccount(user);
-		var authority = DeriveAuthorityAccount();
+		var game = DeriveGameAccount(true);
+		var playerBet = DerivePlayerBetAccount(user, true);
+		var authority = DeriveAuthorityAccount(true);
         var ephemeralBalance = TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(user);
 
 		var accounts = new PlaceBetAccounts
@@ -291,9 +294,9 @@ public class CrashTransactionBuilder : MonoBehaviour
     {
         if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
-		var game = DeriveGameAccount();
-		var playerBet = DerivePlayerBetAccount(user);
-		var authority = DeriveAuthorityAccount();
+		var game = DeriveGameAccount(true);
+		var playerBet = DerivePlayerBetAccount(user, true);
+		var authority = DeriveAuthorityAccount(true);
         var ephemeralBalance = TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(user);
 
 		var accounts = new ClaimBetAccounts

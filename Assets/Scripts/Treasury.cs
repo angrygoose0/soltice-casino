@@ -334,8 +334,6 @@ namespace Treasury
 
             public PublicKey EphemeralBalance { get; set; }
 
-            public PublicKey SolanaBalance { get; set; }
-
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
         }
@@ -479,7 +477,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SolanaBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.EphemeralBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(6588160973453622808UL, offset);
