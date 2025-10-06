@@ -1,5 +1,5 @@
 {
-  "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf",
+  "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS",
   "metadata": {
     "name": "crash",
     "version": "0.1.0",
@@ -153,7 +153,7 @@
         },
         {
           "name": "treasury_program",
-          "address": "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv"
+          "address": "A1yHBPwz7BLrk1VUzQXy5jGTggMrdfoYH3vYLSRYGRTy"
         },
         {
           "name": "system_program",
@@ -213,38 +213,38 @@
             "program": {
               "kind": "const",
               "value": [
-                55,
-                218,
-                56,
-                222,
-                116,
-                94,
-                101,
-                16,
-                227,
-                71,
-                34,
-                188,
-                57,
-                163,
-                138,
-                56,
-                61,
-                53,
-                63,
-                10,
-                15,
-                33,
+                148,
+                224,
+                174,
+                245,
+                9,
+                223,
+                205,
+                85,
+                6,
+                121,
+                2,
+                77,
+                131,
+                37,
+                173,
+                42,
+                5,
+                124,
+                224,
                 54,
-                126,
-                219,
-                234,
-                252,
-                232,
-                212,
-                128,
-                247,
-                164
+                210,
+                102,
+                30,
+                146,
+                58,
+                152,
+                119,
+                209,
+                108,
+                191,
+                214,
+                79
               ]
             }
           }
@@ -344,7 +344,7 @@
         },
         {
           "name": "owner_program",
-          "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf"
+          "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS"
         },
         {
           "name": "delegation_program",
@@ -408,38 +408,38 @@
             "program": {
               "kind": "const",
               "value": [
-                55,
-                218,
-                56,
-                222,
-                116,
-                94,
-                101,
-                16,
-                227,
-                71,
-                34,
-                188,
-                57,
-                163,
-                138,
-                56,
-                61,
-                53,
-                63,
-                10,
-                15,
-                33,
+                148,
+                224,
+                174,
+                245,
+                9,
+                223,
+                205,
+                85,
+                6,
+                121,
+                2,
+                77,
+                131,
+                37,
+                173,
+                42,
+                5,
+                124,
+                224,
                 54,
-                126,
-                219,
-                234,
-                252,
-                232,
-                212,
-                128,
-                247,
-                164
+                210,
+                102,
+                30,
+                146,
+                58,
+                152,
+                119,
+                209,
+                108,
+                191,
+                214,
+                79
               ]
             }
           }
@@ -534,7 +534,7 @@
         },
         {
           "name": "owner_program",
-          "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf"
+          "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS"
         },
         {
           "name": "delegation_program",
@@ -598,38 +598,38 @@
             "program": {
               "kind": "const",
               "value": [
-                55,
-                218,
-                56,
-                222,
-                116,
-                94,
-                101,
-                16,
-                227,
-                71,
-                34,
-                188,
-                57,
-                163,
-                138,
-                56,
-                61,
-                53,
-                63,
-                10,
-                15,
-                33,
+                148,
+                224,
+                174,
+                245,
+                9,
+                223,
+                205,
+                85,
+                6,
+                121,
+                2,
+                77,
+                131,
+                37,
+                173,
+                42,
+                5,
+                124,
+                224,
                 54,
-                126,
-                219,
-                234,
-                252,
-                232,
-                212,
-                128,
-                247,
-                164
+                210,
+                102,
+                30,
+                146,
+                58,
+                152,
+                119,
+                209,
+                108,
+                191,
+                214,
+                79
               ]
             }
           }
@@ -734,7 +734,7 @@
         },
         {
           "name": "owner_program",
-          "address": "4m2RNNqp8sTxSS7ZzknPcFrQbfBnosbXyEMCnqrsXSAf"
+          "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS"
         },
         {
           "name": "delegation_program",
@@ -1008,7 +1008,7 @@
         },
         {
           "name": "treasury_program",
-          "address": "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv"
+          "address": "A1yHBPwz7BLrk1VUzQXy5jGTggMrdfoYH3vYLSRYGRTy"
         },
         {
           "name": "system_program",

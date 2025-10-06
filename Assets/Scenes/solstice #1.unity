@@ -2742,6 +2742,7 @@ MonoBehaviour:
   treasuryBuilder: {fileID: 591210657}
   crashBuilder: {fileID: 431344624}
   solanaManager: {fileID: 444504097}
+  _balloonSimulator: {fileID: 1446041385}
   btnSetupGame: {fileID: 2051712560}
   btnSetupUser: {fileID: 1710175904}
   btnDeposit: {fileID: 2143125351}
@@ -9092,6 +9093,7 @@ MonoBehaviour:
   frequencyX: 0.7
   phaseOffset: 1.3
   scaleConstant: {x: 10, y: 10, z: 10}
+  initialScale: {x: 0, y: 0, z: 0}
   scaleDuration: 0.5
   overshootStrength: 10
   multiplierCountDuration: 0.35

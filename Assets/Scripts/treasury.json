@@ -1,5 +1,5 @@
 {
-  "address": "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv",
+  "address": "A1yHBPwz7BLrk1VUzQXy5jGTggMrdfoYH3vYLSRYGRTy",
   "metadata": {
     "name": "treasury",
     "version": "0.1.0",
@@ -60,7 +60,8 @@
           }
         },
         {
-          "name": "authority"
+          "name": "authority",
+          "signer": true
         },
         {
           "name": "magic_program",
@@ -132,7 +133,8 @@
           }
         },
         {
-          "name": "authority"
+          "name": "authority",
+          "signer": true
         },
         {
           "name": "magic_program",
@@ -193,38 +195,38 @@
             "program": {
               "kind": "const",
               "value": [
-                210,
-                4,
-                208,
-                189,
-                135,
-                27,
-                219,
-                52,
-                199,
-                157,
-                187,
-                17,
-                60,
-                163,
-                35,
-                80,
-                221,
-                185,
-                44,
-                127,
-                240,
-                231,
-                136,
-                38,
-                35,
-                120,
-                252,
+                133,
+                248,
+                209,
                 48,
-                20,
-                92,
-                17,
-                249
+                214,
+                88,
+                60,
+                248,
+                241,
+                212,
+                169,
+                223,
+                165,
+                73,
+                18,
+                171,
+                144,
+                108,
+                125,
+                250,
+                130,
+                239,
+                110,
+                7,
+                159,
+                27,
+                68,
+                148,
+                158,
+                93,
+                2,
+                132
               ]
             }
           }
@@ -336,7 +338,7 @@
         },
         {
           "name": "owner_program",
-          "address": "F8psmTz14LynPCQTw2UZDCMBPUAM2JHQJgQ4iichR3fv"
+          "address": "A1yHBPwz7BLrk1VUzQXy5jGTggMrdfoYH3vYLSRYGRTy"
         },
         {
           "name": "delegation_program",
@@ -393,6 +395,36 @@
                   82,
                   65,
                   76,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "solana_balance",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  79,
+                  76,
+                  65,
+                  78,
+                  65,
                   95,
                   66,
                   65,
@@ -1226,6 +1258,15 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
         }
       ],
       "args": []

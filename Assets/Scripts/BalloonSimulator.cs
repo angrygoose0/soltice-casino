@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 using TMPro;
+using Crash.Accounts;
 
 public class BalloonSimulator : MonoBehaviour
 {
@@ -18,10 +19,10 @@ public class BalloonSimulator : MonoBehaviour
     private TMP_Text multiplierText;
 
     private Coroutine smoothScaleCoroutineRef;
-    private Coroutine moveUpCoroutineRef;
     private Coroutine multiplierCountCoroutineRef;
+    private Coroutine bobBalloonCoroutineRef;
 
-    // Base local position used for bobbing; MoveUp updates this, bobbing offsets from it
+    // Base local position used for bobbing; bobbing offsets from it
     private Vector3 balloonBaseLocalPos;
 
     [Header("Balloon Bobbing Settings")]
@@ -33,6 +34,7 @@ public class BalloonSimulator : MonoBehaviour
 
     [Header("Balloon Scaling Settings")]
     [SerializeField] private Vector3 scaleConstant = Vector3.one;
+    [SerializeField] private Vector3 initialScale;
     [SerializeField] private float scaleDuration = 0.7f;
 	[SerializeField] private float overshootStrength = 0.8f; // controls how far past target it goes
 
@@ -42,76 +44,54 @@ public class BalloonSimulator : MonoBehaviour
 
     void Start()
     {
-        spawnedBalloon = SpawnBalloon(defaultSpawnLocation);
-        currentTick = 0;
-        BalloonBasedOnTick(currentTick);
+        SpawnBalloon(defaultSpawnLocation); 
     }
 
-    void Update()
-    {
-        // When 1 key is pressed, call BalloonBasedOnTick with currentTick + 1
-        if (Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame)
-        {
-            BalloonBasedOnTick(currentTick + 1);
-        }
-    }
 
-    void BalloonBasedOnTick(double tick)
+    private void BalloonBasedOnTick(double tick)
     {
-        // Update multiplier text appearance and animate value to feel like fast counting
-        if (multiplierText != null)
+        double fromMultiplier = currentTick == 0 ? 0 : System.Math.Pow(1.11, currentTick);
+        double toMultiplier = System.Math.Pow(1.11, tick);
+        // Start/refresh fast-count animation when tick increases; otherwise just set directly
+        if (multiplierCountCoroutineRef != null)
         {
-            double fromMultiplier = System.Math.Pow(1.11, currentTick);
-            double toMultiplier = System.Math.Pow(1.11, tick);
-            // Start/refresh fast-count animation when tick increases; otherwise just set directly
-            if (multiplierCountCoroutineRef != null)
-            {
-                StopCoroutine(multiplierCountCoroutineRef);
-                multiplierCountCoroutineRef = null;
-            }
-            if (currentTick != tick)
-            {
-                multiplierCountCoroutineRef = StartCoroutine(AnimateMultiplierText((float)fromMultiplier, (float)toMultiplier));
-            }
-            else
-            {
-                multiplierText.text = string.Format("{0:0.00}x", toMultiplier);
-            }
-            // Color gradient independent of crashTick: white -> yellow -> red -> dark red as tick increases
-            // Clamp by 43 so 43+ is very dark red
-            float t01 = Mathf.Clamp01((float)tick / 43f);
-            Color colorWhite = Color.white;
-            Color colorYellow = Color.yellow;
-            Color colorRed = Color.red;
-            Color colorDarkRed = new Color(0.2f, 0f, 0f, 1f); // very dark red
-            // Use two pivots to make the color change noticeable earlier
-            float pivot1 = 0.2f; // white -> yellow completes early
-            float pivot2 = 0.6f; // yellow -> red, then red -> dark red
-            Color targetColor;
-            if (t01 < pivot1)
-            {
-                targetColor = Color.Lerp(colorWhite, colorYellow, t01 / pivot1);
-            }
-            else if (t01 < pivot2)
-            {
-                targetColor = Color.Lerp(colorYellow, colorRed, (t01 - pivot1) / (pivot2 - pivot1));
-            }
-            else
-            {
-                targetColor = Color.Lerp(colorRed, colorDarkRed, (t01 - pivot2) / (1f - pivot2));
-            }
-            multiplierText.color = targetColor;
+            StopCoroutine(multiplierCountCoroutineRef);
+            multiplierCountCoroutineRef = null;
         }
-
-        if (currentTick == tick) return;
-        currentTick = tick;
+        if (currentTick != tick)
+        {
+            multiplierCountCoroutineRef = StartCoroutine(AnimateMultiplierText((float)fromMultiplier, (float)toMultiplier));
+        }
+        else
+        {
+            multiplierText.text = string.Format("{0:0.00}x", toMultiplier);
+        }
+        // Color gradient independent of crashTick: white -> yellow -> red -> dark red as tick increases
+        // Clamp by 43 so 43+ is very dark red
+        float t01 = Mathf.Clamp01((float)tick / 43f);
+        Color colorWhite = Color.white;
+        Color colorYellow = Color.yellow;
+        Color colorRed = Color.red;
+        Color colorDarkRed = new Color(0.2f, 0f, 0f, 1f); // very dark red
+        // Use two pivots to make the color change noticeable earlier
+        float pivot1 = 0.2f; // white -> yellow completes early
+        float pivot2 = 0.6f; // yellow -> red, then red -> dark red
+        Color targetColor;
+        if (t01 < pivot1)
+        {
+            targetColor = Color.Lerp(colorWhite, colorYellow, t01 / pivot1);
+        }
+        else if (t01 < pivot2)
+        {
+            targetColor = Color.Lerp(colorYellow, colorRed, (t01 - pivot1) / (pivot2 - pivot1));
+        }
+        else
+        {
+            targetColor = Color.Lerp(colorRed, colorDarkRed, (t01 - pivot2) / (1f - pivot2));
+        }
+        multiplierText.color = targetColor;
         
-        // Check if balloon should pop
-        if (tick >= crashTick)
-        {
-            PopBalloon();
-            return;
-        }
+        currentTick = tick;
         
         double sizeScale = System.Math.Pow(1.1, tick);
         // Stop previous SmoothScaleCoroutine if running
@@ -120,80 +100,95 @@ public class BalloonSimulator : MonoBehaviour
             StopCoroutine(smoothScaleCoroutineRef);
         }
         smoothScaleCoroutineRef = StartCoroutine(SmoothScaleCoroutine(spawnedBalloon, (float)sizeScale));
-        // Stop previous MoveUpCoroutine if running
-        if (moveUpCoroutineRef != null)
-        {
-            StopCoroutine(moveUpCoroutineRef);
-        }
-        //moveUpCoroutineRef = StartCoroutine(MoveUpCoroutine(spawnedBalloon, (float)upScale));
     }
 
-    void PopBalloon()
-    {
-        // Disable the balloon renderer
-        if (balloonRenderer != null)
-            balloonRenderer.enabled = false;
-        // Hide multiplier text
-        if (multiplierText != null)
-            multiplierText.enabled = false;
-        
-        // Play the particle systems
-        if (popParticle != null)
-            popParticle.Play();
-        if (burstParticle != null)
-            burstParticle.Play();
-        
-        // Stop any ongoing coroutines
+    private void PopBalloon()
+    {   
+        // Stop all running coroutines for the balloon
         if (smoothScaleCoroutineRef != null)
         {
             StopCoroutine(smoothScaleCoroutineRef);
             smoothScaleCoroutineRef = null;
-        }
-        if (moveUpCoroutineRef != null)
-        {
-            StopCoroutine(moveUpCoroutineRef);
-            moveUpCoroutineRef = null;
         }
         if (multiplierCountCoroutineRef != null)
         {
             StopCoroutine(multiplierCountCoroutineRef);
             multiplierCountCoroutineRef = null;
         }
-    }
-
-    public GameObject SpawnBalloon(Vector3 position)
-    {
-        GameObject balloon = Instantiate(balloonPrefab, position, Quaternion.Euler(-90, 0, 0));
-        balloon.transform.localScale = scaleConstant;
-        
-        // Find and store particle system references
-        Transform popTransform = balloon.transform.Find("pop");
-        Transform burstTransform = balloon.transform.Find("burst");
-        
-        if (popTransform != null)
-            popParticle = popTransform.GetComponent<ParticleSystem>();
-        if (burstTransform != null)
-            burstParticle = burstTransform.GetComponent<ParticleSystem>();
-            
-        // Get the balloon renderer
-        balloonRenderer = balloon.GetComponent<Renderer>();
-
-        // Cache multiplier TMP text under canvas/multiplier if present
-        Transform canvasTransform = balloon.transform.Find("canvas");
-        if (canvasTransform != null)
+        if (bobBalloonCoroutineRef != null)
         {
-            Transform multiplierTransform = canvasTransform.Find("multiplier");
-            if (multiplierTransform != null)
-                multiplierText = multiplierTransform.GetComponent<TMP_Text>();
-            if (multiplierText != null)
-                multiplierText.enabled = true; // ensure visible on new spawn
+            StopCoroutine(bobBalloonCoroutineRef);
+            bobBalloonCoroutineRef = null;
         }
         
-        // Initialize base position for bobbing
-        spawnedBalloon = balloon;
-        balloonBaseLocalPos = balloon.transform.localPosition;
-        StartCoroutine(BobBalloonCoroutine(balloon));
-        return balloon;
+        // Hide balloon and text immediately, but let particles play
+        balloonRenderer.enabled = false;
+        multiplierText.enabled = false;
+        
+        // Play the particle systems (keep the current scale so particles are visible)
+
+        popParticle.Play();
+        burstParticle.Play();
+
+        currentTick = 0;
+    }
+
+    private void SpawnBalloon(Vector3 position)
+    {
+        spawnedBalloon = Instantiate(balloonPrefab, position, Quaternion.Euler(-90, 0, 0));
+
+        spawnedBalloon.transform.localScale = initialScale;
+        balloonBaseLocalPos = spawnedBalloon.transform.localPosition;
+        
+        // Find and store particle system references
+        Transform popTransform = spawnedBalloon.transform.Find("pop");
+        Transform burstTransform = spawnedBalloon.transform.Find("burst");
+        
+        popParticle = popTransform.GetComponent<ParticleSystem>();
+        burstParticle = burstTransform.GetComponent<ParticleSystem>();
+            
+        // Get the balloon renderer
+        balloonRenderer = spawnedBalloon.GetComponent<Renderer>();
+        balloonRenderer.enabled = false;
+
+        // Cache multiplier TMP text under canvas/multiplier if present
+        Transform canvasTransform = spawnedBalloon.transform.Find("canvas");
+
+        Transform multiplierTransform = canvasTransform.Find("multiplier");
+        multiplierText = multiplierTransform.GetComponent<TMP_Text>();
+
+        multiplierText.enabled = false; // ensure visible on new spawn
+
+    }
+
+    public void UpdateBalloon(Game game)
+    {
+        if (!balloonRenderer.enabled) {
+            if (game.State == 0) {
+                return;
+            }
+            balloonRenderer.enabled = true;
+            multiplierText.enabled = true;
+            spawnedBalloon.transform.localScale = initialScale;
+            bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
+
+            BalloonBasedOnTick(game.Tick);
+            //size based on tick
+            return;
+        } else { //balloon is enabled
+            if (game.State == 0) {
+                PopBalloon();
+                return;
+            }
+            //size based on tick
+            if (bobBalloonCoroutineRef == null) {
+                bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
+            }
+            BalloonBasedOnTick(game.Tick);
+
+
+            return;
+        }
     }
 
     // Coroutine to bob a balloon up and down in place
@@ -232,46 +227,6 @@ public class BalloonSimulator : MonoBehaviour
         }
         if (balloon != null)
             balloon.transform.localScale = newScale;
-    }
-
-    // Coroutine to smoothly move the balloon up by deltaY units
-    private IEnumerator MoveUpCoroutine(GameObject balloon, float scaleFactor)
-    {
-        if (balloon == null) yield break;
-        if (scaleFactor == 0) yield break;
-        // Move the base position so bobbing remains additive and doesn't fight with this motion
-        Vector3 startBasePos = balloon == spawnedBalloon ? balloonBaseLocalPos : balloon.transform.localPosition;
-        Vector3 endBasePos = startBasePos + new Vector3(0f, scaleFactor, 0f);
-        float duration = scaleDuration * scaleFactor;
-        float elapsed = 0f;
-        while (elapsed < duration && balloon != null)
-        {
-            float t = elapsed / duration;
-            float expT = Mathf.Pow(t, 2.2f); // Exponential curve for smoothness
-            Vector3 newBasePos = Vector3.Lerp(startBasePos, endBasePos, expT);
-            if (balloon == spawnedBalloon)
-            {
-                balloonBaseLocalPos = newBasePos;
-            }
-            else
-            {
-                // Fallback: if moving a non-tracked balloon, set its position directly
-                balloon.transform.localPosition = newBasePos;
-            }
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        if (balloon != null)
-        {
-            if (balloon == spawnedBalloon)
-            {
-                balloonBaseLocalPos = endBasePos;
-            }
-            else
-            {
-                balloon.transform.localPosition = endBasePos;
-            }
-        }
     }
 
     // Animate multiplier text from a start value to an end value quickly

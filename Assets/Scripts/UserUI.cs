@@ -15,6 +15,8 @@ public class UserUI : MonoBehaviour
     private PlayerBet _playerBetCache;
     private EphemeralBalance _ephemeralBalanceCache;
 
+    [SerializeField] private BalloonSimulator _balloonSimulator;
+
     // Button TMP fields
     [SerializeField] private Button btnSetupGame;
     [SerializeField] private Button btnSetupUser;
@@ -95,7 +97,7 @@ public class UserUI : MonoBehaviour
             btnSetupEphemeralBalanceSubscription.onClick.AddListener(() => SetupEphemeralBalanceSubscription());
     }
 
-    public void SetupGame() //admin
+    public async void SetupGame() //admin
     {
         var initTreasuryIx = treasuryBuilder.InitializeTreasury();
         var initCrashAuthorityIx = crashBuilder.InitializeAuthority();
@@ -103,7 +105,7 @@ public class UserUI : MonoBehaviour
         var initGameIx = crashBuilder.InitializeGame();
         var delegateGameIx = crashBuilder.DelegateGame();
 
-        solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
             initTreasuryIx, 
             initCrashAuthorityIx, 
             delegateCrashAuthorityIx, 
@@ -112,14 +114,14 @@ public class UserUI : MonoBehaviour
         );  
     }
 
-    public void SetupUser() //user
+    public async void SetupUser() //user
     {
         var initBalanceIx = treasuryBuilder.InitializeBalance();
         var delegateEphemeralBalanceIx = treasuryBuilder.DelegateEphemeralBalance();
         var initPlayerBetIx = crashBuilder.InitializePlayerBet();
         var delegatePlayerBetIx = crashBuilder.DelegatePlayerBet();
 
-        solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
             initBalanceIx, delegateEphemeralBalanceIx, initPlayerBetIx, delegatePlayerBetIx
         );
     }
@@ -145,40 +147,40 @@ public class UserUI : MonoBehaviour
     }
 
     //ENSURE game delegated
-    public void SetupRandomness(byte clientSeed) //user
+    public async void SetupRandomness(byte clientSeed) //user
     {
         var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
-        solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, requestRandomnessIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, requestRandomnessIx);
     }
 
-    public void StartGame() //user
+    public async void StartGame() //user
     {
         var startGameIx = crashBuilder.StartGame();
-        solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, startGameIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, startGameIx);
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
-    public void PlaceBet(ulong amount) //user
+    public async void PlaceBet(ulong amount) //user
     {
         var placeBetIx = crashBuilder.PlaceBet(amount);
-        solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, placeBetIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, placeBetIx);
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
-    public void ClaimBet() //user
+    public async void ClaimBet() //user
     {
         var claimBetIx = crashBuilder.ClaimBet();
-        solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, claimBetIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, claimBetIx);
     }
 
     //ENSURE game delegated
-    public void Tick() //admin? 
+    public async void Tick() //admin? 
     {
         var tickIx = crashBuilder.Tick();
-        solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
     }
 
-    public void EnsureDelegation() //prevents soft lock. input: pubkey + account type.
+    public async void EnsureDelegation() //prevents soft lock. input: pubkey + account type.
     {
         /*
         checks account's owner. if delegation program, return true.
@@ -189,7 +191,7 @@ public class UserUI : MonoBehaviour
     
 
 
-    public void UponUserJoin()
+    public async void UponUserJoin()
     {
         /*
         ensure game is setup.
@@ -252,14 +254,14 @@ public class UserUI : MonoBehaviour
         _playerBetCache = newData;
         if (playerBetAccountTMP != null)
         {
-            playerBetAccountTMP.text = newData != null ? newData.ToString() : "No PlayerBet Data";
+            playerBetAccountTMP.text = newData != null ? $"PLAYERBET\nAmount: {newData.Amount}, GameNo: {newData.GameNo}" : "No PlayerBet Data";
         }
         if (newData == null)
         {
             Debug.Log("Player bet account update: null");
             return;
         }
-        Debug.Log($"Player bet updated: {newData.ToString()}");
+        Debug.Log($"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}");
     }
 
     private void OnEphemeralBalanceUpdate(EphemeralBalance newData)
@@ -267,14 +269,14 @@ public class UserUI : MonoBehaviour
         _ephemeralBalanceCache = newData;
         if (ephemeralBalanceAccountTMP != null)
         {
-            ephemeralBalanceAccountTMP.text = newData != null ? newData.ToString() : "No EphemeralBalance Data";
+            ephemeralBalanceAccountTMP.text = newData != null ? $"EPHEMERALBALANCE\nBalance: {newData.Balance}" : "No EphemeralBalance Data";
         }
         if (newData == null)
         {
             Debug.Log("Ephemeral balance account update: null");
             return;
         }
-        Debug.Log($"Ephemeral balance updated: {newData.ToString()}");
+        Debug.Log($"Balance: {newData.Balance}, Withdraw: {newData.Withdraw}, Deposit: {newData.Deposit}");
     }
 
     private void OnGameUpdate(Game newData)
@@ -282,13 +284,14 @@ public class UserUI : MonoBehaviour
         _gameCache = newData;
         if (gameAccountTMP != null)
         {
-            gameAccountTMP.text = newData != null ? newData.ToString() : "No Game Data";
+            gameAccountTMP.text = newData != null ? $"GAME\nState: {newData.State}, Tick: {newData.Tick}, GameNo: {newData.GameNo}" : "No Game Data";
         }
+        _balloonSimulator.UpdateBalloon(newData);
         if (newData == null)
         {
             Debug.Log("Game account update: null");
             return;
         }
-        Debug.Log($"Game updated: {newData.ToString()}");
+        Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
     }
 }
