@@ -32,6 +32,7 @@ public class UserUI : MonoBehaviour
     [SerializeField] private Button btnSetupGameSubscription;
     [SerializeField] private Button btnSetupPlayerBetSubscription;
     [SerializeField] private Button btnSetupEphemeralBalanceSubscription;
+    [SerializeField] private Button btnCreateOrRefreshSession;
 
     // Public fields for input values (editable in Inspector)
     [Header("Input Values")]
@@ -95,6 +96,9 @@ public class UserUI : MonoBehaviour
         
         if (btnSetupEphemeralBalanceSubscription != null)
             btnSetupEphemeralBalanceSubscription.onClick.AddListener(() => SetupEphemeralBalanceSubscription());
+
+        if (btnCreateOrRefreshSession != null)
+            btnCreateOrRefreshSession.onClick.AddListener(() => CreateOrRefreshSession());
     }
 
     public async void SetupGame() //admin
@@ -293,5 +297,14 @@ public class UserUI : MonoBehaviour
             return;
         }
         Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
+    }
+
+    /// <summary>
+    /// Calls SessionManager to create or refresh a session.
+    /// </summary>
+    public async void CreateOrRefreshSession()
+    {
+        await SessionManager.CreateNewSession();
+        Debug.Log("Session created or refreshed.");
     }
 }

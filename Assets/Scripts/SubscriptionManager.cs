@@ -9,7 +9,6 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
-using SolsticeCasino.Utils;
 using UnityEngine;
 
 /// <summary>
@@ -276,7 +275,7 @@ public class SubscriptionManager : MonoBehaviour
 
     private async Task<IStreamingRpcClient> GetStreamingClient(bool isDelegated)
     {
-        var wallet = isDelegated ? Web3Utils.EphemeralWallet : Web3.Wallet;
+        var wallet = isDelegated ? SolanaManager.EphemeralWallet : Web3.Wallet;
         
         if (wallet == null)
         {
@@ -296,7 +295,7 @@ public class SubscriptionManager : MonoBehaviour
     private IRpcClient GetRpcClient(bool isDelegated)
     {
         return isDelegated 
-            ? Web3Utils.EphemeralWallet?.ActiveRpcClient 
+            ? SolanaManager.EphemeralWallet?.ActiveRpcClient 
             : Web3.Wallet?.ActiveRpcClient;
     }
 

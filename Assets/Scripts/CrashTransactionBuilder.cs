@@ -107,7 +107,6 @@ public class CrashTransactionBuilder : MonoBehaviour
         {
             Game = game,
             Signer = user,
-            SystemProgram = SYSTEM_PROGRAM_ID
         };
         var ix = CrashProgram.InitializeGame(accounts);
         return ix;
@@ -122,7 +121,6 @@ public class CrashTransactionBuilder : MonoBehaviour
 		{
 			Signer = user,
 			Authority = authority,
-			SystemProgram = SYSTEM_PROGRAM_ID
 		};
         var ix = CrashProgram.InitializeAuthority(accounts);
         return ix;
@@ -139,7 +137,6 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Signer = user,
 			PlayerBet = playerBet,
 			Game = game,
-			SystemProgram = SYSTEM_PROGRAM_ID
 		};
         var ix = CrashProgram.InitializePlayerBet(accounts);
         return ix;
@@ -264,21 +261,26 @@ public class CrashTransactionBuilder : MonoBehaviour
     public TransactionInstruction PlaceBet(ulong amountTokens)
     {
         if (CurrentUser() == null) return null;
-        var user = CurrentUserPk();
+        var signer = CurrentUserPk();
 		var game = DeriveGameAccount();
-		var playerBet = DerivePlayerBetAccount(user);
+		var playerBet = DerivePlayerBetAccount(signer);
 		var authority = DeriveAuthorityAccount();
-        var ephemeralBalance = TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(user);
+        var ephemeralBalance = TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(signer);
+		PublicKey sessionToken = null;
+		if (SessionManager.SessionToken != null)
+		{
+			signer = SessionManager.SessionWallet.Account.PublicKey;
+			sessionToken = SessionManager.SessionWallet.SessionTokenPDA;
+		}
 
 		var accounts = new PlaceBetAccounts
 		{
-			Signer = user,
+			Signer = signer,
 			PlayerBet = playerBet,
-			SessionToken = null,
+			SessionToken = sessionToken,
 			Game = game,
 			Authority = authority,
 			EphemeralBalance = ephemeralBalance,
-			SystemProgram = SYSTEM_PROGRAM_ID
 			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
 
@@ -289,21 +291,25 @@ public class CrashTransactionBuilder : MonoBehaviour
     public TransactionInstruction ClaimBet()
     {
         if (CurrentUser() == null) return null;
-        var user = CurrentUserPk();
+        var signer = CurrentUserPk();
 		var game = DeriveGameAccount();
-		var playerBet = DerivePlayerBetAccount(user);
+		var playerBet = DerivePlayerBetAccount(signer);
 		var authority = DeriveAuthorityAccount();
-        var ephemeralBalance = TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(user);
-
+        var ephemeralBalance = TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(signer);
+		PublicKey sessionToken = null;
+		if (SessionManager.SessionToken != null)
+		{
+			signer = SessionManager.SessionWallet.Account.PublicKey;
+			sessionToken = SessionManager.SessionWallet.SessionTokenPDA;
+		}
 		var accounts = new ClaimBetAccounts
 		{
-			Signer = user,
+			Signer = signer,
 			PlayerBet = playerBet,
-			SessionToken = null,
+			SessionToken = sessionToken,
 			Game = game,
 			Authority = authority,
 			EphemeralBalance = ephemeralBalance,
-			SystemProgram = SYSTEM_PROGRAM_ID
 			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
         var ix = CrashProgram.ClaimBet(accounts);

@@ -20,7 +20,6 @@ using Crash.Program;
 using Crash;
 using Treasury.Program;
 using Treasury;
-using SolsticeCasino.Utils;
 
 public class SolanaManager : MonoBehaviour
 {
@@ -49,6 +48,7 @@ public class SolanaManager : MonoBehaviour
     private WalletBase _walletBase;
     private WalletBase _ephemeralWalletBase;
 
+    public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet.magicblock.app", "wss://devnet.magicblock.app", true);
 
 
     public CrashClient GetCrashClient() => _crashClient;
@@ -127,10 +127,10 @@ public class SolanaManager : MonoBehaviour
         {
             // Initialize main client
             _rpcClient = Web3.Instance.WalletBase.ActiveRpcClient;
-            _ephemeralRpcClient = Web3Utils.EphemeralWallet?.ActiveRpcClient;
+            _ephemeralRpcClient = EphemeralWallet?.ActiveRpcClient;
 
             _walletBase = Web3.Instance.WalletBase;
-            _ephemeralWalletBase = Web3Utils.EphemeralWallet;
+            _ephemeralWalletBase = EphemeralWallet;
 
             var streamingClient = Web3.Instance.WalletBase.ActiveStreamingRpcClient;
             if (streamingClient == null)
@@ -458,9 +458,9 @@ public class SolanaManager : MonoBehaviour
     {
         try
         {
-            var baseWallet = Web3Utils.SessionWallet?.Account?.PublicKey == null
+            var baseWallet = SessionManager.SessionToken == null
                 ? Web3.Wallet
-                : Web3Utils.SessionWallet;
+                : SessionManager.SessionWallet;
 
             var rpcClient = ephemeralFlag ? _ephemeralRpcClient : _rpcClient;
 
