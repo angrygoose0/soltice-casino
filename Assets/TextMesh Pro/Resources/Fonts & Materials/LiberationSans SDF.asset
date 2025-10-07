@@ -14,7 +14,6 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords:
   - OUTLINE_ON
-  - _ALPHA_ONLY_ON
   - _SDF_ON
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
@@ -32,12 +31,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _ALPHA_ONLY: 1
-    - _OutlineThickness: 0.2
+    - _ALPHA_ONLY: 0
+    - _OutlineThickness: 0.3
     - _OutlineWidth: 0.25
     - _SDF: 1
     - _SDFSoftness: 0.1
-    - _SDFThreshold: 0.55
+    - _SDFThreshold: 0.5
     - _ScaleRatioC: 0.29770193
     - _UnderlayDilate: 1
     - _UnderlayOffsetX: 1

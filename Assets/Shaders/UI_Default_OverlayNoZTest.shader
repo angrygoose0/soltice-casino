@@ -9,7 +9,6 @@ Shader "UI/Default_OverlayNoZTest"
 		[Toggle] _ALPHA_ONLY ("Use Alpha Only (TMP)", Float) = 0
 		[Toggle] _SDF ("Use SDF (TMP)", Float) = 1
 		_SDFThreshold ("SDF Edge", Range(0,1)) = 0.5
-		_SDFSoftness ("SDF Softness", Range(0.1,2)) = 1
 		_OutlineColor ("Outline Color", Color) = (0,0,0,1)
 		_OutlineThickness ("Outline Thickness", Range(0,1)) = 0
 		
@@ -75,7 +74,6 @@ Shader "UI/Default_OverlayNoZTest"
 			float _ALPHA_ONLY;
 			float _SDF;
 			float _SDFThreshold;
-			float _SDFSoftness;
 			fixed4 _OutlineColor;
 			float _OutlineThickness;
 
@@ -98,20 +96,18 @@ Shader "UI/Default_OverlayNoZTest"
 				half4 tex = tex2D(_MainTex, IN.texcoord);
 				fixed4 color;
 				
-				// SDF path for crisp TMP distance field fonts with optional outline
+				// SDF path for pixel-perfect TMP distance field fonts with optional outline (NES style)
 				if (_SDF > 0.5)
 				{
-					// Derive smooth threshold using screen-space derivatives
 					float dist = tex.a;
-					float w = fwidth(dist) * _SDFSoftness;
 					float t = _SDFThreshold;
-					// Face fill coverage
-					float fill = smoothstep(t - w, t + w, dist);
-					// Outline band coverage (ring): between t - _OutlineThickness and t
 					float outlineT = saturate(t - _OutlineThickness);
-					float outer = smoothstep(outlineT - w, outlineT + w, dist);
+					
+					// Hard-edged pixel perfect rendering (NES style)
+					float fill = step(t, dist);
+					float outer = step(outlineT, dist);
 					float outlineBand = saturate(outer - fill);
-					// Compose premultiplied-style color contributions for smooth blending
+					// Compose color
 					float3 faceRGB = IN.color.rgb * fill;
 					float3 outlineRGB = _OutlineColor.rgb * outlineBand;
 					color.rgb = faceRGB + outlineRGB;
