@@ -5,428 +5,88 @@ using Solana.Unity.Wallet;
 using TMPro;
 using System.Collections.Generic;
 using Solana.Unity.SDK;
+using System.Collections;
 
 public class CrashUI : MonoBehaviour
 {
-    [Header("Builder")]
-    [SerializeField] private CrashTransactionBuilder builder;
-    [SerializeField] private SolanaManager solanaManager;
+    private GameObject canvas;
+    public Transform currentPlayer;
 
-    [Header("Initialize")]
-    [SerializeField] private Button initializeAuthorityButton;
-    [SerializeField] private Button initializeGameButton;
-    [SerializeField] private Button initializePlayerBetButton;
-    [SerializeField] private Button startGameButton;
+    [SerializeField] private List<GameObject> chipButtons;
+    [SerializeField] private GameObject betButton;
 
-    [Header("Delegation (optional inputs shared)")]
-    [SerializeField] private InputField delegateCommitFrequencyMsInput; // optional
-    [SerializeField] private InputField delegateValidatorPubkeyInput;   // optional
-    [SerializeField] private Button delegateAuthorityButton;
-    [SerializeField] private Button delegateGameButton;
-    [SerializeField] private Button delegatePlayerBetButton;
-
-    [Header("Game Loop")]
-    [SerializeField] private Button tickButton;
-
-    [Header("Randomness")]
-    [SerializeField] private Button requestRandomnessButton;
-    [SerializeField] private InputField requestRandomnessSeedInput; // byte 0-255
-
-    [Header("Betting")]
-    [SerializeField] private Button placeBetButton;
-    [SerializeField] private InputField placeBetAmountInput;
-    [SerializeField] private Button claimBetButton;
-
-    [Header("Fetch")]
-    [SerializeField] private Button getGameDataButton;
-    [SerializeField] private Button getPlayerBetButton;
-
-    [Header("Feedback (optional)")]
-    [SerializeField] private TextMeshProUGUI statusTMPText;
-
-    // Cached data from fetches
-    private Crash.Accounts.Game _cachedGame;
-    private Crash.Accounts.PlayerBet _cachedPlayerBet;
-
-
-    private void OnEnable()
+    [Header("Distance Scale Settings")]
+    public float minDistance = 10f;
+    public float maxDistance = 30f; // Distance at which UI is completely shrunk
+    
+    [Header("Scale Animation Settings")]
+    [SerializeField] private float scaleDuration = 0.7f;
+    [SerializeField] private float overshootStrength = 0.8f; // controls how far past target it goes
+    
+    private Vector3 originalCanvasScale;
+    private Coroutine scaleCoroutine;
+    private bool isInRange = false;
+    
+    private void Start()
     {
-        if (initializeAuthorityButton != null) initializeAuthorityButton.onClick.AddListener(OnClickInitializeAuthority);
-        if (initializeGameButton != null) initializeGameButton.onClick.AddListener(OnClickInitializeGame);
-        if (initializePlayerBetButton != null) initializePlayerBetButton.onClick.AddListener(OnClickInitializePlayerBet);
-        if (startGameButton != null) startGameButton.onClick.AddListener(OnClickStartGame);
-
-        if (delegateAuthorityButton != null) delegateAuthorityButton.onClick.AddListener(OnClickDelegateAuthority);
-        if (delegateGameButton != null) delegateGameButton.onClick.AddListener(OnClickDelegateGame);
-        if (delegatePlayerBetButton != null) delegatePlayerBetButton.onClick.AddListener(OnClickDelegatePlayerBet);
-
-        if (tickButton != null) tickButton.onClick.AddListener(OnClickTick);
-
-        if (requestRandomnessButton != null) requestRandomnessButton.onClick.AddListener(OnClickRequestRandomness);
-
-        if (placeBetButton != null) placeBetButton.onClick.AddListener(OnClickPlaceBet);
-        if (claimBetButton != null) claimBetButton.onClick.AddListener(OnClickClaimBet);
-
-        if (getGameDataButton != null) getGameDataButton.onClick.AddListener(OnClickGetGameData);
-        if (getPlayerBetButton != null) getPlayerBetButton.onClick.AddListener(OnClickGetPlayerBet);
-
-        CacheOriginalButtonTexts();
-        RefreshButtons();
+        canvas = transform.Find("canvas").gameObject;
+        originalCanvasScale = canvas.transform.localScale;
+        
+        // Start with canvas scaled to zero (assuming player starts out of range)
+        canvas.transform.localScale = Vector3.zero;
     }
-
-    private void OnDisable()
+    
+    private void Update()
     {
-        if (initializeAuthorityButton != null) initializeAuthorityButton.onClick.RemoveListener(OnClickInitializeAuthority);
-        if (initializeGameButton != null) initializeGameButton.onClick.RemoveListener(OnClickInitializeGame);
-        if (initializePlayerBetButton != null) initializePlayerBetButton.onClick.RemoveListener(OnClickInitializePlayerBet);
-        if (startGameButton != null) startGameButton.onClick.RemoveListener(OnClickStartGame);
-
-        if (delegateAuthorityButton != null) delegateAuthorityButton.onClick.RemoveListener(OnClickDelegateAuthority);
-        if (delegateGameButton != null) delegateGameButton.onClick.RemoveListener(OnClickDelegateGame);
-        if (delegatePlayerBetButton != null) delegatePlayerBetButton.onClick.RemoveListener(OnClickDelegatePlayerBet);
-
-        if (tickButton != null) tickButton.onClick.RemoveListener(OnClickTick);
-
-        if (requestRandomnessButton != null) requestRandomnessButton.onClick.RemoveListener(OnClickRequestRandomness);
-
-        if (placeBetButton != null) placeBetButton.onClick.RemoveListener(OnClickPlaceBet);
-        if (claimBetButton != null) claimBetButton.onClick.RemoveListener(OnClickClaimBet);
-
-        if (getGameDataButton != null) getGameDataButton.onClick.RemoveListener(OnClickGetGameData);
-        if (getPlayerBetButton != null) getPlayerBetButton.onClick.RemoveListener(OnClickGetPlayerBet);
-    }
-
-    public void SetBuilder(CrashTransactionBuilder newBuilder)
-    {
-        builder = newBuilder;
-        RefreshButtons();
-    }
-
-    public void RefreshButtons()
-    {
-        SetInteractable(initializeAuthorityButton, true);
-        SetInteractable(initializeGameButton, true);
-        SetInteractable(initializePlayerBetButton, true);
-        SetInteractable(startGameButton, true);
-        SetInteractable(delegateAuthorityButton, true);
-        SetInteractable(delegateGameButton, true);
-        SetInteractable(delegatePlayerBetButton, true);
-        SetInteractable(tickButton, true);
-        SetInteractable(requestRandomnessButton, true);
-        SetInteractable(placeBetButton, true);
-        SetInteractable(claimBetButton, true);
-        SetInteractable(getGameDataButton, true);
-        SetInteractable(getPlayerBetButton, true);
-    }
-
-    private static void SetInteractable(Button button, bool interactable)
-    {
-        if (button != null) button.interactable = interactable;
-    }
-
-    private async void OnClickInitializeAuthority()
-    {
-        await RunAsync(initializeAuthorityButton, async () =>
+        if (currentPlayer == null || canvas == null) return;
+        
+        // Calculate distance between canvas and currentPlayer
+        float distance = Vector3.Distance(canvas.transform.position, currentPlayer.position);
+        
+        // Check if player is in range
+        bool shouldBeInRange = distance <= maxDistance;
+        
+        // If range state changed, animate the transition
+        if (shouldBeInRange != isInRange)
         {
-            var ix = builder.InitializeAuthority();
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickInitializeGame()
-    {
-        await RunAsync(initializeGameButton, async () =>
-        {
-            var ix = builder.InitializeGame();
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickInitializePlayerBet()
-    {
-        await RunAsync(initializePlayerBetButton, async () =>
-        {
-            var ix = builder.InitializePlayerBet();
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickStartGame()
-    {
-        await RunAsync(startGameButton, async () =>
-        {
-            var ix = builder.StartGame();
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickDelegateAuthority()
-    {
-        uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
-        PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegateAuthorityButton, async () =>
-        {
-            var ix = builder.DelegateAuthority(commitMs, validator);
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickDelegateGame()
-    {
-        uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
-        PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegateGameButton, async () =>
-        {
-            var ix = builder.DelegateGame(commitMs, validator);
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickDelegatePlayerBet()
-    {
-        uint commitMs = ParseUint(delegateCommitFrequencyMsInput, 1000u);
-        PublicKey validator = ParsePublicKey(delegateValidatorPubkeyInput);
-        await RunAsync(delegatePlayerBetButton, async () =>
-        {
-            var ix = builder.DelegatePlayerBet(commitMs, validator);
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickTick()
-    {
-        await RunAsync(tickButton, async () =>
-        {
-            var ix = builder.Tick();
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickRequestRandomness()
-    {
-        byte seed = ParseByte(requestRandomnessSeedInput, 0);
-        await RunAsync(requestRandomnessButton, async () =>
-        {
-            var ix = builder.RequestRandomness(seed);
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickPlaceBet()
-    {
-        ulong amount = ParseUlong(placeBetAmountInput, 0ul);
-        await RunAsync(placeBetButton, async () =>
-        {
-            var ix = builder.PlaceBet(amount);
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickClaimBet()
-    {
-        await RunAsync(claimBetButton, async () =>
-        {
-            var ix = builder.ClaimBet();
-            if (ix == null) return null;
-            return await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, ix);
-        });
-    }
-
-    private async void OnClickGetGameData()
-    {
-        var game = CrashTransactionBuilder.DeriveGameAccount();
-        await RunFetchAsync(getGameDataButton, async () => await builder.GetGameData(game), result =>
-        {
-            _cachedGame = result;
-            return result != null ? "Fetched Game" : "Game not found";
-        });
-    }
-
-    private async void OnClickGetPlayerBet()
-    {
-        if (Web3.Account == null)
-        {
-            SetStatus("Wallet not connected");
-            return;
-        }
-        var userPk = Web3.Account.PublicKey;
-        await RunFetchAsync(getPlayerBetButton, async () => await builder.GetPlayerBet(userPk), result =>
-        {
-            _cachedPlayerBet = result;
-            return result != null ? "Fetched PlayerBet" : "PlayerBet not found";
-        });
-    }
-
-    private readonly Dictionary<Button, string> _originalButtonText = new Dictionary<Button, string>();
-
-    private void CacheOriginalButtonTexts()
-    {
-        CacheOriginalText(initializeAuthorityButton);
-        CacheOriginalText(initializeGameButton);
-        CacheOriginalText(initializePlayerBetButton);
-        CacheOriginalText(startGameButton);
-        CacheOriginalText(delegateAuthorityButton);
-        CacheOriginalText(delegateGameButton);
-        CacheOriginalText(delegatePlayerBetButton);
-        CacheOriginalText(tickButton);
-        CacheOriginalText(requestRandomnessButton);
-        CacheOriginalText(placeBetButton);
-        CacheOriginalText(claimBetButton);
-        CacheOriginalText(getGameDataButton);
-        CacheOriginalText(getPlayerBetButton);
-    }
-
-    private void CacheOriginalText(Button button)
-    {
-        if (button == null) return;
-        if (_originalButtonText.ContainsKey(button)) return;
-        var textComp = FindChildTMPText(button);
-        if (textComp != null)
-        {
-            _originalButtonText[button] = textComp.text;
-        }
-    }
-
-    private TextMeshProUGUI FindChildTMPText(Button button)
-    {
-        if (button == null) return null;
-        return button.GetComponentInChildren<TextMeshProUGUI>();
-    }
-
-    private void SetButtonText(Button button, string newText)
-    {
-        if (button == null) return;
-        var textComp = FindChildTMPText(button);
-        if (textComp == null) return;
-        textComp.text = newText;
-    }
-
-    private async Task RunAsync(Button contextButton, System.Func<Task<string>> func)
-    {
-        string originalText = null;
-        if (contextButton != null)
-        {
-            CacheOriginalText(contextButton);
-            _originalButtonText.TryGetValue(contextButton, out originalText);
-            SetButtonText(contextButton, "Processing...");
-        }
-        SetAllButtonsInteractable(false);
-        try
-        {
-            string signature = await func();
-            var message = string.IsNullOrEmpty(signature) ? "Transaction failed" : $"Tx: {signature}";
-            SetStatus(message);
-        }
-        finally
-        {
-            if (contextButton != null)
+            isInRange = shouldBeInRange;
+            
+            // Stop previous coroutine if running
+            if (scaleCoroutine != null)
             {
-                if (!string.IsNullOrEmpty(originalText))
-                {
-                    SetButtonText(contextButton, originalText);
-                }
+                StopCoroutine(scaleCoroutine);
             }
-            SetAllButtonsInteractable(true);
+            
+            // Start new scale animation
+            float targetScale = isInRange ? 1f : 0f;
+            scaleCoroutine = StartCoroutine(SmoothScaleCoroutine(targetScale));
         }
     }
-
-    private async Task RunFetchAsync<T>(Button contextButton, System.Func<Task<T>> fetch, System.Func<T, string> makeMessage)
+    
+    // Smoothly scales the canvas with overshoot effect (same as BalloonSimulator)
+    private IEnumerator SmoothScaleCoroutine(float scaleFactor)
     {
-        string originalText = null;
-        if (contextButton != null)
+        if (canvas == null) yield break;
+        
+        Vector3 currentScale = canvas.transform.localScale;
+        Vector3 targetScale = originalCanvasScale * scaleFactor;
+        float elapsed = 0f;
+        
+        while (elapsed < scaleDuration && canvas != null)
         {
-            CacheOriginalText(contextButton);
-            _originalButtonText.TryGetValue(contextButton, out originalText);
-            SetButtonText(contextButton, "Loading...");
+            float t = elapsed / scaleDuration;
+            // Ease-out exponential time mapping for quick start, gentle finish
+            float expoEaseOutT = 1f - Mathf.Pow(1f - t, 2.2f);
+            // Apply a gentle overshoot (back) so it goes a bit past and corrects
+            float s = overshootStrength;
+            float p = expoEaseOutT - 1f;
+            float overshootT = p * p * ((s + 1f) * p + s) + 1f; // easeOutBack
+            canvas.transform.localScale = Vector3.LerpUnclamped(currentScale, targetScale, overshootT);
+            elapsed += Time.deltaTime;
+            yield return null;
         }
-        SetAllButtonsInteractable(false);
-        try
-        {
-            T result = await fetch();
-            string message = makeMessage != null ? makeMessage(result) : (result != null ? "Fetch succeeded" : "Fetch failed");
-            SetStatus(message);
-        }
-        finally
-        {
-            if (contextButton != null)
-            {
-                if (!string.IsNullOrEmpty(originalText))
-                {
-                    SetButtonText(contextButton, originalText);
-                }
-            }
-            SetAllButtonsInteractable(true);
-        }
-    }
-
-    private void SetAllButtonsInteractable(bool interactable)
-    {
-        SetInteractable(initializeAuthorityButton, interactable);
-        SetInteractable(initializeGameButton, interactable);
-        SetInteractable(initializePlayerBetButton, interactable);
-        SetInteractable(startGameButton, interactable);
-        SetInteractable(delegateAuthorityButton, interactable);
-        SetInteractable(delegateGameButton, interactable);
-        SetInteractable(delegatePlayerBetButton, interactable);
-        SetInteractable(tickButton, interactable);
-        SetInteractable(requestRandomnessButton, interactable);
-        SetInteractable(placeBetButton, interactable);
-        SetInteractable(claimBetButton, interactable);
-        SetInteractable(getGameDataButton, interactable);
-        SetInteractable(getPlayerBetButton, interactable);
-    }
-
-    private void SetStatus(string message)
-    {
-        if (statusTMPText != null) statusTMPText.text = message;
-        else Debug.Log($"CrashUI: {message}");
-    }
-
-    private static ulong ParseUlong(InputField input, ulong defaultValue)
-    {
-        if (input == null || string.IsNullOrWhiteSpace(input.text)) return defaultValue;
-        if (ulong.TryParse(input.text, out var result)) return result;
-        return defaultValue;
-    }
-
-    private static uint ParseUint(InputField input, uint defaultValue)
-    {
-        if (input == null || string.IsNullOrWhiteSpace(input.text)) return defaultValue;
-        if (uint.TryParse(input.text, out var result)) return result;
-        return defaultValue;
-    }
-
-    private static byte ParseByte(InputField input, byte defaultValue)
-    {
-        if (input == null || string.IsNullOrWhiteSpace(input.text)) return defaultValue;
-        if (byte.TryParse(input.text, out var result)) return result;
-        return defaultValue;
-    }
-
-    private static PublicKey ParsePublicKey(InputField input)
-    {
-        if (input == null) return null;
-        var value = input.text;
-        if (string.IsNullOrWhiteSpace(value)) return null;
-        try
-        {
-            return new PublicKey(value.Trim());
-        }
-        catch
-        {
-            return null;
-        }
+        
+        if (canvas != null)
+            canvas.transform.localScale = targetScale;
     }
 }
-
-
