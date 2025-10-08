@@ -39,13 +39,13 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 0
-    - _GlowIntensity: 3
+    - _GlowIntensity: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Scale: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 0}
-    - _GlowColor: {r: 1, g: 0.17254902, b: 0.8745098, a: 1}
+    - _GlowColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &4530602687848146709
