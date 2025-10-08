@@ -39,7 +39,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 0
-    - _GlowIntensity: 1
+    - _GlowIntensity: 3
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Scale: 1

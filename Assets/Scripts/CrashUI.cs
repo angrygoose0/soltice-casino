@@ -6,6 +6,7 @@ using TMPro;
 using System.Collections.Generic;
 using Solana.Unity.SDK;
 using System.Collections;
+ 
 
 public class CrashUI : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class CrashUI : MonoBehaviour
 
     [SerializeField] private List<GameObject> chipButtons;
     [SerializeField] private GameObject betButton;
+    [SerializeField] private InteractableObjects interactableObjects;
 
     [Header("Distance Scale Settings")]
     public float minDistance = 10f;
@@ -23,9 +25,12 @@ public class CrashUI : MonoBehaviour
     [SerializeField] private float scaleDuration = 0.7f;
     [SerializeField] private float overshootStrength = 0.8f; // controls how far past target it goes
     
+    
     private Vector3 originalCanvasScale;
     private Coroutine scaleCoroutine;
     private bool isInRange = false;
+
+ 
     
     private void Start()
     {
@@ -34,6 +39,36 @@ public class CrashUI : MonoBehaviour
         
         // Start with canvas scaled to zero (assuming player starts out of range)
         canvas.transform.localScale = Vector3.zero;
+        
+        // Register chip 3D children as interactables
+        RegisterChipChildren();
+    }
+    
+    private void RegisterChipChildren()
+    {
+        if (interactableObjects == null) return;
+
+        List<GameObject> collected = new List<GameObject>();
+        foreach (GameObject chipButton in chipButtons)
+        {
+            if (chipButton == null) continue;
+
+            // collect all child gameobjects (excluding the chipButton itself) that have a Renderer
+            foreach (Transform child in chipButton.transform.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == chipButton.transform) continue;
+                GameObject go = child.gameObject;
+                if (go.GetComponent<Renderer>() != null)
+                {
+                    collected.Add(go);
+                }
+            }
+        }
+
+        if (collected.Count > 0)
+        {
+            interactableObjects.AddInteractables(collected);
+        }
     }
     
     private void Update()

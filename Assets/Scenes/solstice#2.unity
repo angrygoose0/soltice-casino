@@ -1315,7 +1315,6 @@ GameObject:
   - component: {fileID: 336990191}
   - component: {fileID: 336990190}
   - component: {fileID: 336990192}
-  - component: {fileID: 336990193}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -1432,18 +1431,6 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!114 &336990193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 336990189}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &410305205
 GameObject:
   m_ObjectHideFlags: 0
@@ -4304,6 +4291,7 @@ MonoBehaviour:
   - {fileID: 413461713}
   - {fileID: 645657537}
   betButton: {fileID: 1873303157}
+  interactableObjects: {fileID: 1102202717}
   minDistance: 5
   maxDistance: 10
   scaleDuration: 0.7
@@ -4320,6 +4308,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 854da03c8739c4ef880565474d009e19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaterialManager
+--- !u!114 &1102202717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1102202711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c9ab48d68c674191906e81b5baa9739, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableObjects
+  interactables: []
+  materialManager: {fileID: 1102202716}
+  idleGlowIntensity: 2
+  idleGlowScale: 1.11
+  idleGlowColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverGlowIntensity: 3
+  hoverGlowScale: 1.2
+  hoverGlowColor: {r: 0, g: 1, b: 1, a: 1}
+  cam: {fileID: 1222202740}
 --- !u!1 &1190269373
 GameObject:
   m_ObjectHideFlags: 0
@@ -4591,7 +4600,7 @@ GameObject:
   - component: {fileID: 1222202741}
   m_Layer: 0
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5609,7 +5618,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1425998381}
   - component: {fileID: 1425998382}
-  - component: {fileID: 1425998383}
   m_Layer: 0
   m_Name: Reflection
   m_TagString: Untagged
@@ -5665,18 +5673,6 @@ ReflectionProbe:
   m_UseOcclusionCulling: 1
   m_Importance: 1
   m_CustomBakedTexture: {fileID: 0}
---- !u!114 &1425998383
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1425998380}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0ef8dc2c2eabfa4e8cb77be57a837c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1446041378
 GameObject:
   m_ObjectHideFlags: 0
@@ -6815,6 +6811,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774946219}
     m_Modifications:
+    - target: {fileID: 4216574452434613617, guid: bf954e34b7894a8458648115afe6675a, type: 3}
+      propertyPath: m_Convex
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6961040462844469465, guid: bf954e34b7894a8458648115afe6675a, type: 3}
       propertyPath: m_Name
       value: chip
@@ -7377,6 +7377,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1102202716}
+    - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1102202717}
   m_SourcePrefab: {fileID: 100100000, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
 --- !u!1 &1942366584
 GameObject:
