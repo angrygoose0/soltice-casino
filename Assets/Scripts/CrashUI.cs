@@ -13,8 +13,10 @@ public class CrashUI : MonoBehaviour
     private GameObject canvas;
     public Transform currentPlayer;
 
-    [SerializeField] private List<GameObject> chipButtons;
-    [SerializeField] private GameObject betButton;
+    public GameObject beforeBettingGroup; //after user connected
+    public GameObject beforeStartingGroup; //after user bet
+    public GameObject duringGameGroup; //while game is running
+
 
     [Header("Distance Scale Settings")]
     public float minDistance = 10f;

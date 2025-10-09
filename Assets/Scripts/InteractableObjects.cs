@@ -141,6 +141,23 @@ public class InteractableObjects : MonoBehaviour
                 // Not a profiled interactable; treat as no hover
                 hitObjectOverall = null;
             }
+
+            // On click down edge, call interact handler if present
+            bool clickStartedThisFrame = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+            if (clickStartedThisFrame)
+            {
+                Transform t = hitObjectOverall != null ? hitObjectOverall.transform : null;
+                while (t != null)
+                {
+                    IInteractable interactable = t.GetComponent<IInteractable>();
+                    if (interactable != null)
+                    {
+                        interactable.OnInteract();
+                        break;
+                    }
+                    t = t.parent;
+                }
+            }
             if (lastHoveredObject != hitObjectOverall)
             {
                 if (hitObjectOverall != null)

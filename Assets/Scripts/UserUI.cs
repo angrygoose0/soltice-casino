@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Crash.Accounts;
 using Treasury.Accounts;
 using Solana.Unity.SDK;
+using Solana.Unity.Wallet;
 using TMPro;
 
 public class UserUI : MonoBehaviour
@@ -38,7 +39,7 @@ public class UserUI : MonoBehaviour
     [Header("Input Values")]
     public ulong depositAmount = 1000;
     public ulong withdrawAmount = 1000;
-    public ulong betAmount = 1000;
+    public ulong betAmount = 0;
     public byte clientSeed = 42;
 
     // Account Data Display
@@ -50,6 +51,22 @@ public class UserUI : MonoBehaviour
     private void Start()
     {
         SetupButtonListeners();
+        SetupGameSubscription();
+    }
+
+    private void OnEnable()
+    {
+        Web3.OnLogin += OnWalletConnected;
+    }
+
+    private void OnDisable()
+    {
+        Web3.OnLogin -= OnWalletConnected;
+    }
+
+    private void OnWalletConnected(Account account)
+    {
+        Debug.Log("CONNECTED");
     }
 
     private void SetupButtonListeners()
@@ -74,7 +91,7 @@ public class UserUI : MonoBehaviour
             btnStartGame.onClick.AddListener(() => StartGame());
         
         if (btnPlaceBet != null)
-            btnPlaceBet.onClick.AddListener(() => PlaceBet(betAmount));
+            btnPlaceBet.onClick.AddListener(() => PlaceBet());
         
         if (btnClaimBet != null)
             btnClaimBet.onClick.AddListener(() => ClaimBet());
@@ -164,9 +181,9 @@ public class UserUI : MonoBehaviour
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
-    public async void PlaceBet(ulong amount) //user
+    public async void PlaceBet() //user
     {
-        var placeBetIx = crashBuilder.PlaceBet(amount);
+        var placeBetIx = crashBuilder.PlaceBet(betAmount);
         await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, placeBetIx);
     }
 

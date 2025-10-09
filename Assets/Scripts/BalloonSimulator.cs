@@ -135,9 +135,18 @@ public class BalloonSimulator : MonoBehaviour
 
     private void SpawnBalloon(Vector3 position)
     {
-        spawnedBalloon = Instantiate(balloonPrefab, position, Quaternion.Euler(-90, 0, 0));
-
-        spawnedBalloon.transform.localScale = initialScale;
+		spawnedBalloon = Instantiate(balloonPrefab);
+		spawnedBalloon.transform.SetParent(transform, false);
+		spawnedBalloon.transform.localPosition = new Vector3(0f, 0.75f, 0f);
+		spawnedBalloon.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+		{
+			Vector3 p = transform.lossyScale;
+			spawnedBalloon.transform.localScale = new Vector3(
+				initialScale.x / p.x,
+				initialScale.y / p.y,
+				initialScale.z / p.z
+			);
+		}
         balloonBaseLocalPos = spawnedBalloon.transform.localPosition;
         
         // Find and store particle system references
@@ -169,7 +178,14 @@ public class BalloonSimulator : MonoBehaviour
             }
             balloonRenderer.enabled = true;
             multiplierText.enabled = true;
-            spawnedBalloon.transform.localScale = initialScale;
+			{
+				Vector3 p = transform.lossyScale;
+				spawnedBalloon.transform.localScale = new Vector3(
+					initialScale.x / p.x,
+					initialScale.y / p.y,
+					initialScale.z / p.z
+				);
+			}
             bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
 
             BalloonBasedOnTick(game.Tick);
@@ -206,11 +222,17 @@ public class BalloonSimulator : MonoBehaviour
     }
 
 	// Smoothly scales the balloon to a new scale (uniform, can be up or down)
-    private IEnumerator SmoothScaleCoroutine(GameObject balloon, float scaleFactor)
+	private IEnumerator SmoothScaleCoroutine(GameObject balloon, float scaleFactor)
     {
         if (balloon == null) yield break;
-        Vector3 originalScale = balloon.transform.localScale;
-        Vector3 newScale = scaleConstant * scaleFactor;
+		Vector3 originalScale = balloon.transform.localScale;
+		Vector3 worldScaleTarget = scaleConstant * scaleFactor;
+		Vector3 parentScale = balloon.transform.parent.lossyScale;
+		Vector3 newLocalScale = new Vector3(
+			worldScaleTarget.x / parentScale.x,
+			worldScaleTarget.y / parentScale.y,
+			worldScaleTarget.z / parentScale.z
+		);
         float elapsed = 0f;
         while (elapsed < scaleDuration && balloon != null)
         {
@@ -221,12 +243,12 @@ public class BalloonSimulator : MonoBehaviour
 			float s = overshootStrength;
 			float p = expoEaseOutT - 1f;
 			float overshootT = p * p * ((s + 1f) * p + s) + 1f; // easeOutBack
-			balloon.transform.localScale = Vector3.LerpUnclamped(originalScale, newScale, overshootT);
+			balloon.transform.localScale = Vector3.LerpUnclamped(originalScale, newLocalScale, overshootT);
             elapsed += Time.deltaTime;
             yield return null;
         }
         if (balloon != null)
-            balloon.transform.localScale = newScale;
+			balloon.transform.localScale = newLocalScale;
     }
 
     // Animate multiplier text from a start value to an end value quickly
