@@ -48,6 +48,9 @@ public class UserUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI playerBetAccountTMP;
     [SerializeField] private TextMeshProUGUI ephemeralBalanceAccountTMP;
 
+    [SerializeField] private TextMeshProUGUI playerTextTMP;
+
+
     private void Start()
     {
         SetupButtonListeners();
@@ -275,14 +278,31 @@ public class UserUI : MonoBehaviour
         _playerBetCache = newData;
         if (playerBetAccountTMP != null)
         {
-            playerBetAccountTMP.text = newData != null ? $"PLAYERBET\nAmount: {newData.Amount}, GameNo: {newData.GameNo}" : "No PlayerBet Data";
+            playerBetAccountTMP.text = $"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}";
         }
-        if (newData == null)
-        {
-            Debug.Log("Player bet account update: null");
-            return;
-        }
+        UpdateUserBetText(newData, _gameCache);
         Debug.Log($"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}");
+    }
+
+    private void UpdateUserBetText(PlayerBet playerBet, Game game)
+    {
+        if (playerBet.Amount == 0) {
+            playerTextTMP.enabled = false;
+            return;
+        } else {
+            playerTextTMP.enabled = true;
+
+            if (playerBet.GameNo != game.GameNo) {
+                playerTextTMP.text = $"Bet: {playerBet.Amount}";
+
+                playerTextTMP.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                //make it transparent and the color of the text gray.
+            } else {
+                //make it opaque, but also multiply it by the multiplier + color.
+                playerTextTMP.text = $"Bet: {playerBet.Amount * System.Math.Pow(1.11, game.Tick) }";
+                playerTextTMP.color = new Color(1f, 1f, 1f, 1f);
+            }
+        }
     }
 
     private void OnEphemeralBalanceUpdate(EphemeralBalance newData)
@@ -290,12 +310,7 @@ public class UserUI : MonoBehaviour
         _ephemeralBalanceCache = newData;
         if (ephemeralBalanceAccountTMP != null)
         {
-            ephemeralBalanceAccountTMP.text = newData != null ? $"EPHEMERALBALANCE\nBalance: {newData.Balance}" : "No EphemeralBalance Data";
-        }
-        if (newData == null)
-        {
-            Debug.Log("Ephemeral balance account update: null");
-            return;
+            ephemeralBalanceAccountTMP.text = $"Balance: {newData.Balance}";
         }
         Debug.Log($"Balance: {newData.Balance}, Withdraw: {newData.Withdraw}, Deposit: {newData.Deposit}");
     }
@@ -305,14 +320,10 @@ public class UserUI : MonoBehaviour
         _gameCache = newData;
         if (gameAccountTMP != null)
         {
-            gameAccountTMP.text = newData != null ? $"GAME\nState: {newData.State}, Tick: {newData.Tick}, GameNo: {newData.GameNo}" : "No Game Data";
+            gameAccountTMP.text = $"GAME\nState: {newData.State}, Tick: {newData.Tick}, GameNo: {newData.GameNo}";
         }
         _balloonSimulator.UpdateBalloon(newData);
-        if (newData == null)
-        {
-            Debug.Log("Game account update: null");
-            return;
-        }
+        UpdateUserBetText(_playerBetCache, newData);
         Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
     }
 

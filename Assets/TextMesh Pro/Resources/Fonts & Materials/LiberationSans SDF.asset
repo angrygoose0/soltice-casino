@@ -32,7 +32,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _ALPHA_ONLY: 0
-    - _OutlineThickness: 0.3
+    - _OutlineThickness: 0
     - _OutlineWidth: 0.25
     - _SDF: 1
     - _SDFSoftness: 0.1

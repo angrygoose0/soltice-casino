@@ -1,5 +1,5 @@
 {
-  "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS",
+  "address": "5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y",
   "metadata": {
     "name": "crash",
     "version": "0.1.0",
@@ -213,38 +213,38 @@
             "program": {
               "kind": "const",
               "value": [
-                148,
-                224,
-                174,
+                73,
+                206,
+                33,
+                178,
                 245,
-                9,
-                223,
-                205,
-                85,
-                6,
-                121,
-                2,
+                103,
+                192,
+                82,
+                48,
+                151,
+                21,
                 77,
-                131,
-                37,
-                173,
-                42,
-                5,
-                124,
-                224,
-                54,
-                210,
-                102,
-                30,
-                146,
-                58,
-                152,
+                176,
+                74,
+                104,
+                221,
+                215,
+                190,
+                75,
+                177,
+                7,
+                208,
+                90,
+                241,
+                242,
+                3,
+                238,
+                73,
+                194,
                 119,
-                209,
-                108,
-                191,
-                214,
-                79
+                134,
+                216
               ]
             }
           }
@@ -344,7 +344,7 @@
         },
         {
           "name": "owner_program",
-          "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS"
+          "address": "5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y"
         },
         {
           "name": "delegation_program",
@@ -408,38 +408,38 @@
             "program": {
               "kind": "const",
               "value": [
-                148,
-                224,
-                174,
+                73,
+                206,
+                33,
+                178,
                 245,
-                9,
-                223,
-                205,
-                85,
-                6,
-                121,
-                2,
+                103,
+                192,
+                82,
+                48,
+                151,
+                21,
                 77,
-                131,
-                37,
-                173,
-                42,
-                5,
-                124,
-                224,
-                54,
-                210,
-                102,
-                30,
-                146,
-                58,
-                152,
+                176,
+                74,
+                104,
+                221,
+                215,
+                190,
+                75,
+                177,
+                7,
+                208,
+                90,
+                241,
+                242,
+                3,
+                238,
+                73,
+                194,
                 119,
-                209,
-                108,
-                191,
-                214,
-                79
+                134,
+                216
               ]
             }
           }
@@ -534,7 +534,7 @@
         },
         {
           "name": "owner_program",
-          "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS"
+          "address": "5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y"
         },
         {
           "name": "delegation_program",
@@ -598,38 +598,38 @@
             "program": {
               "kind": "const",
               "value": [
-                148,
-                224,
-                174,
+                73,
+                206,
+                33,
+                178,
                 245,
-                9,
-                223,
-                205,
-                85,
-                6,
-                121,
-                2,
+                103,
+                192,
+                82,
+                48,
+                151,
+                21,
                 77,
-                131,
-                37,
-                173,
-                42,
-                5,
-                124,
-                224,
-                54,
-                210,
-                102,
-                30,
-                146,
-                58,
-                152,
+                176,
+                74,
+                104,
+                221,
+                215,
+                190,
+                75,
+                177,
+                7,
+                208,
+                90,
+                241,
+                242,
+                3,
+                238,
+                73,
+                194,
                 119,
-                209,
-                108,
-                191,
-                214,
-                79
+                134,
+                216
               ]
             }
           }
@@ -734,7 +734,7 @@
         },
         {
           "name": "owner_program",
-          "address": "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS"
+          "address": "5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y"
         },
         {
           "name": "delegation_program",
@@ -1337,6 +1337,11 @@
       "code": 6007,
       "name": "RandomnessNotResolved",
       "msg": "Randomness not resolved"
+    },
+    {
+      "code": 6008,
+      "name": "AlreadyClaimed",
+      "msg": "Bet already claimed"
     }
   ],
   "types": [
@@ -1402,6 +1407,22 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "current_players",
+            "type": "u32"
+          },
+          {
+            "name": "current_total_bet",
+            "type": "u64"
+          },
+          {
+            "name": "next_players",
+            "type": "u32"
+          },
+          {
+            "name": "next_total_bet",
+            "type": "u64"
           }
         ]
       }
@@ -1430,6 +1451,10 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
           }
         ]
       }

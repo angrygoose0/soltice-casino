@@ -17,6 +17,8 @@ public class BalloonSimulator : MonoBehaviour
     private ParticleSystem burstParticle;
     private Renderer balloonRenderer;
     private TMP_Text multiplierText;
+    private TMP_Text playerCountText;
+    private TMP_Text totalBetText;
 
     private Coroutine smoothScaleCoroutineRef;
     private Coroutine multiplierCountCoroutineRef;
@@ -162,17 +164,24 @@ public class BalloonSimulator : MonoBehaviour
 
         // Cache multiplier TMP text under canvas/multiplier if present
         Transform canvasTransform = spawnedBalloon.transform.Find("canvas");
+        Transform canvasExtraTransform = spawnedBalloon.transform.Find("extraCanvas");
 
         Transform multiplierTransform = canvasTransform.Find("multiplier");
         multiplierText = multiplierTransform.GetComponent<TMP_Text>();
 
+        playerCountText = canvasExtraTransform.Find("playerCount").GetComponent<TMP_Text>();
+        totalBetText = canvasExtraTransform.Find("totalBet").GetComponent<TMP_Text>();
+
         multiplierText.enabled = false; // ensure visible on new spawn
+        playerCountText.enabled = false;
+        totalBetText.enabled = false;
 
     }
 
     public void UpdateBalloon(Game game)
     {
         if (!balloonRenderer.enabled) {
+
             if (game.State == 0) {
                 return;
             }
@@ -189,6 +198,16 @@ public class BalloonSimulator : MonoBehaviour
             bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
 
             BalloonBasedOnTick(game.Tick);
+
+            if (game.CurrentPlayers > 0) {
+                playerCountText.enabled = true;
+                playerCountText.text = game.CurrentPlayers.ToString();
+                totalBetText.enabled = true;
+                totalBetText.text = game.CurrentTotalBet.ToString();
+            } else {
+                playerCountText.enabled = false;
+                totalBetText.enabled = false;
+            }
             //size based on tick
             return;
         } else { //balloon is enabled
@@ -201,6 +220,7 @@ public class BalloonSimulator : MonoBehaviour
                 bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
             }
             BalloonBasedOnTick(game.Tick);
+            //update totalbet using the multiplier..
 
 
             return;

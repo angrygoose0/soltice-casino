@@ -69,6 +69,14 @@ namespace Crash
 
             public byte Bump { get; set; }
 
+            public uint CurrentPlayers { get; set; }
+
+            public ulong CurrentTotalBet { get; set; }
+
+            public uint NextPlayers { get; set; }
+
+            public ulong NextTotalBet { get; set; }
+
             public static Game Deserialize(ReadOnlySpan<byte> _data)
             {
                 int offset = 0;
@@ -90,6 +98,14 @@ namespace Crash
                 offset += 8;
                 result.Bump = _data.GetU8(offset);
                 offset += 1;
+                result.CurrentPlayers = _data.GetU32(offset);
+                offset += 4;
+                result.CurrentTotalBet = _data.GetU64(offset);
+                offset += 8;
+                result.NextPlayers = _data.GetU32(offset);
+                offset += 4;
+                result.NextTotalBet = _data.GetU64(offset);
+                offset += 8;
                 return result;
             }
         }
@@ -108,6 +124,8 @@ namespace Crash
             public PublicKey Player { get; set; }
 
             public byte Bump { get; set; }
+
+            public bool Claimed { get; set; }
 
             public static PlayerBet Deserialize(ReadOnlySpan<byte> _data)
             {
@@ -129,6 +147,8 @@ namespace Crash
                 result.Player = _data.GetPubKey(offset);
                 offset += 32;
                 result.Bump = _data.GetU8(offset);
+                offset += 1;
+                result.Claimed = _data.GetBool(offset);
                 offset += 1;
                 return result;
             }
@@ -182,7 +202,8 @@ namespace Crash
             GameAlreadyStarted = 6004U,
             InsufficientBalance = 6005U,
             ActiveBetInProgress = 6006U,
-            RandomnessNotResolved = 6007U
+            RandomnessNotResolved = 6007U,
+            AlreadyClaimed = 6008U
         }
     }
 
@@ -368,7 +389,7 @@ namespace Crash
 
         protected override Dictionary<uint, ProgramError<CrashErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, };
+            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, {6008U, new ProgramError<CrashErrorKind>(CrashErrorKind.AlreadyClaimed, "Bet already claimed")}, };
         }
     }
 
@@ -412,7 +433,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -429,7 +450,7 @@ namespace Crash
 
             public PublicKey Game { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -446,7 +467,7 @@ namespace Crash
 
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -546,7 +567,7 @@ namespace Crash
 
         public static class CrashProgram
         {
-            public const string ID = "B2A3veWa46Esq2xYuo5urmRNgX3bm2Z2PUcongdJyYiS";
+            public const string ID = "5y74pMcVWkQ11vGzD1jSCGSEkXwZwXy71JcafVAwyF5y";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackRandomness(CallbackRandomnessAccounts accounts, byte[] randomness, PublicKey programId = null)
             {
                 programId ??= new(ID);

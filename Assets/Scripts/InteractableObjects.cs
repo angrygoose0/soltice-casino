@@ -1,12 +1,23 @@
 using System.Collections.Generic;
+using System.Globalization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 
 public class InteractableObjects : MonoBehaviour
 {
+    public enum ActionType
+    {
+        Add,
+        Set,
+        PlaceBet,
+        StartGame,
+        ClaimBet
+    }
+
     [System.Serializable]
-    private struct GlowSettings
+    public struct GlowSettings
     {
         public float intensity;
         public float scale;
@@ -14,7 +25,7 @@ public class InteractableObjects : MonoBehaviour
     }
 
     [System.Serializable]
-    private class GlowProfile
+    public class GlowProfile
     {
         public GlowSettings idle;
         public GlowSettings hover;
@@ -22,65 +33,83 @@ public class InteractableObjects : MonoBehaviour
     }
 
     [System.Serializable]
-    private class TagGlowProfile
+    public class NamedGlowProfile
     {
-        public string tag;
+        public string name;
         public GlowProfile profile;
     }
 
-    [SerializeField] private MaterialManager materialManager;
+    [System.Serializable]
+    public class InteractableEntry
+    {
+        public GameObject gameObject;
+        public string glowProfileName;
+        public ActionType actionType;
+        
+        [Header("Action Parameters (if needed)")]
+        public ulong amount; // Used for Add/Set actions
+        
+        // Cached components (non-serialized)
+        [System.NonSerialized] public TextMeshProUGUI label;
+        [System.NonSerialized] public GlowProfile cachedGlowProfile;
+    }
 
+    [SerializeField] private MaterialManager materialManager;
+    [SerializeField] private UserUI userUI;
 
     private GameObject lastHoveredObject; // null when nothing is hovered
     private bool lastHoveredPressed; // whether left click was held on last hovered
 
-    [Header("Per-Type Settings (by Tag)")]
-    [SerializeField] private List<TagGlowProfile> tagProfiles = new List<TagGlowProfile>();
+    [Header("Glow Profiles")]
+    [SerializeField] private List<NamedGlowProfile> glowProfiles = new List<NamedGlowProfile>();
+
+    [Header("Centralized Interactables")]
+    [SerializeField] private List<InteractableEntry> interactables = new List<InteractableEntry>();
 
     private void Start()
     {
-        // Initialize all objects with matching tags to idle state
-        for (int i = 0; i < tagProfiles.Count; i++)
+        // Initialize centralized interactables
+        for (int i = 0; i < interactables.Count; i++)
         {
-            TagGlowProfile tp = tagProfiles[i];
-            if (tp == null || tp.profile == null || string.IsNullOrEmpty(tp.tag)) continue;
+            InteractableEntry entry = interactables[i];
+            if (entry == null || entry.gameObject == null) continue;
 
-            GameObject[] taggedObjects = GameObject.FindGameObjectsWithTag(tp.tag);
-            for (int j = 0; j < taggedObjects.Length; j++)
-            {
-                GameObject go = taggedObjects[j];
-                if (go == null) continue;
-                materialManager.SetGlowMaterial(
-                    go,
-                    scale: tp.profile.idle.scale,
-                    glowColor: tp.profile.idle.color,
-                    glowIntensity: tp.profile.idle.intensity
-                );
-            }
+            // Cache glow profile
+            entry.cachedGlowProfile = GetGlowProfileByName(entry.glowProfileName);
+            if (entry.cachedGlowProfile == null) continue;
+
+            materialManager.SetGlowMaterial(
+                entry.gameObject,
+                scale: entry.cachedGlowProfile.idle.scale,
+                glowColor: entry.cachedGlowProfile.idle.color,
+                glowIntensity: entry.cachedGlowProfile.idle.intensity
+            );
+
+            // Cache label component from children
+            entry.label = entry.gameObject.GetComponentInChildren<TextMeshProUGUI>();
         }
     }
 
-    public void AddInteractables(List<GameObject> newInteractables)
+    private GlowProfile GetGlowProfileByName(string profileName)
     {
-        if (newInteractables == null || newInteractables.Count == 0) return;
-        // No longer maintaining a list; just apply idle to any with a matching tag profile
-        foreach (GameObject interactable in newInteractables)
+        if (string.IsNullOrEmpty(profileName)) return null;
+        
+        for (int i = 0; i < glowProfiles.Count; i++)
         {
-            if (interactable == null) continue;
-            if (TryGetProfile(interactable, out GlowProfile profile))
+            NamedGlowProfile namedProfile = glowProfiles[i];
+            if (namedProfile != null && namedProfile.name == profileName)
             {
-                materialManager.SetGlowMaterial(
-                    interactable,
-                    scale: profile.idle.scale,
-                    glowColor: profile.idle.color,
-                    glowIntensity: profile.idle.intensity
-                );
+                return namedProfile.profile;
             }
         }
+        return null;
     }
 
     private void Update()
     {
+        // Update labels for interactables
+        UpdateLabels();
+
         Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
 
         GameObject hitObjectOverall = null;
@@ -144,18 +173,11 @@ public class InteractableObjects : MonoBehaviour
 
             // On click down edge, call interact handler if present
             bool clickStartedThisFrame = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-            if (clickStartedThisFrame)
+            if (clickStartedThisFrame && hitObjectOverall != null)
             {
-                Transform t = hitObjectOverall != null ? hitObjectOverall.transform : null;
-                while (t != null)
+                if (TryGetInteractableEntry(hitObjectOverall, out InteractableEntry entry))
                 {
-                    IInteractable interactable = t.GetComponent<IInteractable>();
-                    if (interactable != null)
-                    {
-                        interactable.OnInteract();
-                        break;
-                    }
-                    t = t.parent;
+                    ExecuteAction(entry);
                 }
             }
             if (lastHoveredObject != hitObjectOverall)
@@ -223,21 +245,106 @@ public class InteractableObjects : MonoBehaviour
     {
         profile = null;
         if (obj == null) return false;
-        string tag = obj.tag;
-        if (string.IsNullOrEmpty(tag)) return false;
-        for (int i = 0; i < tagProfiles.Count; i++)
+
+        for (int i = 0; i < interactables.Count; i++)
         {
-            TagGlowProfile tp = tagProfiles[i];
-            if (tp != null && tp.profile != null && tp.tag == tag)
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj && entry.cachedGlowProfile != null)
             {
-                profile = tp.profile;
+                profile = entry.cachedGlowProfile;
                 return true;
             }
         }
         return false;
     }
 
-    
+    private bool TryGetInteractableEntry(GameObject obj, out InteractableEntry entry)
+    {
+        entry = null;
+        if (obj == null) return false;
+
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry e = interactables[i];
+            if (e != null && e.gameObject == obj)
+            {
+                entry = e;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void ExecuteAction(InteractableEntry entry)
+    {
+        if (entry == null || userUI == null) return;
+
+        switch (entry.actionType)
+        {
+            case ActionType.Add:
+                userUI.betAmount += entry.amount;
+                break;
+            case ActionType.Set:
+                userUI.betAmount = entry.amount;
+                break;
+            case ActionType.PlaceBet:
+                userUI.PlaceBet();
+                break;
+            case ActionType.StartGame:
+                userUI.StartGame();
+                break;
+            case ActionType.ClaimBet:
+                userUI.ClaimBet();
+                break;
+        }
+    }
+
+    private void UpdateLabels()
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry == null || entry.label == null) continue;
+
+            if (entry.actionType == ActionType.PlaceBet && userUI != null)
+            {
+                ulong currentBet = userUI.betAmount;
+                ulong lastAmount = TextAnimationManager.Instance.GetLastRenderedAmount(entry.label);
+
+                if (currentBet != lastAmount)
+                {
+                    TextAnimationManager.Instance.AnimateFormattedNumber(
+                        entry.label,
+                        lastAmount,
+                        currentBet,
+                        prefix: "Bet: "
+                    );
+                }
+                else
+                {
+                    entry.label.text = $"Bet: {FormatShortAmount(currentBet)}";
+                }
+            }
+            else if (entry.actionType == ActionType.Add)
+            {
+                entry.label.text = FormatShortAmount(entry.amount);
+            }
+        }
+    }
+
+    private string FormatShortAmount(ulong value)
+    {
+        const double Thousand = 1_000d;
+        const double Million = 1_000_000d;
+        const double Billion = 1_000_000_000d;
+        const double Trillion = 1_000_000_000_000d;
+
+        if (value >= (ulong)Trillion) return (value / Trillion).ToString("0.#", CultureInfo.InvariantCulture) + "t";
+        if (value >= (ulong)Billion) return (value / Billion).ToString("0.#", CultureInfo.InvariantCulture) + "b";
+        if (value >= (ulong)Million) return (value / Million).ToString("0.#", CultureInfo.InvariantCulture) + "m";
+        if (value >= (ulong)Thousand) return (value / Thousand).ToString("0.#", CultureInfo.InvariantCulture) + "k";
+        return value.ToString(CultureInfo.InvariantCulture);
+    }
 }
 
 
