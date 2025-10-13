@@ -13,11 +13,6 @@ public class CrashUI : MonoBehaviour
     private GameObject canvas;
     public Transform currentPlayer;
 
-    public GameObject beforeBettingGroup; //after user connected
-    public GameObject beforeStartingGroup; //after user bet
-    public GameObject duringGameGroup; //while game is running
-
-
     [Header("Distance Scale Settings")]
     public float minDistance = 10f;
     public float maxDistance = 30f; // Distance at which UI is completely shrunk

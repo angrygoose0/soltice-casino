@@ -13,7 +13,8 @@ public class InteractableObjects : MonoBehaviour
         Set,
         PlaceBet,
         StartGame,
-        ClaimBet
+        ClaimBet,
+        SetupAccounts
     }
 
     [System.Serializable]
@@ -295,6 +296,9 @@ public class InteractableObjects : MonoBehaviour
                 break;
             case ActionType.ClaimBet:
                 userUI.ClaimBet();
+                break;
+            case ActionType.SetupAccounts:
+                userUI.SetupUserAccountsFromState();
                 break;
         }
     }

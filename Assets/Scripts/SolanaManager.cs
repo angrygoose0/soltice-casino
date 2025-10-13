@@ -38,6 +38,7 @@ public class SolanaManager : MonoBehaviour
 
     // Crash Client properties
     private CrashClient _crashClient;
+    private CrashClient _crashClientEphemeral;
     private TreasuryClient _treasuryClient;
     private static PublicKey _crashProgramId = new PublicKey(CrashProgram.ID);
     private static PublicKey _treasuryProgramId = new PublicKey(TreasuryProgram.ID);
@@ -52,6 +53,7 @@ public class SolanaManager : MonoBehaviour
 
 
     public CrashClient GetCrashClient() => _crashClient;
+    public CrashClient GetCrashClientEphemeral() => _crashClientEphemeral;
     public TreasuryClient GetTreasuryClient() => _treasuryClient;
 
     public PublicKey GetMintPublicKey()
@@ -141,6 +143,12 @@ public class SolanaManager : MonoBehaviour
 
             _crashClient = new CrashClient(
                 _rpcClient,
+                streamingClient,
+                _crashProgramId
+            );
+
+            _crashClientEphemeral = new CrashClient(
+                _ephemeralRpcClient,
                 streamingClient,
                 _crashProgramId
             );

@@ -28,6 +28,7 @@ public class CrashTransactionBuilder : MonoBehaviour
     // Clients
     private static PublicKey _programId = new PublicKey(CrashProgram.ID);
     private CrashClient Client => solanaManager?.GetCrashClient();
+	
     
 
 

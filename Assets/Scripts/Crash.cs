@@ -415,7 +415,7 @@ namespace Crash
 
             public PublicKey EphemeralBalance { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("A1yHBPwz7BLrk1VUzQXy5jGTggMrdfoYH3vYLSRYGRTy");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("2bcYKWwtu9cDvq34Jznih3r8ow6DFMeVmJB13hzrX4qN");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -514,7 +514,7 @@ namespace Crash
 
             public PublicKey EphemeralBalance { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("A1yHBPwz7BLrk1VUzQXy5jGTggMrdfoYH3vYLSRYGRTy");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("2bcYKWwtu9cDvq34Jznih3r8ow6DFMeVmJB13hzrX4qN");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
