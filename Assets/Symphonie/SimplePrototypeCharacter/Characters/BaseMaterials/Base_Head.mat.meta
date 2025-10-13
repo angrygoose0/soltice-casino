@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 99e1708fe1456e0438c89c9f8665edf9
+timeCreated: 1436631544
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Characters/BaseMaterials/Base_Head.mat
+  uploadId: 751249

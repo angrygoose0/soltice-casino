@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e3d477a568df34964adb370246099910
+timeCreated: 1436637675
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Prefab/ChesspieceHuman/CH_HumanKiller.prefab
+  uploadId: 751249

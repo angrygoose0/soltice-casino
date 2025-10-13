@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6af1cdc0b9a344e61a4057fc39fada5c
+timeCreated: 1436684434
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Prefab/CartoonHuman/CH_CitizenMale.prefab
+  uploadId: 751249

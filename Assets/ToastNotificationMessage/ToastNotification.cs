@@ -170,7 +170,6 @@ public class ToastNotification : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
         // Instantiate message prefab and configure it
         Transform message = Instantiate(messagePrefab, toastNotification);
-        message.gameObject.SetActive(true);
         message.name = "Message"; // <- You can change the name of messages that are created here
         if ( isCanvasGroup ) toastNotification.GetComponent<CanvasGroup>().alpha = 0; // Instatiate with zero alpha (invisible)
 
@@ -192,6 +191,9 @@ public class ToastNotification : MonoBehaviour, IPointerEnterHandler, IPointerEx
         SetupInvokeMessage();
         ResetToastNoticationPosition();
         SetMessagePositionOnScreen();
+        
+        // Activate the message after all configuration is complete
+        message.gameObject.SetActive(true);
 
         // Set the message text and his aligment
         // You can change the text alignment at any time using something like:

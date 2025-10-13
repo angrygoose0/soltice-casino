@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 92fe057a8117642248078ba91dd042b6
+timeCreated: 1436645200
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Materials/CarMatGray.mat
+  uploadId: 751249

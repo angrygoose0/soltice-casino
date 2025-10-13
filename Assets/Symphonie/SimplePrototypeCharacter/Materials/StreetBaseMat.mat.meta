@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e2108fabf4f0b4f45b1fae8aad22cf30
+timeCreated: 1436538697
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Materials/StreetBaseMat.mat
+  uploadId: 751249

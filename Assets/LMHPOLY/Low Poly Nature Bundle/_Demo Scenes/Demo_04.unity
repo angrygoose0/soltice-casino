@@ -5746,6 +5746,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7614013924240662640, guid: d731111fb0914d549bf9e195e9abfe3c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e823cd5b5d27c0f4b8256e7c12ee3e6d, type: 2}
     - target: {fileID: 7614013924240662641, guid: d731111fb0914d549bf9e195e9abfe3c, type: 3}
       propertyPath: m_Name
       value: Dust Particles

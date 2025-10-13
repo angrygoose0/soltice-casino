@@ -2529,26 +2529,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e54e594cbcaf54a7ab2f7c9ee3085f36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CrashUI
-  builder: {fileID: 0}
-  solanaManager: {fileID: 0}
-  initializeAuthorityButton: {fileID: 0}
-  initializeGameButton: {fileID: 0}
-  initializePlayerBetButton: {fileID: 0}
-  startGameButton: {fileID: 0}
-  delegateCommitFrequencyMsInput: {fileID: 0}
-  delegateValidatorPubkeyInput: {fileID: 0}
-  delegateAuthorityButton: {fileID: 0}
-  delegateGameButton: {fileID: 0}
-  delegatePlayerBetButton: {fileID: 0}
-  tickButton: {fileID: 0}
-  requestRandomnessButton: {fileID: 0}
-  requestRandomnessSeedInput: {fileID: 0}
-  placeBetButton: {fileID: 0}
-  placeBetAmountInput: {fileID: 0}
-  claimBetButton: {fileID: 0}
-  getGameDataButton: {fileID: 0}
-  getPlayerBetButton: {fileID: 0}
-  statusTMPText: {fileID: 0}
+  currentPlayer: {fileID: 0}
+  minDistance: 10
+  maxDistance: 30
+  scaleDuration: 0.7
+  overshootStrength: 0.8
 --- !u!114 &431344624
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3623,12 +3608,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96a72a9b6e0ad4dcfb76e94ab0531d62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreasuryUI
-  builder: {fileID: 591210657}
-  solanaManager: {fileID: 444504097}
-  initializeTreasuryButton: {fileID: 2051712560}
-  initializePlayerBalanceButton: {fileID: 1710175904}
-  depositButton: {fileID: 292608208}
-  withdrawButton: {fileID: 1190269375}
 --- !u!114 &591210657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8573,6 +8552,7 @@ MonoBehaviour:
   MaxZoomDistance: 15
   ZoomSpeed: 2
   RotationSmoothTime: 0.1
+  PlayerRotationSpeed: 10
 --- !u!136 &1446041381
 CapsuleCollider:
   m_ObjectHideFlags: 0

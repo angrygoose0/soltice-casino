@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8e8c8ab4ff611554197b7075c8010c90
+timeCreated: 1425736822
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Prefab/ChesspieceHuman/Materials/ChessPiece.mat
+  uploadId: 751249

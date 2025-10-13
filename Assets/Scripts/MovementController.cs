@@ -6,20 +6,22 @@ public class MovementController : MonoBehaviour
     private Vector3 PlayerMovementInput;
     private Vector2 MouseInput;
 
-    [SerializeField] private LayerMask FloorMask;
-    [SerializeField] private Transform FeetTransform;
     [SerializeField] private Transform PlayerCamera;
-    [SerializeField] private Rigidbody PlayerBody;
+    [SerializeField] private CharacterController controller;
+    [SerializeField] private Animator animator;
     [Space]
-    [SerializeField] private float Speed;
+    [SerializeField] private float Speed = 5f;
     [SerializeField] private float SprintSpeedMultiplier = 1.5f;
-    [SerializeField] private float Jumpforce;
+    [SerializeField] private float JumpHeight = 2f;
+    [SerializeField] private float Gravity = -9.81f;
+    [SerializeField] private float AnimationSmoothTime = 0.1f;
     [Space]
     [SerializeField] private float MouseSensitivity = 2f;
     [SerializeField] private float MinZoomDistance = 5f;
     [SerializeField] private float MaxZoomDistance = 15f;
     [SerializeField] private float ZoomSpeed = 2f;
     [SerializeField] private float RotationSmoothTime = 0.1f;
+    [SerializeField] private float PlayerRotationSpeed = 10f;
 
     private float currentZoomDistance = 10f;
     private float currentRotationX = 0f;
@@ -27,26 +29,35 @@ public class MovementController : MonoBehaviour
     private Vector3 cameraRotationSmoothVelocity;
     private Vector3 currentRotation;
     private bool isRotating = false;
-
-    
+    private Vector3 velocity;
+    private float currentAnimationSpeed;
+    private float animationSpeedVelocity;
 
     private void Start()
     {
-        // Initialize camera position
+        if (controller == null)
+            controller = GetComponent<CharacterController>();
+
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
         if (PlayerCamera != null)
         {
             currentRotationY = PlayerCamera.eulerAngles.y;
             UpdateCameraPosition();
         }
         Cursor.lockState = CursorLockMode.None;
-        
     }
 
     private void Update()
     {
         HandleInput();
-        HandleCamera();
         MovePlayer();
+    }
+
+    private void LateUpdate()
+    {
+        HandleCamera();
     }
 
     private void HandleInput()
@@ -75,7 +86,7 @@ public class MovementController : MonoBehaviour
         if (Mouse.current != null && Mouse.current.rightButton.isPressed)
         {
             isRotating = true;
-            Vector2 mouseDelta = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
+            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
             MouseInput = new Vector2(mouseDelta.x, mouseDelta.y);
             Cursor.lockState = CursorLockMode.Locked;
         }
@@ -87,13 +98,11 @@ public class MovementController : MonoBehaviour
         }
 
         // Handle zoom with scroll wheel
-        float scrollInput = 0f;
         if (Mouse.current != null)
         {
-            // scale down to feel similar to legacy GetAxis("Mouse ScrollWheel")
-            scrollInput = Mouse.current.scroll.ReadValue().y * 0.01f;
+            float scrollInput = Mouse.current.scroll.ReadValue().y * 0.01f;
+            currentZoomDistance = Mathf.Clamp(currentZoomDistance - scrollInput * ZoomSpeed, MinZoomDistance, MaxZoomDistance);
         }
-        currentZoomDistance = Mathf.Clamp(currentZoomDistance - scrollInput * ZoomSpeed, MinZoomDistance, MaxZoomDistance);
     }
 
     private void HandleCamera()
@@ -104,12 +113,9 @@ public class MovementController : MonoBehaviour
         {
             currentRotationX -= MouseInput.y * MouseSensitivity;
             currentRotationY += MouseInput.x * MouseSensitivity;
-            
-            // Clamp the vertical rotation to prevent over-rotation
             currentRotationX = Mathf.Clamp(currentRotationX, -60f, 80f);
         }
 
-        // Calculate target rotation and smoothly interpolate
         Vector3 targetRotation = new Vector3(currentRotationX, currentRotationY, 0f);
         currentRotation = Vector3.SmoothDamp(currentRotation, targetRotation, ref cameraRotationSmoothVelocity, RotationSmoothTime);
 
@@ -118,17 +124,23 @@ public class MovementController : MonoBehaviour
 
     private void UpdateCameraPosition()
     {
-        // Calculate camera position based on player position, rotation and zoom
         Vector3 targetPosition = transform.position;
         Quaternion rotation = Quaternion.Euler(currentRotation.x, currentRotation.y, 0);
         Vector3 offset = rotation * new Vector3(0, 0, -currentZoomDistance);
         
         PlayerCamera.position = targetPosition + offset;
-        PlayerCamera.LookAt(targetPosition + Vector3.up * 1f); // Look slightly above player's feet
+        PlayerCamera.LookAt(targetPosition + Vector3.up * 1f);
     }
 
     private void MovePlayer()
     {
+        bool isGrounded = controller.isGrounded;
+
+        if (isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f;
+        }
+
         bool isSprinting = Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
         float currentSpeed = isSprinting ? Speed * SprintSpeedMultiplier : Speed;
 
@@ -136,31 +148,42 @@ public class MovementController : MonoBehaviour
         Vector3 cameraForward = PlayerCamera.forward;
         Vector3 cameraRight = PlayerCamera.right;
         
-        // Project vectors onto the horizontal plane
         cameraForward.y = 0;
         cameraRight.y = 0;
         cameraForward.Normalize();
         cameraRight.Normalize();
 
         Vector3 moveDirection = (cameraForward * PlayerMovementInput.z + cameraRight * PlayerMovementInput.x).normalized;
-        Vector3 MoveVector = moveDirection * currentSpeed;
+        Vector3 move = moveDirection * currentSpeed;
 
-        PlayerBody.linearVelocity = new Vector3(MoveVector.x, PlayerBody.linearVelocity.y, MoveVector.z);
+        controller.Move(move * Time.deltaTime);
 
-        // Rotate player to face movement direction - REMOVED to prevent twitching
-        // if (moveDirection != Vector3.zero)
-        // {
-        //     transform.rotation = Quaternion.LookRotation(moveDirection);
-        // }
-
-        bool isGrounded = Physics.CheckSphere(FeetTransform.position, 0.1f, FloorMask);
-
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
+        // Smoothly rotate player to face movement direction
+        if (moveDirection != Vector3.zero)
         {
-            PlayerBody.AddForce(Vector3.up * Jumpforce, ForceMode.Impulse);
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, PlayerRotationSpeed * Time.deltaTime);
         }
 
-        
-    }
+        // Jump
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+        }
 
+        // Apply gravity
+        velocity.y += Gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+
+        // Update animator
+        if (animator != null)
+        {
+            // Calculate movement speed (0 = idle, 0.5 = walk, 1 = sprint)
+            float targetSpeed = PlayerMovementInput.magnitude * (isSprinting ? 1f : 0.5f);
+            currentAnimationSpeed = Mathf.SmoothDamp(currentAnimationSpeed, targetSpeed, ref animationSpeedVelocity, AnimationSmoothTime);
+            
+            animator.SetFloat("Speed", currentAnimationSpeed);
+            animator.SetBool("IsGrounded", isGrounded);
+        }
+    }
 }

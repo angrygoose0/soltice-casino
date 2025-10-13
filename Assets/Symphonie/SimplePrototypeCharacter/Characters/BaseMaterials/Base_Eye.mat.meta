@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9a80589d970dc2742beb980fb8ff3549
+timeCreated: 1436631544
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Characters/BaseMaterials/Base_Eye.mat
+  uploadId: 751249

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f232326500ca9b643b6d5e4d11bf68f3
+timeCreated: 1436647254
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Characters/AvatarSet2/Materials/Avt2_Leg.mat
+  uploadId: 751249

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7f2affcf683dadc468d6facf5a82e8e5
+timeCreated: 1436647254
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Characters/AvatarSet2/Materials/Avt2_Body.mat
+  uploadId: 751249

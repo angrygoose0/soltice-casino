@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0be1c5b6c03aaf548980d2cd94d91332
+timeCreated: 1436647254
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Characters/AvatarSet2/Materials/Avt2_Head.mat
+  uploadId: 751249

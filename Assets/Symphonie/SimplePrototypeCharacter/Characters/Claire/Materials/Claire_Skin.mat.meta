@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ca35aaaeacf93b74c819e9b221b629d8
+timeCreated: 1436647254
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317926
+  packageName: Simple Prototype Character
+  packageVersion: 1.0
+  assetPath: Assets/Symphonie/SimplePrototypeCharacter/Characters/Claire/Materials/Claire_Skin.mat
+  uploadId: 751249
