@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 49675ce1b498a5b4d980556341f37ce8
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 301977
+  packageName: "coherence \u2013 Multiplayer Networking"
+  packageVersion: 1.8.0
+  assetPath: Packages/io.coherence.sdk/Samples~/DissonanceSample/Dissonance Integration.unitypackage
+  uploadId: 779709

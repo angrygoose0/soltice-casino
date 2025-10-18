@@ -27,7 +27,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
     // Clients
     private static PublicKey _programId = new PublicKey(TreasuryProgram.ID);
-    private TreasuryClient Client => solanaManager?.GetTreasuryClient();
+    private TreasuryClient Client => solanaManager?.TreasuryClient;
     
 
 
@@ -188,7 +188,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
         var signer = CurrentUserPk();
         var solanaBalance = DeriveSolanaBalanceAccount(signer);
-        var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
+        var userAta = DeriveUserTokenAccount(signer, solanaManager.MintPublicKey);
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
 
@@ -249,7 +249,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var signer = CurrentUserPk();
         var solanaBalance = DeriveSolanaBalanceAccount(signer);
         var ephemeralBalance = DeriveEphemeralBalanceAccount(signer);
-        var userAta = DeriveUserTokenAccount(signer, solanaManager.GetMintPublicKey());
+        var userAta = DeriveUserTokenAccount(signer, solanaManager.MintPublicKey);
         var treasury = DeriveTreasuryAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
 

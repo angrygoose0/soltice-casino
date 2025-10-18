@@ -5,12 +5,14 @@ using Treasury.Accounts;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using TMPro;
+using Coherence.Toolkit;
 
 public class UserUI : MonoBehaviour
 {
     [SerializeField] private TreasuryTransactionBuilder treasuryBuilder;
     [SerializeField] private CrashTransactionBuilder crashBuilder;
     [SerializeField] private SolanaManager solanaManager;
+    [SerializeField] private CoherenceBridge coherenceBridge;
 
     private Game _gameCache;
     private PlayerBet _playerBetCache;
@@ -21,6 +23,9 @@ public class UserUI : MonoBehaviour
     private bool _playerBetIsInitialized;
     private bool _ephemeralBalanceIsDelegated;
     private bool _ephemeralBalanceIsInitialized;
+
+    // Auto-tick coroutine tracking
+    private Coroutine _tickCoroutine;
 
     [SerializeField] private GameObject beforeBettingGroup;
     [SerializeField] private GameObject afterBettingGroup;
@@ -78,6 +83,7 @@ public class UserUI : MonoBehaviour
     {
         Web3.OnLogin -= OnWalletConnected;
         Web3.OnLogout -= OnWalletDisconnected;
+        StopAutoTick();
     }
 
     private async void OnWalletConnected(Account account)
@@ -261,6 +267,33 @@ public class UserUI : MonoBehaviour
         await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
     }
 
+    private System.Collections.IEnumerator AutoTickCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(3f);
+            Tick();
+        }
+    }
+
+    private void StartAutoTick()
+    {
+        if (_tickCoroutine == null && coherenceBridge != null && coherenceBridge.IsSimulatorOrHost)
+        {
+            _tickCoroutine = StartCoroutine(AutoTickCoroutine());
+            Debug.Log("Auto-tick started (Host)");
+        }
+    }
+
+    private void StopAutoTick()
+    {
+        if (_tickCoroutine != null)
+        {
+            StopCoroutine(_tickCoroutine);
+            _tickCoroutine = null;
+            Debug.Log("Auto-tick stopped");
+        }
+    }
 
     public async void SetupGameSubscription()
     {
@@ -478,6 +511,17 @@ public class UserUI : MonoBehaviour
         _balloonSimulator.UpdateBalloon(newData);
         UpdateUserBetText(_playerBetCache, newData);
         Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
+
+        // Auto-tick management (host only)
+        // State 1 = game running, State 0 = game not running/waiting
+        if (newData.State == 1)
+        {
+            StartAutoTick();
+        }
+        else
+        {
+            StopAutoTick();
+        }
     }
 
     /// <summary>

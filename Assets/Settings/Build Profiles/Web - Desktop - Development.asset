@@ -20,8 +20,10 @@ MonoBehaviour:
     rid: 205977033929392326
   m_OverrideGlobalSceneList: 1
   m_Scenes:
-  - m_enabled: 1
+  - m_enabled: 0
     m_path: Assets/LMHPOLY/Low Poly Nature Bundle/_Demo Scenes/Demo_01.unity
+  - m_enabled: 1
+    m_path: Assets/Scenes/solstice#2.unity
   m_ScriptingDefines:
   - MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
   m_PlayerSettingsYaml:

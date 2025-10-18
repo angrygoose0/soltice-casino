@@ -1,0 +1,5 @@
+component _60786269438aa4c6c8c3c4f9b60e4b9b_3871810461409951791 [id "18"]
+  target Entity [bits "20", client-type "Transform"]
+  trailDuration Float [range-min "-9223372036854775808", range-max "9223372036854775807", compression "None"]
+  enabled Bool [bits "1"]
+

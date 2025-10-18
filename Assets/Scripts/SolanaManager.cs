@@ -37,9 +37,10 @@ public class SolanaManager : MonoBehaviour
     [SerializeField] private List<TextMeshProUGUI> tokenBalanceTexts;
 
     // Crash Client properties
-    private CrashClient _crashClient;
-    private CrashClient _crashClientEphemeral;
-    private TreasuryClient _treasuryClient;
+    public CrashClient CrashClient { get; private set; }
+    public CrashClient CrashClientEphemeral { get; private set; }
+    public TreasuryClient TreasuryClient { get; private set; }
+    
     private static PublicKey _crashProgramId = new PublicKey(CrashProgram.ID);
     private static PublicKey _treasuryProgramId = new PublicKey(TreasuryProgram.ID);
 
@@ -51,19 +52,7 @@ public class SolanaManager : MonoBehaviour
 
     public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet.magicblock.app", "wss://devnet.magicblock.app", true);
 
-
-    public CrashClient GetCrashClient() => _crashClient;
-    public CrashClient GetCrashClientEphemeral() => _crashClientEphemeral;
-    public TreasuryClient GetTreasuryClient() => _treasuryClient;
-
-    public PublicKey GetMintPublicKey()
-    {
-        if (string.IsNullOrWhiteSpace(mintAddress))
-        {
-            return null;
-        }
-        return new PublicKey(mintAddress);
-    }
+    public PublicKey MintPublicKey => string.IsNullOrWhiteSpace(mintAddress) ? null : new PublicKey(mintAddress);
 
 
     private void OnEnable()
@@ -87,13 +76,7 @@ public class SolanaManager : MonoBehaviour
                 btnText.text = "Connect";
             }
             btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => {
-                // Play button click feedback
-                //feedbackManager?.PlayButtonClickFeedback();
-                
-                // Call the handler
-                ConnectWallet();
-            });
+            btn.onClick.AddListener(() => Web3.Instance?.LoginWithWalletAdapter());
             
             // Add hover effect with EventTrigger
             AddHoverEffect(btn);
@@ -141,19 +124,19 @@ public class SolanaManager : MonoBehaviour
                 return;
             }
 
-            _crashClient = new CrashClient(
+            CrashClient = new CrashClient(
                 _rpcClient,
                 streamingClient,
                 _crashProgramId
             );
 
-            _crashClientEphemeral = new CrashClient(
+            CrashClientEphemeral = new CrashClient(
                 _ephemeralRpcClient,
                 streamingClient,
                 _crashProgramId
             );
 
-            _treasuryClient = new TreasuryClient(
+            TreasuryClient = new TreasuryClient(
                 _rpcClient,
                 streamingClient,
                 _treasuryProgramId
@@ -217,13 +200,7 @@ public class SolanaManager : MonoBehaviour
         {
             btn.gameObject.SetActive(true);
             btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => {
-                // Play button click feedback
-                //feedbackManager?.PlayButtonClickFeedback();
-                
-                // Call the handler
-                DisconnectWallet();
-            });
+            btn.onClick.AddListener(() => Web3.Instance?.Logout());
         }
 
         // Update public key texts
@@ -255,7 +232,7 @@ public class SolanaManager : MonoBehaviour
                 var sol = await Web3.Instance.WalletBase.GetBalance();
                 foreach (var txt in balanceTexts)
                 {
-                    txt.text = "SOL: " + FormatSol(sol);
+                    txt.text = FormatAmount(sol);
                 }
             }
         }
@@ -273,13 +250,7 @@ public class SolanaManager : MonoBehaviour
         {
             btn.gameObject.SetActive(true);
             btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => {
-                // Play button click feedback
-                //feedbackManager?.PlayButtonClickFeedback();
-                
-                // Call the handler
-                ConnectWallet();
-            });
+            btn.onClick.AddListener(() => Web3.Instance?.LoginWithWalletAdapter());
         }
         foreach (var btn in disconnectButtons)
         {
@@ -313,32 +284,17 @@ public class SolanaManager : MonoBehaviour
         // Update all balance texts
         foreach (var txt in balanceTexts)
         {
-            txt.text = "SOL: " + FormatSol(amount);
+            txt.text = FormatAmount(amount);
         }
     }
 
-    private string FormatBalance(double amount)
+    private string FormatAmount(double amount, bool applyTokenDecimals = false)
     {
-        // Convert raw amount to actual token amount based on decimals
-        double actualAmount = amount / Math.Pow(10, tokenDecimals);
+        if (applyTokenDecimals)
+        {
+            amount = amount / Math.Pow(10, tokenDecimals);
+        }
 
-        if (actualAmount >= 1000000)
-        {
-            return (actualAmount / 1000000).ToString("F2", CultureInfo.InvariantCulture) + "m";
-        }
-        else if (actualAmount >= 1000)
-        {
-            return (actualAmount / 1000).ToString("F2", CultureInfo.InvariantCulture) + "k";
-        }
-        else
-        {
-            return actualAmount.ToString("F2", CultureInfo.InvariantCulture);
-        }
-    }
-
-    private string FormatSol(double amount)
-    {
-        // Amount is expected to be in SOL units already
         if (amount >= 1000000)
         {
             return (amount / 1000000).ToString("F2", CultureInfo.InvariantCulture) + "m";
@@ -372,7 +328,7 @@ public class SolanaManager : MonoBehaviour
             // Update all token balance texts
             foreach (var txt in tokenBalanceTexts)
             {
-                txt.text = "$BLKJAK: " + FormatBalance(tokenBalance);
+                txt.text = FormatAmount(tokenBalance, applyTokenDecimals: true);
             }
         }
         catch (System.Exception)
@@ -433,30 +389,6 @@ public class SolanaManager : MonoBehaviour
         }
     }
 
-    // Public methods for button callbacks
-    public void ConnectWallet()
-    {
-        if (Web3.Instance == null)
-        {
-            return;
-        }
-        Web3.Instance.LoginWithWalletAdapter();
-    }
-
-    public void DisconnectWallet()
-    {
-        if (Web3.Instance == null)
-        {
-            return;
-        }
-        Web3.Instance.Logout();
-    }
-
-    // Public method to refresh token balance
-    public void RefreshTokenBalance()
-    {
-        UpdateTokenBalance();
-    }
 
     public async Task<string> SendAndConfirmTransaction(
         bool ephemeralFlag = false, // if true, tx is happening on ER.
