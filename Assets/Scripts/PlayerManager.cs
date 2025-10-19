@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Coherence.Toolkit;
 using Coherence.Connection;
+using Unity.Cinemachine;
 
 public class PlayerManager : MonoBehaviour
 {
@@ -23,6 +24,9 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private float Gravity = -9.81f;
     [SerializeField] private float AnimationSmoothTime = 0.1f;
     [SerializeField] private float PlayerRotationSpeed = 10f;
+
+    [SerializeField] private CinemachineFreeLook freelookCamera;
+    [SerializeField] private CinemachineInputAxisController inputAxisController;
 
     private Vector3 velocity;
     private float currentAnimationSpeed;
@@ -57,6 +61,7 @@ public class PlayerManager : MonoBehaviour
             return;
 
         HandleInput();
+        HandleCameraOrbitInput();
         MovePlayer();
     }
 
@@ -73,6 +78,27 @@ public class PlayerManager : MonoBehaviour
               + (kb.upArrowKey.isPressed ? 1 : 0) - (kb.downArrowKey.isPressed ? 1 : 0);
         }
         PlayerMovementInput = new Vector3(Mathf.Clamp(h, -1, 1), 0f, Mathf.Clamp(v, -1, 1));
+    }
+
+    private void HandleCameraOrbitInput()
+    {
+        if (inputAxisController == null)
+            return;
+
+        var mouse = Mouse.current;
+        bool isRightClickHeld = mouse != null && mouse.rightButton.isPressed;
+
+        var controllers = inputAxisController.Controllers;
+        if (controllers != null)
+        {
+            foreach (var controller in controllers)
+            {
+                if (controller.Name == "Look Orbit X" || controller.Name == "Look Orbit Y")
+                {
+                    controller.Enabled = isRightClickHeld;
+                }
+            }
+        }
     }
 
     
@@ -135,6 +161,9 @@ public class PlayerManager : MonoBehaviour
         _playerTransform = _playerReference.transform;
         controller = _playerReference.GetComponent<CharacterController>();
         animator = _playerReference.GetComponentInChildren<Animator>();
+        // Assign Cinemachine components from the child of the playerPrefab
+        freelookCamera = _playerReference.GetComponentInChildren<CinemachineFreeLook>(true);
+        inputAxisController = _playerReference.GetComponentInChildren<CinemachineInputAxisController>(true);
 		if (cameraTransform == null && Camera.main != null)
 		{
 			cameraTransform = Camera.main.transform;
