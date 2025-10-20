@@ -54,6 +54,7 @@ public class SolanaManager : MonoBehaviour
 
     public PublicKey MintPublicKey => string.IsNullOrWhiteSpace(mintAddress) ? null : new PublicKey(mintAddress);
 
+    
 
     private void OnEnable()
     {
