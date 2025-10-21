@@ -13,6 +13,7 @@ public class UserUI : MonoBehaviour
     [SerializeField] private CrashTransactionBuilder crashBuilder;
     [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private CoherenceBridge coherenceBridge;
+    [SerializeField] private DepositModal depositModal;
 
     private Game _gameCache;
     private PlayerBet _playerBetCache;
@@ -68,9 +69,19 @@ public class UserUI : MonoBehaviour
     {
         SetupButtonListeners();
         SetupGameSubscription();
+        SetupDepositModalListeners();
         beforeBettingGroup.SetActive(false);
         afterBettingGroup.SetActive(false);
         setupGroup.SetActive(false);
+    }
+    
+    private void SetupDepositModalListeners()
+    {
+        if (depositModal != null)
+        {
+            depositModal.onDeposit.AddListener(Deposit);
+            depositModal.onWithdraw.AddListener(Withdraw);
+        }
     }
 
     private void OnEnable()
@@ -88,6 +99,9 @@ public class UserUI : MonoBehaviour
 
     private async void OnWalletConnected(Account account)
     {
+        if (depositModal != null)
+            depositModal.ShowToggleButton();
+        
         await SetupUserAccountSubscriptions();
     }
 
@@ -97,6 +111,9 @@ public class UserUI : MonoBehaviour
         beforeBettingGroup.SetActive(false);
         afterBettingGroup.SetActive(false);
         setupGroup.SetActive(false);
+        
+        if (depositModal != null)
+            depositModal.HideToggleButton();
         
         // Reset account state
         _playerBetIsDelegated = false;
@@ -503,6 +520,12 @@ public class UserUI : MonoBehaviour
                 userBalanceAccountTMP.text = $"Balance: {newData.Balance}";
             }
         }
+        
+        if (depositModal != null && depositModal.ephemeralBalance != null)
+        {
+            depositModal.ephemeralBalance.text = newData.Balance.ToString();
+        }
+        
         Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");
     }
 

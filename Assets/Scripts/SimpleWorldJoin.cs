@@ -8,6 +8,7 @@ using Coherence.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class SimpleWorldJoin : MonoBehaviour
 {
@@ -24,6 +25,8 @@ public class SimpleWorldJoin : MonoBehaviour
     private IReadOnlyList<WorldData> availableWorlds = new List<WorldData>();
     private WorldData localWorld;
     private bool isJoining;
+
+    public static event Action OnGameJoined;
 
     private PlayerAccount PlayerAccount => cloudLogin ? cloudLogin.PlayerAccount : null;
     private WorldsService CloudWorlds => PlayerAccount?.Services?.Worlds;
@@ -172,6 +175,7 @@ public class SimpleWorldJoin : MonoBehaviour
     private void OnConnected(CoherenceBridge _)
     {
         Debug.Log("Connected! Starting fade out...");
+        OnGameJoined?.Invoke();
         StartCoroutine(FadeOutOverlay());
     }
     

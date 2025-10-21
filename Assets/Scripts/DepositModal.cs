@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 using TMPro;
 
 public class DepositModal : MonoBehaviour
@@ -19,7 +20,7 @@ public class DepositModal : MonoBehaviour
     [SerializeField] private TMP_InputField ephemeralInput;
     [SerializeField] private TMP_Dropdown ephemeralDropdown;
     [SerializeField] private TMP_Text ephemeralConverted;
-    [SerializeField] private TMP_Text ephemeralBalance;
+    [SerializeField] public TMP_Text ephemeralBalance;
     [SerializeField] private Button ephemeralHalfButton;
     [SerializeField] private Button ephemeralFullButton;
 
@@ -29,6 +30,10 @@ public class DepositModal : MonoBehaviour
 
     [SerializeField] private Button swapButton;
     [SerializeField] private Button sendButton;
+    [SerializeField] private Button toggleModalButton;
+    
+    public UnityEvent<ulong> onDeposit;
+    public UnityEvent<ulong> onWithdraw;
 
     private void Start()
     {
@@ -43,8 +48,16 @@ public class DepositModal : MonoBehaviour
         walletInput.onValueChanged.AddListener(OnInputChanged);
         ephemeralInput.onValueChanged.AddListener(OnInputChanged);
         
-        // Connect button
+        // Connect buttons
         swapButton.onClick.AddListener(Swap);
+        sendButton.onClick.AddListener(Send);
+        if (toggleModalButton != null)
+            toggleModalButton.onClick.AddListener(ToggleModal);
+        
+        // Initially hide everything since wallet isn't connected
+        gameObject.SetActive(false);
+        if (toggleModalButton != null)
+            toggleModalButton.gameObject.SetActive(false);
     }
 
     private void OnInputChanged(string value)
@@ -127,13 +140,33 @@ public class DepositModal : MonoBehaviour
 
     public void Send()
     {
+        ulong amount = (ulong)currentInputValue;
+        
         if (walletCardIsActive)
         {
-            // send to wallet
+            onDeposit?.Invoke(amount);
         }
         else
         {
-            // send to ephemeral
+            onWithdraw?.Invoke(amount);
         }
+    }
+    
+    public void ToggleModal()
+    {
+        gameObject.SetActive(!gameObject.activeSelf);
+    }
+    
+    public void ShowToggleButton()
+    {
+        if (toggleModalButton != null)
+            toggleModalButton.gameObject.SetActive(true);
+    }
+    
+    public void HideToggleButton()
+    {
+        if (toggleModalButton != null)
+            toggleModalButton.gameObject.SetActive(false);
+        gameObject.SetActive(false);
     }
 }

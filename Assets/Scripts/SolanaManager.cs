@@ -49,6 +49,7 @@ public class SolanaManager : MonoBehaviour
 
     private WalletBase _walletBase;
     private WalletBase _ephemeralWalletBase;
+    private bool _gameJoined = false;
 
     public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet.magicblock.app", "wss://devnet.magicblock.app", true);
 
@@ -58,6 +59,19 @@ public class SolanaManager : MonoBehaviour
 
     private void OnEnable()
     {
+        // Hide connect buttons until game is joined
+        foreach (var btn in connectButtons)
+        {
+            btn.gameObject.SetActive(false);
+        }
+        foreach (var btn in disconnectButtons)
+        {
+            btn.gameObject.SetActive(false);
+        }
+
+        // Subscribe to game join event
+        SimpleWorldJoin.OnGameJoined += OnGameJoined;
+
         // Check if Web3 is available and user is logged in
         if (Web3.Instance != null && Web3.Account != null)
         {
@@ -182,9 +196,32 @@ public class SolanaManager : MonoBehaviour
 
     private void OnDisable()
     {
+        SimpleWorldJoin.OnGameJoined -= OnGameJoined;
         Web3.OnLogin -= OnLogin;
         Web3.OnLogout -= OnLogout;
         Web3.OnBalanceChange -= OnBalanceChange;
+    }
+
+    private void OnGameJoined()
+    {
+        _gameJoined = true;
+        Debug.Log("Game joined - enabling wallet buttons");
+        
+        // Show appropriate buttons based on wallet state
+        if (Web3.Instance != null && Web3.Account != null)
+        {
+            foreach (var btn in disconnectButtons)
+            {
+                btn.gameObject.SetActive(true);
+            }
+        }
+        else
+        {
+            foreach (var btn in connectButtons)
+            {
+                btn.gameObject.SetActive(true);
+            }
+        }
     }
 
     private async void OnLogin(Account account)
@@ -192,14 +229,14 @@ public class SolanaManager : MonoBehaviour
         // Initialize clients when user logs in
         InitializeClients();
 
-        // Update connect/disconnect buttons
+        // Update connect/disconnect buttons (only if game already joined)
         foreach (var btn in connectButtons)
         {
             btn.gameObject.SetActive(false);
         }
         foreach (var btn in disconnectButtons)
         {
-            btn.gameObject.SetActive(true);
+            btn.gameObject.SetActive(_gameJoined);
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => Web3.Instance?.Logout());
         }
@@ -246,10 +283,10 @@ public class SolanaManager : MonoBehaviour
 
     private void OnLogout()
     {
-        // Update connect/disconnect buttons
+        // Update connect/disconnect buttons (only show if game already joined)
         foreach (var btn in connectButtons)
         {
-            btn.gameObject.SetActive(true);
+            btn.gameObject.SetActive(_gameJoined);
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => Web3.Instance?.LoginWithWalletAdapter());
         }
