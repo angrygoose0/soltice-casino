@@ -16,13 +16,13 @@ public class UserUI : MonoBehaviour
 
     private Game _gameCache;
     private PlayerBet _playerBetCache;
-    private EphemeralBalance _ephemeralBalanceCache;
+    private UserBalance _userBalanceCache;
 
     // Account state tracking
     private bool _playerBetIsDelegated;
     private bool _playerBetIsInitialized;
-    private bool _ephemeralBalanceIsDelegated;
-    private bool _ephemeralBalanceIsInitialized;
+    private bool _userBalanceIsDelegated;
+    private bool _userBalanceIsInitialized;
 
     // Auto-tick coroutine tracking
     private Coroutine _tickCoroutine;
@@ -59,7 +59,7 @@ public class UserUI : MonoBehaviour
     [Header("Account Data Display")]
     [SerializeField] private TextMeshProUGUI gameAccountTMP;
     [SerializeField] private TextMeshProUGUI playerBetAccountTMP;
-    [SerializeField] private TextMeshProUGUI ephemeralBalanceAccountTMP;
+    [SerializeField] private TextMeshProUGUI userBalanceAccountTMP;
 
     [SerializeField] private TextMeshProUGUI playerTextTMP;
 
@@ -101,8 +101,8 @@ public class UserUI : MonoBehaviour
         // Reset account state
         _playerBetIsDelegated = false;
         _playerBetIsInitialized = false;
-        _ephemeralBalanceIsDelegated = false;
-        _ephemeralBalanceIsInitialized = false;
+        _userBalanceIsDelegated = false;
+        _userBalanceIsInitialized = false;
         
         Debug.Log("Wallet disconnected - UI reset");
     }
@@ -161,12 +161,12 @@ public class UserUI : MonoBehaviour
     public async void SetupUser() //user
     {
         var initBalanceIx = treasuryBuilder.InitializeBalance();
-        var delegateEphemeralBalanceIx = treasuryBuilder.DelegateEphemeralBalance();
+        var delegateUserBalanceIx = treasuryBuilder.DelegateUserBalance();
         var initPlayerBetIx = crashBuilder.InitializePlayerBet();
         var delegatePlayerBetIx = crashBuilder.DelegatePlayerBet();
 
         await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
-            initBalanceIx, delegateEphemeralBalanceIx, initPlayerBetIx, delegatePlayerBetIx
+            initBalanceIx, delegateUserBalanceIx, initPlayerBetIx, delegatePlayerBetIx
         );
     }
 
@@ -174,17 +174,17 @@ public class UserUI : MonoBehaviour
     {
         var instructions = new System.Collections.Generic.List<Solana.Unity.Rpc.Models.TransactionInstruction>();
 
-        // Handle Ephemeral Balance setup
-        if (!_ephemeralBalanceIsInitialized)
+        // Handle User Balance setup
+        if (!_userBalanceIsInitialized)
         {
             Debug.Log("Adding InitializeBalance instruction");
             instructions.Add(treasuryBuilder.InitializeBalance());
         }
         
-        if (_ephemeralBalanceIsInitialized && !_ephemeralBalanceIsDelegated)
+        if (_userBalanceIsInitialized && !_userBalanceIsDelegated)
         {
-            Debug.Log("Adding DelegateEphemeralBalance instruction");
-            instructions.Add(treasuryBuilder.DelegateEphemeralBalance());
+            Debug.Log("Adding DelegateUserBalance instruction");
+            instructions.Add(treasuryBuilder.DelegateUserBalance());
         }
 
         // Handle Player Bet setup
@@ -213,24 +213,30 @@ public class UserUI : MonoBehaviour
         await SetupUserAccountSubscriptions();
     }
 
-    //ENSURE ephemeral_balance delegated
+    //ENSURE user_balance delegated
     public async void Deposit(ulong amount) //user
     {
+        // 1. Undelegate on ER
+        var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+        
+        // 2. Deposit + Re-delegate on base layer (together)
         var userDepositIx = treasuryBuilder.UserDeposit(amount);
-        var ephemeralDepositIx = treasuryBuilder.EphemeralDeposit();
-
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, userDepositIx);
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, ephemeralDepositIx);
+        var delegateIx = treasuryBuilder.DelegateUserBalance();
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, userDepositIx, delegateIx);
     }
 
-    //ENSURE ephemeral_balance delegated
+    //ENSURE user_balance delegated
     public async void Withdraw(ulong amount) //user
     {
-        var ephemeralWithdrawIx = treasuryBuilder.EphemeralWithdraw(amount);
-        var userWithdrawIx = treasuryBuilder.UserWithdraw();
-
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, ephemeralWithdrawIx);
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, userWithdrawIx);
+        // 1. Undelegate on ER
+        var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+        
+        // 2. Withdraw + Re-delegate on base layer (together)
+        var userWithdrawIx = treasuryBuilder.UserWithdraw(amount);
+        var delegateIx = treasuryBuilder.DelegateUserBalance();
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, userWithdrawIx, delegateIx);
     }
 
     //ENSURE game delegated
@@ -326,13 +332,13 @@ public class UserUI : MonoBehaviour
         );
 
         await SetupAccountSubscription(
-            "EphemeralBalance",
-            TreasuryTransactionBuilder.DeriveEphemeralBalanceAccount(Web3.Account.PublicKey),
-            OnEphemeralBalanceUpdate,
-            data => EphemeralBalance.Deserialize(data),
+            "UserBalance",
+            TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey),
+            OnUserBalanceUpdate,
+            data => UserBalance.Deserialize(data),
             (isDelegated, isInitialized) => {
-                _ephemeralBalanceIsDelegated = isDelegated;
-                _ephemeralBalanceIsInitialized = isInitialized;
+                _userBalanceIsDelegated = isDelegated;
+                _userBalanceIsInitialized = isInitialized;
             }
         );
 
@@ -397,7 +403,7 @@ public class UserUI : MonoBehaviour
     }
 
     private bool AreAccountsReady() => _playerBetIsDelegated && _playerBetIsInitialized 
-                                      && _ephemeralBalanceIsDelegated && _ephemeralBalanceIsInitialized;
+                                      && _userBalanceIsDelegated && _userBalanceIsInitialized;
 
     private void UpdateUIGroupsBasedOnAccountState()
     {
@@ -409,7 +415,7 @@ public class UserUI : MonoBehaviour
         {
             beforeBettingGroup.SetActive(false);
             afterBettingGroup.SetActive(false);
-            Debug.Log($"Setup required - PlayerBet(d={_playerBetIsDelegated}, i={_playerBetIsInitialized}), EphemeralBalance(d={_ephemeralBalanceIsDelegated}, i={_ephemeralBalanceIsInitialized})");
+            Debug.Log($"Setup required - PlayerBet(d={_playerBetIsDelegated}, i={_playerBetIsInitialized}), UserBalance(d={_userBalanceIsDelegated}, i={_userBalanceIsInitialized})");
         }
         else
         {
@@ -477,16 +483,16 @@ public class UserUI : MonoBehaviour
     }
 
 
-    private void OnEphemeralBalanceUpdate(EphemeralBalance newData)
+    private void OnUserBalanceUpdate(UserBalance newData)
     {
-        _ephemeralBalanceCache = newData;
-        if (ephemeralBalanceAccountTMP != null && TextAnimationManager.Instance != null)
+        _userBalanceCache = newData;
+        if (userBalanceAccountTMP != null && TextAnimationManager.Instance != null)
         {
-            ulong lastBalance = TextAnimationManager.Instance.GetLastRenderedAmount(ephemeralBalanceAccountTMP);
+            ulong lastBalance = TextAnimationManager.Instance.GetLastRenderedAmount(userBalanceAccountTMP);
             if (lastBalance != newData.Balance)
             {
                 TextAnimationManager.Instance.AnimateNumber(
-                    ephemeralBalanceAccountTMP,
+                    userBalanceAccountTMP,
                     lastBalance,
                     newData.Balance,
                     prefix: "Balance: "
@@ -494,10 +500,10 @@ public class UserUI : MonoBehaviour
             }
             else
             {
-                ephemeralBalanceAccountTMP.text = $"Balance: {newData.Balance}";
+                userBalanceAccountTMP.text = $"Balance: {newData.Balance}";
             }
         }
-        Debug.Log($"Balance: {newData.Balance}, Withdraw: {newData.Withdraw}, Deposit: {newData.Deposit}");
+        Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");
     }
 
     
