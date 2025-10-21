@@ -4955,6 +4955,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 1329481886740451829, guid: 60786269438aa4c6c8c3c4f9b60e4b9b, type: 3}
   spawnPoint: {fileID: 529855801}
   cameraTransform: {fileID: 1038959641}
+  materialManager: {fileID: 1102202716}
   Speed: 5
   SprintSpeedMultiplier: 1.5
   JumpHeight: 2

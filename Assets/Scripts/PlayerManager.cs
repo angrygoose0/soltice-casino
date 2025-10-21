@@ -16,6 +16,7 @@ public class PlayerManager : MonoBehaviour
     private CharacterController controller;
     private Animator animator;
 	[SerializeField] private Transform cameraTransform;
+    [SerializeField] private MaterialManager materialManager;
     
     [Header("Movement Settings")]
     [SerializeField] private float Speed = 5f;
@@ -161,6 +162,11 @@ public class PlayerManager : MonoBehaviour
         _playerTransform = _playerReference.transform;
         controller = _playerReference.GetComponent<CharacterController>();
         animator = _playerReference.GetComponentInChildren<Animator>();
+        
+        if (materialManager != null)
+        {
+            materialManager.SetRandomPlayerColor(_playerReference);
+        }
         // Assign Cinemachine components from the child of the playerPrefab
         freelookCamera = _playerReference.GetComponentInChildren<CinemachineFreeLook>(true);
         inputAxisController = _playerReference.GetComponentInChildren<CinemachineInputAxisController>(true);

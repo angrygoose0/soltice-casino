@@ -73,4 +73,32 @@ public class MaterialManager : MonoBehaviour
         }
     }
 
+    public void SetRandomPlayerColor(GameObject playerObject)
+    {
+        Transform avatarMesh = playerObject.transform.Find("avatarMesh");
+        if (avatarMesh == null) return;
+
+        Color randomColor = Random.ColorHSV(0f, 1f, 0.6f, 1f, 0.7f, 1f);
+
+        MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+        mpb.SetColor("_Color", randomColor);
+        mpb.SetFloat("_Metallic", Random.Range(0f, 1f));
+        mpb.SetFloat("_Smoothness", Random.Range(0f, 1f));
+        mpb.SetFloat("_Occlusion", Random.Range(0f, 1f));
+
+        string[] meshNames = { "bodyMesh", "headMesh", "legMesh" };
+        foreach (string meshName in meshNames)
+        {
+            Transform meshTransform = avatarMesh.Find(meshName);
+            if (meshTransform != null)
+            {
+                Renderer renderer = meshTransform.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.SetPropertyBlock(mpb);
+                }
+            }
+        }
+    }
+
 }
