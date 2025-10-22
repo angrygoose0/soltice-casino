@@ -19,6 +19,7 @@ Shader "UI/Default_OverlayNoZTest"
 		_StencilReadMask ("Stencil Read Mask", Float) = 255
 
 		_ColorMask ("Color Mask", Float) = 15
+		_CullMode ("Cull Mode", Float) = 0
 	}
 
 	SubShader

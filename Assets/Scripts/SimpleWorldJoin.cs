@@ -15,6 +15,7 @@ public class SimpleWorldJoin : MonoBehaviour
     [Header("UI References")]
     public CanvasGroup uiCanvasGroup;
     public Button startButton;
+    public TMP_InputField usernameInput;
     public TMP_Text errorText;
     
     [Header("Settings")]
@@ -27,6 +28,7 @@ public class SimpleWorldJoin : MonoBehaviour
     private bool isJoining;
 
     public static event Action OnGameJoined;
+    public static string PlayerUsername { get; private set; } = "Player";
 
     private PlayerAccount PlayerAccount => cloudLogin ? cloudLogin.PlayerAccount : null;
     private WorldsService CloudWorlds => PlayerAccount?.Services?.Worlds;
@@ -147,6 +149,12 @@ public class SimpleWorldJoin : MonoBehaviour
         HideError();
         isJoining = true;
         startButton.interactable = false;
+
+        // Capture username from input field
+        if (usernameInput != null && !string.IsNullOrEmpty(usernameInput.text))
+        {
+            PlayerUsername = usernameInput.text;
+        }
 
         WorldData worldToJoin = default;
 

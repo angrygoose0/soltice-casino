@@ -43,6 +43,8 @@ namespace Coherence.Generated
                 case 16: return AssetId.FromInterop(data, dataSize, simFrames, simFramesCount);
                 case 17: return GenericScale.FromInterop(data, dataSize, simFrames, simFramesCount);
                 case 18: return _60786269438aa4c6c8c3c4f9b60e4b9b_3871810461409951791.FromInterop(data, dataSize, simFrames, simFramesCount);
+                case 19: return _60786269438aa4c6c8c3c4f9b60e4b9b_7736649631221385927.FromInterop(data, dataSize, simFrames, simFramesCount);
+                case 20: return _60786269438aa4c6c8c3c4f9b60e4b9b_9064713401945964142.FromInterop(data, dataSize, simFrames, simFramesCount);
             }
 
             throw new ArgumentException($"Unkown component type {type}", nameof(type));
@@ -269,6 +271,33 @@ namespace Coherence.Generated
 
                     return;
                 }
+                case 19:
+                {
+                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_7736649631221385927)component;
+                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_7736649631221385927.Interop();
+
+                    val.Speed = orig.Speed;
+
+                    updater.UpdateComponent(entity, componentType, val, 4, component.FieldsMask, component.StoppedMask, frames);
+
+                    return;
+                }
+                case 20:
+                {
+                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_9064713401945964142)component;
+                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_9064713401945964142.Interop();
+
+                    var pinnedplayerUsername = orig.playerUsername != null ? Encoding.UTF8.GetBytes(orig.playerUsername) : null; fixed (void* pinnedPtrplayerUsername = pinnedplayerUsername) { val.playerUsername = new ByteArray { Data = pinnedPtrplayerUsername, Length =  pinnedplayerUsername?.Length ?? 0 };
+                    val.playerColorR = orig.playerColorR;
+                    val.playerColorG = orig.playerColorG;
+                    val.playerColorB = orig.playerColorB;
+                    val.playerMetallic = orig.playerMetallic;
+                    val.playerSmoothness = orig.playerSmoothness;
+
+                    updater.UpdateComponent(entity, componentType, val, 36, component.FieldsMask, component.StoppedMask, frames);
+
+}                    return;
+                }
             }
 
             throw new NotImplementedException($"Failed to update a component with type {componentType}.");
@@ -284,6 +313,7 @@ namespace Coherence.Generated
                   case 3: return AdoptOrphan.FromInterop(data, dataSize);
                   case 4: return PersistenceReady.FromInterop(data, dataSize);
                   case 5: return SceneIndexChanged.FromInterop(data, dataSize);
+                  case 6: return _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00.FromInterop(data, dataSize);
             }
 
             throw new ArgumentException($"Unkown command type {type}", nameof(type));
@@ -361,6 +391,17 @@ namespace Coherence.Generated
                     return sender.SendCommand(entity, target, type, val, 4);
 
                 }
+                case 6:
+                {
+                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00)command;
+                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00.Interop();
+
+                    var pinnedusername = orig.username != null ? Encoding.UTF8.GetBytes(orig.username) : null; fixed (void* pinnedPtrusername = pinnedusername) { val.username = new ByteArray { Data = pinnedPtrusername, Length =  pinnedusername?.Length ?? 0 };
+                    var pinnedmessage = orig.message != null ? Encoding.UTF8.GetBytes(orig.message) : null; fixed (void* pinnedPtrmessage = pinnedmessage) { val.message = new ByteArray { Data = pinnedPtrmessage, Length =  pinnedmessage?.Length ?? 0 };
+
+                    return sender.SendCommand(entity, target, type, val, 32);
+
+}}                }
             }
 
             throw new NotImplementedException($"Failed to send a command with type {type}.");

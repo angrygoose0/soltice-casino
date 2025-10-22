@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 23cbf5aebbbdeb0498115d04f62f7a76
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 260966
+  packageName: Ultimate Chat Box
+  packageVersion: 1.0.2
+  assetPath: Assets/Tank & Healer Studio/Ultimate Chat Box/Scripts/UltimateChatBoxStyles.cs
+  uploadId: 711914

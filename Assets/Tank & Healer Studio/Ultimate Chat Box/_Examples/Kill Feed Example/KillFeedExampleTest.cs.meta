@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e7feefd795ad0ee4f85241eae8bccd06
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 260966
+  packageName: Ultimate Chat Box
+  packageVersion: 1.0.2
+  assetPath: Assets/Tank & Healer Studio/Ultimate Chat Box/_Examples/Kill Feed Example/KillFeedExampleTest.cs
+  uploadId: 711914

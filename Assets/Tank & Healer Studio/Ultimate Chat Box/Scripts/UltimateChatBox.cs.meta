@@ -1,0 +1,34 @@
+fileFormatVersion: 2
+guid: e1682cbdd68c9ae40b52565b394f65e9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - editorImage: {fileID: 2800000, guid: 31b95f62492350c4785d30cc30be23c4, type: 3}
+  - verticalBoundingBox: {instanceID: 0}
+  - horizontalBoundingBox: {instanceID: 0}
+  - textObject: {instanceID: 0}
+  - emojiAsset: {instanceID: 0}
+  - usernameHighlightImage: {instanceID: 0}
+  - scrollbarRect: {instanceID: 0}
+  - scrollbarHandle: {instanceID: 0}
+  - navigationArrowUp: {instanceID: 0}
+  - navigationArrowDown: {instanceID: 0}
+  - inputField: {instanceID: 0}
+  - prefixImage: {instanceID: 0}
+  - emojiButtonImage: {instanceID: 0}
+  - emojiWindowImage: {instanceID: 0}
+  - emojiText: {instanceID: 0}
+  - emojiWindowCanvasGroup: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 260966
+  packageName: Ultimate Chat Box
+  packageVersion: 1.0.2
+  assetPath: Assets/Tank & Healer Studio/Ultimate Chat Box/Scripts/UltimateChatBox.cs
+  uploadId: 711914

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 9cd485639c1a36347ad5bb5328fe6004
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 260966
+  packageName: Ultimate Chat Box
+  packageVersion: 1.0.2
+  assetPath: Assets/Tank & Healer Studio/Ultimate Chat Box/Editor/ChatStylePropertyDrawer.cs
+  uploadId: 711914
