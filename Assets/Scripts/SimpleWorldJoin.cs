@@ -222,13 +222,13 @@ public class SimpleWorldJoin : MonoBehaviour
     private void ShowError(string message)
     {
         errorText.text = message;
-        errorText.gameObject.SetActive(true);
+        UIFader.FadeIn(errorText.gameObject);
     }
 
     private void HideError()
     {
         errorText.text = "";
-        errorText.gameObject.SetActive(false);
+        UIFader.FadeOut(errorText.gameObject);
     }
 }
 

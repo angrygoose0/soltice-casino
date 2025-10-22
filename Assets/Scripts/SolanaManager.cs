@@ -62,11 +62,11 @@ public class SolanaManager : MonoBehaviour
         // Hide connect buttons until game is joined
         foreach (var btn in connectButtons)
         {
-            btn.gameObject.SetActive(false);
+            UIFader.HideImmediate(btn.gameObject);
         }
         foreach (var btn in disconnectButtons)
         {
-            btn.gameObject.SetActive(false);
+            UIFader.HideImmediate(btn.gameObject);
         }
 
         // Subscribe to game join event
@@ -212,14 +212,14 @@ public class SolanaManager : MonoBehaviour
         {
             foreach (var btn in disconnectButtons)
             {
-                btn.gameObject.SetActive(true);
+                UIFader.FadeIn(btn.gameObject);
             }
         }
         else
         {
             foreach (var btn in connectButtons)
             {
-                btn.gameObject.SetActive(true);
+                UIFader.FadeIn(btn.gameObject);
             }
         }
     }
@@ -232,11 +232,14 @@ public class SolanaManager : MonoBehaviour
         // Update connect/disconnect buttons (only if game already joined)
         foreach (var btn in connectButtons)
         {
-            btn.gameObject.SetActive(false);
+            UIFader.FadeOut(btn.gameObject);
         }
         foreach (var btn in disconnectButtons)
         {
-            btn.gameObject.SetActive(_gameJoined);
+            if (_gameJoined)
+                UIFader.FadeIn(btn.gameObject);
+            else
+                UIFader.FadeOut(btn.gameObject);
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => Web3.Instance?.Logout());
         }
@@ -244,20 +247,20 @@ public class SolanaManager : MonoBehaviour
         // Update public key texts
         foreach (var txt in publicKeyTexts)
         {
-            txt.gameObject.SetActive(true);
+            UIFader.FadeIn(txt.gameObject);
             txt.text = account.PublicKey;
         }
 
         // Show balance texts
         foreach (var txt in balanceTexts)
         {
-            txt.gameObject.SetActive(true);
+            UIFader.FadeIn(txt.gameObject);
         }
 
         // Show and update token balance texts
         foreach (var txt in tokenBalanceTexts)
         {
-            txt.gameObject.SetActive(true);
+            UIFader.FadeIn(txt.gameObject);
         }
         
         // Immediately refresh SOL balance and update UI once
@@ -286,33 +289,36 @@ public class SolanaManager : MonoBehaviour
         // Update connect/disconnect buttons (only show if game already joined)
         foreach (var btn in connectButtons)
         {
-            btn.gameObject.SetActive(_gameJoined);
+            if (_gameJoined)
+                UIFader.FadeIn(btn.gameObject);
+            else
+                UIFader.FadeOut(btn.gameObject);
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => Web3.Instance?.LoginWithWalletAdapter());
         }
         foreach (var btn in disconnectButtons)
         {
-            btn.gameObject.SetActive(false);
+            UIFader.FadeOut(btn.gameObject);
         }
 
         // Hide and clear public key texts
         foreach (var txt in publicKeyTexts)
         {
-            txt.gameObject.SetActive(false);
+            UIFader.FadeOut(txt.gameObject);
             txt.text = string.Empty;
         }
 
         // Hide balance texts
         foreach (var txt in balanceTexts)
         {
-            txt.gameObject.SetActive(false);
+            UIFader.FadeOut(txt.gameObject);
             txt.text = string.Empty;
         }
 
         // Hide and clear token balance texts
         foreach (var txt in tokenBalanceTexts)
         {
-            txt.gameObject.SetActive(false);
+            UIFader.FadeOut(txt.gameObject);
             txt.text = string.Empty;
         }
     }

@@ -30,7 +30,9 @@ public class DepositModal : MonoBehaviour
 
     [SerializeField] private Button swapButton;
     [SerializeField] private Button sendButton;
+    private TMP_Text sendButtonText;
     [SerializeField] private Button toggleModalButton;
+    [SerializeField] private Button exitButton;
     
     public UnityEvent<ulong> onDeposit;
     public UnityEvent<ulong> onWithdraw;
@@ -40,6 +42,8 @@ public class DepositModal : MonoBehaviour
         // Configure input fields to only accept numbers
         walletInput.contentType = TMP_InputField.ContentType.DecimalNumber;
         ephemeralInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+        
+        sendButtonText = sendButton.GetComponentInChildren<TMP_Text>();
         
         UpdateCardStates();
         UpdateConvertedValues();
@@ -53,11 +57,13 @@ public class DepositModal : MonoBehaviour
         sendButton.onClick.AddListener(Send);
         if (toggleModalButton != null)
             toggleModalButton.onClick.AddListener(ToggleModal);
+        if (exitButton != null)
+            exitButton.onClick.AddListener(() => UIFader.FadeOut(gameObject));
         
         // Initially hide everything since wallet isn't connected
-        gameObject.SetActive(false);
+        UIFader.HideImmediate(gameObject);
         if (toggleModalButton != null)
-            toggleModalButton.gameObject.SetActive(false);
+            UIFader.HideImmediate(toggleModalButton.gameObject);
     }
 
     private void OnInputChanged(string value)
@@ -88,31 +94,37 @@ public class DepositModal : MonoBehaviour
         {
             walletCard.transform.SetAsFirstSibling();
             walletInput.interactable = true;
-            walletDropdown.gameObject.SetActive(true);
-            walletHalfButton.gameObject.SetActive(true);
-            walletFullButton.gameObject.SetActive(true);
-            walletBalance.gameObject.SetActive(true);
+            UIFader.FadeIn(walletDropdown.gameObject);
+            UIFader.FadeIn(walletHalfButton.gameObject);
+            UIFader.FadeIn(walletFullButton.gameObject);
+            UIFader.FadeIn(walletBalance.gameObject);
             
             ephemeralInput.interactable = false;
-            ephemeralDropdown.gameObject.SetActive(false);
-            ephemeralHalfButton.gameObject.SetActive(false);
-            ephemeralFullButton.gameObject.SetActive(false);
-            ephemeralBalance.gameObject.SetActive(false);
+            UIFader.FadeOut(ephemeralDropdown.gameObject);
+            UIFader.FadeOut(ephemeralHalfButton.gameObject);
+            UIFader.FadeOut(ephemeralFullButton.gameObject);
+            UIFader.FadeOut(ephemeralBalance.gameObject);
+            
+            if (sendButtonText != null)
+                sendButtonText.text = "Deposit";
         }
         else
         {
             ephemeralCard.transform.SetAsFirstSibling();
             ephemeralInput.interactable = true;
-            ephemeralDropdown.gameObject.SetActive(true);
-            ephemeralHalfButton.gameObject.SetActive(true);
-            ephemeralFullButton.gameObject.SetActive(true);
-            ephemeralBalance.gameObject.SetActive(true);
+            UIFader.FadeIn(ephemeralDropdown.gameObject);
+            UIFader.FadeIn(ephemeralHalfButton.gameObject);
+            UIFader.FadeIn(ephemeralFullButton.gameObject);
+            UIFader.FadeIn(ephemeralBalance.gameObject);
             
             walletInput.interactable = false;
-            walletDropdown.gameObject.SetActive(false);
-            walletHalfButton.gameObject.SetActive(false);
-            walletFullButton.gameObject.SetActive(false);
-            walletBalance.gameObject.SetActive(false);
+            UIFader.FadeOut(walletDropdown.gameObject);
+            UIFader.FadeOut(walletHalfButton.gameObject);
+            UIFader.FadeOut(walletFullButton.gameObject);
+            UIFader.FadeOut(walletBalance.gameObject);
+            
+            if (sendButtonText != null)
+                sendButtonText.text = "Withdraw";
         }
         
         UpdateInactiveCardPlaceholder();
@@ -154,19 +166,22 @@ public class DepositModal : MonoBehaviour
     
     public void ToggleModal()
     {
-        gameObject.SetActive(!gameObject.activeSelf);
+        if (gameObject.activeSelf)
+            UIFader.FadeOut(gameObject);
+        else
+            UIFader.FadeIn(gameObject);
     }
     
     public void ShowToggleButton()
     {
         if (toggleModalButton != null)
-            toggleModalButton.gameObject.SetActive(true);
+            UIFader.FadeIn(toggleModalButton.gameObject);
     }
     
     public void HideToggleButton()
     {
         if (toggleModalButton != null)
-            toggleModalButton.gameObject.SetActive(false);
-        gameObject.SetActive(false);
+            UIFader.FadeOut(toggleModalButton.gameObject);
+        UIFader.FadeOut(gameObject);
     }
 }

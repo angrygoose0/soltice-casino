@@ -25,8 +25,6 @@ public class CrashUI : MonoBehaviour
     private Vector3 originalCanvasScale;
     private Coroutine scaleCoroutine;
     private bool isInRange = false;
-
- 
     
     private void Start()
     {

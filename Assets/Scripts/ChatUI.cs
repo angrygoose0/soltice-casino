@@ -23,7 +23,7 @@ public class ChatUI : MonoBehaviour
         
         if (chatBox != null)
         {
-            chatBox.gameObject.SetActive(false);
+            UIFader.HideImmediate(chatBox.gameObject);
             chatBox.OnInputFieldSubmitted += OnMessageSubmitted;
         }
         else
@@ -58,7 +58,7 @@ public class ChatUI : MonoBehaviour
         isConnected = true;
         if (chatBox != null)
         {
-            chatBox.gameObject.SetActive(true);
+            UIFader.FadeIn(chatBox.gameObject);
             Debug.Log($"ChatUI: Connected to Coherence. ChatBox enabled on client {bridge.ClientID}");
         }
     }
@@ -68,7 +68,7 @@ public class ChatUI : MonoBehaviour
         isConnected = false;
         if (chatBox != null)
         {
-            chatBox.gameObject.SetActive(false);
+            UIFader.FadeOut(chatBox.gameObject);
         }
     }
 

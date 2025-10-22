@@ -70,9 +70,9 @@ public class UserUI : MonoBehaviour
         SetupButtonListeners();
         SetupGameSubscription();
         SetupDepositModalListeners();
-        beforeBettingGroup.SetActive(false);
-        afterBettingGroup.SetActive(false);
-        setupGroup.SetActive(false);
+        UIFader.HideImmediate(beforeBettingGroup);
+        UIFader.HideImmediate(afterBettingGroup);
+        UIFader.HideImmediate(setupGroup);
     }
     
     private void SetupDepositModalListeners()
@@ -108,9 +108,9 @@ public class UserUI : MonoBehaviour
     private void OnWalletDisconnected()
     {
         // Hide all UI groups when wallet disconnects
-        beforeBettingGroup.SetActive(false);
-        afterBettingGroup.SetActive(false);
-        setupGroup.SetActive(false);
+        UIFader.FadeOut(beforeBettingGroup);
+        UIFader.FadeOut(afterBettingGroup);
+        UIFader.FadeOut(setupGroup);
         
         if (depositModal != null)
             depositModal.HideToggleButton();
@@ -426,16 +426,16 @@ public class UserUI : MonoBehaviour
     {
         bool ready = AreAccountsReady();
         
-        setupGroup.SetActive(!ready);
-        
         if (!ready)
         {
-            beforeBettingGroup.SetActive(false);
-            afterBettingGroup.SetActive(false);
+            UIFader.FadeIn(setupGroup);
+            UIFader.FadeOut(beforeBettingGroup);
+            UIFader.FadeOut(afterBettingGroup);
             Debug.Log($"Setup required - PlayerBet(d={_playerBetIsDelegated}, i={_playerBetIsInitialized}), UserBalance(d={_userBalanceIsDelegated}, i={_userBalanceIsInitialized})");
         }
         else
         {
+            UIFader.FadeOut(setupGroup);
             Debug.Log("All accounts ready");
         }
     }
@@ -457,15 +457,15 @@ public class UserUI : MonoBehaviour
 
         if (playerBet.Amount == 0 || playerBet.GameNo < game.GameNo || playerBet.Claimed) { //means player hasnt bet.
             playerTextTMP.enabled = false;
-            beforeBettingGroup.SetActive(true);
-            afterBettingGroup.SetActive(false);
+            UIFader.FadeIn(beforeBettingGroup);
+            UIFader.FadeOut(afterBettingGroup);
             return;
         }
         
         if (playerBet.GameNo > game.GameNo) {
             playerTextTMP.enabled = true;
-            beforeBettingGroup.SetActive(false);
-            afterBettingGroup.SetActive(true);
+            UIFader.FadeOut(beforeBettingGroup);
+            UIFader.FadeIn(afterBettingGroup);
 
             ulong lastAmount = TextAnimationManager.Instance.GetLastRenderedAmount(playerTextTMP);
             if (lastAmount != playerBet.Amount)
@@ -481,21 +481,24 @@ public class UserUI : MonoBehaviour
             playerTextTMP.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
             
             afterBettingText.text = $"Your bet: {playerBet.Amount} (next round)";
-            claimButton.gameObject.SetActive(false);
-            startButton.gameObject.SetActive(game.State == 0);
+            UIFader.FadeOut(claimButton.gameObject);
+            if (game.State == 0)
+                UIFader.FadeIn(startButton.gameObject);
+            else
+                UIFader.FadeOut(startButton.gameObject);
         } 
         else if (playerBet.GameNo == game.GameNo) {
             playerTextTMP.enabled = true;
-            beforeBettingGroup.SetActive(false);
-            afterBettingGroup.SetActive(true);
+            UIFader.FadeOut(beforeBettingGroup);
+            UIFader.FadeIn(afterBettingGroup);
             
             ulong currentValue = (ulong)(playerBet.Amount * System.Math.Pow(1.11, game.Tick));
             playerTextTMP.text = $"Bet: {currentValue}";
             playerTextTMP.color = new Color(1f, 1f, 1f, 1f);
             
             afterBettingText.text = $"Your bet: {currentValue}";
-            claimButton.gameObject.SetActive(true);
-            startButton.gameObject.SetActive(false);
+            UIFader.FadeIn(claimButton.gameObject);
+            UIFader.FadeOut(startButton.gameObject);
         }
     }
 

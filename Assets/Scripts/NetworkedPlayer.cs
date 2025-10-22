@@ -102,8 +102,7 @@ public class NetworkedPlayer : MonoBehaviour
         }
         else
         {
-            // Remote players: just update visuals based on synced data
-            UpdateRemotePlayerVisuals();
+            // Remote players: visuals updated automatically via Coherence sync
         }
 
         // Apply material properties for all players (local and remote)
@@ -235,12 +234,6 @@ public class NetworkedPlayer : MonoBehaviour
         }
     }
 
-    private void UpdateRemotePlayerVisuals()
-    {
-        // Remote players: Animator Speed parameter is synced automatically by CoherenceSync
-        // No need to manually update it here - Coherence handles it via the Animator binding
-    }
-
     private void UpdateUI()
     {
         if (nameText != null)
@@ -250,7 +243,15 @@ public class NetworkedPlayer : MonoBehaviour
 
         if (betAmountText != null)
         {
-            betAmountText.text = $"Bet: {currentBetAmount}";
+            if (currentBetAmount > 0)
+            {
+                UIFader.FadeIn(betAmountText.gameObject);
+                betAmountText.text = $"Bet: {currentBetAmount}";
+            }
+            else
+            {
+                UIFader.FadeOut(betAmountText.gameObject);
+            }
         }
     }
 

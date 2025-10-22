@@ -10,6 +10,7 @@ public class PlayerManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private MaterialManager materialManager;
+    [SerializeField] private CrashUI crashUI;
 
     private CoherenceBridge _coherenceBridge;
     private GameObject _playerReference;
@@ -50,6 +51,12 @@ public class PlayerManager : MonoBehaviour
             
             // Set scene references (can't be set in prefab)
             _localPlayer.materialManager = materialManager;
+            
+            // Set currentPlayer on CrashUI
+            if (crashUI != null)
+            {
+                crashUI.currentPlayer = _localPlayer.transform;
+            }
         }
     }
 
