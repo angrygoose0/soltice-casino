@@ -32,7 +32,7 @@ public class SubscriptionManager : MonoBehaviour
     }
 
     private readonly Dictionary<string, AccountSubscription> _subscriptions = new Dictionary<string, AccountSubscription>();
-    private static readonly PublicKey DELEGATION_PROGRAM_ID = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
+    private SolanaManager _solanaManager;
 
     private void Awake()
     {
@@ -43,6 +43,11 @@ public class SubscriptionManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        _solanaManager = FindObjectOfType<SolanaManager>();
     }
 
     /// <summary>
@@ -85,7 +90,7 @@ public class SubscriptionManager : MonoBehaviour
         }
 
         // Determine if account is delegated
-        bool isDelegated = forceDelegated ?? await CheckIfDelegated(accountAddress);
+        bool isDelegated = forceDelegated ?? await _solanaManager.CheckIfDelegated(accountAddress);
         
         // If forceDelegated is true but account isn't actually delegated, fail
         if (forceDelegated == true && !isDelegated)
@@ -161,7 +166,7 @@ public class SubscriptionManager : MonoBehaviour
         Func<byte[], T> deserializer = null,
         bool? forceDelegated = null)
     {
-        bool isDelegated = forceDelegated ?? await CheckIfDelegated(accountAddress);
+        bool isDelegated = forceDelegated ?? await _solanaManager.CheckIfDelegated(accountAddress);
         
         // If forceDelegated is true but account isn't actually delegated, fail
         if (forceDelegated == true && !isDelegated)
@@ -229,27 +234,6 @@ public class SubscriptionManager : MonoBehaviour
             await Unsubscribe(id);
         }
         Debug.Log($"✓ Unsubscribed from all {subscriptionIds.Count} subscriptions");
-    }
-
-    /// <summary>
-    /// Check if an account is delegated to the rollup.
-    /// </summary>
-    public async Task<bool> CheckIfDelegated(PublicKey accountAddress)
-    {
-        try
-        {
-            var accountInfo = await Web3.Wallet.ActiveRpcClient.GetAccountInfoAsync(
-                accountAddress,
-                Commitment.Processed
-            );
-
-            return accountInfo.Result?.Value?.Owner?.Equals(DELEGATION_PROGRAM_ID.Key) ?? false;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogWarning($"Failed to check delegation status for {accountAddress}: {ex.Message}");
-            return false;
-        }
     }
 
     /// <summary>

@@ -11,6 +11,7 @@ public class PlayerManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private MaterialManager materialManager;
     [SerializeField] private CrashUI crashUI;
+    [SerializeField] private UserUI userUI;
 
     private CoherenceBridge _coherenceBridge;
     private GameObject _playerReference;
@@ -56,6 +57,12 @@ public class PlayerManager : MonoBehaviour
             if (crashUI != null)
             {
                 crashUI.currentPlayer = _localPlayer.transform;
+            }
+            
+            // Set player bet text reference in UserUI
+            if (userUI != null)
+            {
+                userUI.SetPlayerBetText(_localPlayer.betAmountText);
             }
         }
     }

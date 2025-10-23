@@ -40,9 +40,11 @@ public class SolanaManager : MonoBehaviour
     public CrashClient CrashClient { get; private set; }
     public CrashClient CrashClientEphemeral { get; private set; }
     public TreasuryClient TreasuryClient { get; private set; }
+    public int TokenDecimals => tokenDecimals;
     
     private static PublicKey _crashProgramId = new PublicKey(CrashProgram.ID);
     private static PublicKey _treasuryProgramId = new PublicKey(TreasuryProgram.ID);
+    public static readonly PublicKey DELEGATION_PROGRAM_ID = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
 
     private IRpcClient _rpcClient;
     private IRpcClient _ephemeralRpcClient;
@@ -527,6 +529,27 @@ public class SolanaManager : MonoBehaviour
         {
             Debug.LogError($"Error in SendAndConfirmTransaction: {ex.Message}");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if an account is delegated to the rollup.
+    /// </summary>
+    public async Task<bool> CheckIfDelegated(PublicKey accountAddress)
+    {
+        try
+        {
+            var accountInfo = await Web3.Wallet.ActiveRpcClient.GetAccountInfoAsync(
+                accountAddress,
+                Commitment.Processed
+            );
+
+            return accountInfo.Result?.Value?.Owner?.Equals(DELEGATION_PROGRAM_ID.Key) ?? false;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Failed to check delegation status for {accountAddress}: {ex.Message}");
+            return false;
         }
     }
 

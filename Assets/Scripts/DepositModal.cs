@@ -164,6 +164,16 @@ public class DepositModal : MonoBehaviour
         }
     }
     
+    public void Show()
+    {
+        UIFader.FadeIn(gameObject);
+    }
+
+    public void Hide()
+    {
+        UIFader.FadeOut(gameObject);
+    }
+
     public void ToggleModal()
     {
         if (gameObject.activeSelf)

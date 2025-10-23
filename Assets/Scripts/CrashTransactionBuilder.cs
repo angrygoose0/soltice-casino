@@ -21,7 +21,6 @@ public class CrashTransactionBuilder : MonoBehaviour
     public static readonly PublicKey SYSTEM_PROGRAM_ID = SystemProgram.ProgramIdKey;
     public static readonly PublicKey TOKEN_PROGRAM_ID = TokenProgram.ProgramIdKey;
     public static readonly PublicKey ASSOCIATED_TOKEN_PROGRAM_ID = AssociatedTokenAccountProgram.ProgramIdKey;
-    public static readonly PublicKey DELEGATION_PROGRAM_ID = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
     // References
     [SerializeField] private SolanaManager solanaManager;
 
@@ -66,13 +65,13 @@ public class CrashTransactionBuilder : MonoBehaviour
 
     public static PublicKey DeriveDelegationMetadataAccount(PublicKey delegatedAccount)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation-metadata"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation-metadata"), delegatedAccount.KeyBytes }, SolanaManager.DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
         return pda;
     }
 
     public static PublicKey DeriveDelegationRecordAccount(PublicKey delegatedAccount)
     {
-        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation"), delegatedAccount.KeyBytes }, DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("delegation"), delegatedAccount.KeyBytes }, SolanaManager.DELEGATION_PROGRAM_ID, out PublicKey pda, out _);
         return pda;
     }
 
@@ -285,7 +284,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
 
-        var ix = CrashProgram.PlaceBet(accounts, amountTokens);
+        ulong amountWithDecimals = (ulong)(amountTokens * Math.Pow(10, solanaManager.TokenDecimals));
+        var ix = CrashProgram.PlaceBet(accounts, amountWithDecimals);
         return ix;
     }
 

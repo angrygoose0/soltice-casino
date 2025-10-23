@@ -20,8 +20,8 @@ public class NetworkedPlayer : MonoBehaviour
     [SerializeField] private CinemachineInputAxisController inputAxisController;
 
     [Header("UI References")]
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text betAmountText;
+    [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] public TextMeshProUGUI betAmountText;
     
     // Set by PlayerManager at spawn time (scene reference, can't be in prefab)
     [HideInInspector] public MaterialManager materialManager;

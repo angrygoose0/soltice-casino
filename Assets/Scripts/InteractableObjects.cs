@@ -13,8 +13,7 @@ public class InteractableObjects : MonoBehaviour
         Set,
         PlaceBet,
         StartGame,
-        ClaimBet,
-        SetupAccounts
+        ClaimBet
     }
 
     [System.Serializable]
@@ -57,6 +56,7 @@ public class InteractableObjects : MonoBehaviour
 
     [SerializeField] private MaterialManager materialManager;
     [SerializeField] private UserUI userUI;
+    [SerializeField] private Camera mainCamera; // Assign in inspector or auto-find
 
     private GameObject lastHoveredObject; // null when nothing is hovered
     private bool lastHoveredPressed; // whether left click was held on last hovered
@@ -69,6 +69,17 @@ public class InteractableObjects : MonoBehaviour
 
     private void Start()
     {
+        // Cache camera reference if not assigned in inspector
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            // Fallback to find any camera with Cinemachine Brain
+            if (mainCamera == null)
+            {
+                mainCamera = FindObjectOfType<Camera>();
+            }
+        }
+
         // Initialize centralized interactables
         for (int i = 0; i < interactables.Count; i++)
         {
@@ -139,25 +150,21 @@ public class InteractableObjects : MonoBehaviour
         }
 
         // 2) If no UI hit, do 3D physics raycast
-        if (hitObjectOverall == null)
+        if (hitObjectOverall == null && mainCamera != null)
         {
-            Camera cam = Camera.main;
-            if (cam != null)
+            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                Ray ray = cam.ScreenPointToRay(mousePosition);
-                if (Physics.Raycast(ray, out RaycastHit hit))
+                GameObject hitObject = hit.collider.gameObject;
+                Transform t = hitObject.transform;
+                while (t != null)
                 {
-                    GameObject hitObject = hit.collider.gameObject;
-                    Transform t = hitObject.transform;
-                    while (t != null)
+                    if (TryGetProfile(t.gameObject, out _))
                     {
-                        if (TryGetProfile(t.gameObject, out _))
-                        {
-                            hitObjectOverall = t.gameObject;
-                            break;
-                        }
-                        t = t.parent;
+                        hitObjectOverall = t.gameObject;
+                        break;
                     }
+                    t = t.parent;
                 }
             }
         }
@@ -296,9 +303,6 @@ public class InteractableObjects : MonoBehaviour
                 break;
             case ActionType.ClaimBet:
                 userUI.ClaimBet();
-                break;
-            case ActionType.SetupAccounts:
-                userUI.SetupUserAccountsFromState();
                 break;
         }
     }

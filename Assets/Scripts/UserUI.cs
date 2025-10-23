@@ -1,9 +1,14 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using Crash.Accounts;
 using Treasury.Accounts;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
+using Solana.Unity.Rpc.Models;
 using TMPro;
 using Coherence.Toolkit;
 
@@ -19,35 +24,21 @@ public class UserUI : MonoBehaviour
     private PlayerBet _playerBetCache;
     private UserBalance _userBalanceCache;
 
-    // Account state tracking
-    private bool _playerBetIsDelegated;
-    private bool _playerBetIsInitialized;
-    private bool _userBalanceIsDelegated;
-    private bool _userBalanceIsInitialized;
+    // Subscription tracking
+    private string _playerBetSubscriptionId;
+    private string _userBalanceSubscriptionId;
 
     // Auto-tick coroutine tracking
     private Coroutine _tickCoroutine;
 
     [SerializeField] private GameObject beforeBettingGroup;
     [SerializeField] private GameObject afterBettingGroup;
-    [SerializeField] private GameObject setupGroup;
     [SerializeField] private TextMeshProUGUI afterBettingText;
     [SerializeField] private Button claimButton;
     [SerializeField] private Button startButton;
 
     [SerializeField] private BalloonSimulator _balloonSimulator;
 
-    // Button TMP fields
-    [SerializeField] private Button btnSetupGame;
-    [SerializeField] private Button btnSetupUser;
-    [SerializeField] private Button btnDeposit;
-    [SerializeField] private Button btnWithdraw;
-    [SerializeField] private Button btnSetupRandomness;
-    [SerializeField] private Button btnStartGame;
-    [SerializeField] private Button btnPlaceBet;
-    [SerializeField] private Button btnClaimBet;
-    [SerializeField] private Button btnTick;
-    [SerializeField] private Button btnCreateOrRefreshSession;
 
     // Public fields for input values (editable in Inspector)
     [Header("Input Values")]
@@ -67,19 +58,22 @@ public class UserUI : MonoBehaviour
 
     private void Start()
     {
-        SetupButtonListeners();
         SetupGameSubscription();
         SetupDepositModalListeners();
         UIFader.HideImmediate(beforeBettingGroup);
         UIFader.HideImmediate(afterBettingGroup);
-        UIFader.HideImmediate(setupGroup);
+    }
+
+    public void SetPlayerBetText(TextMeshProUGUI betText)
+    {
+        playerTextTMP = betText;
     }
     
     private void SetupDepositModalListeners()
     {
         if (depositModal != null)
         {
-            depositModal.onDeposit.AddListener(Deposit);
+            depositModal.onDeposit.AddListener(DepositAsync);
             depositModal.onWithdraw.AddListener(Withdraw);
         }
     }
@@ -105,137 +99,44 @@ public class UserUI : MonoBehaviour
         await SetupUserAccountSubscriptions();
     }
 
-    private void OnWalletDisconnected()
+    private async void OnWalletDisconnected()
     {
+        // Unsubscribe from user-specific accounts
+        if (!string.IsNullOrEmpty(_playerBetSubscriptionId))
+        {
+            await SubscriptionManager.Instance.Unsubscribe(_playerBetSubscriptionId);
+            _playerBetSubscriptionId = null;
+        }
+        
+        if (!string.IsNullOrEmpty(_userBalanceSubscriptionId))
+        {
+            await SubscriptionManager.Instance.Unsubscribe(_userBalanceSubscriptionId);
+            _userBalanceSubscriptionId = null;
+        }
+        
         // Hide all UI groups when wallet disconnects
         UIFader.FadeOut(beforeBettingGroup);
         UIFader.FadeOut(afterBettingGroup);
-        UIFader.FadeOut(setupGroup);
         
         if (depositModal != null)
             depositModal.HideToggleButton();
         
-        // Reset account state
-        _playerBetIsDelegated = false;
-        _playerBetIsInitialized = false;
-        _userBalanceIsDelegated = false;
-        _userBalanceIsInitialized = false;
-        
         Debug.Log("Wallet disconnected - UI reset");
     }
 
-    private void SetupButtonListeners()
-    {
-        // Setup button listeners for all public void methods
-        if (btnSetupGame != null)
-            btnSetupGame.onClick.AddListener(() => SetupGame());
-        
-        if (btnSetupUser != null)
-            btnSetupUser.onClick.AddListener(() => SetupUser());
-        
-        if (btnDeposit != null)
-            btnDeposit.onClick.AddListener(() => Deposit(depositAmount));
-        
-        if (btnWithdraw != null)
-            btnWithdraw.onClick.AddListener(() => Withdraw(withdrawAmount));
-        
-        if (btnSetupRandomness != null)
-            btnSetupRandomness.onClick.AddListener(() => SetupRandomness(clientSeed));
-        
-        if (btnStartGame != null)
-            btnStartGame.onClick.AddListener(() => StartGame());
-        
-        if (btnPlaceBet != null)
-            btnPlaceBet.onClick.AddListener(() => PlaceBet());
-        
-        if (btnClaimBet != null)
-            btnClaimBet.onClick.AddListener(() => ClaimBet());
-        
-        if (btnTick != null)
-            btnTick.onClick.AddListener(() => Tick());
-
-        if (btnCreateOrRefreshSession != null)
-            btnCreateOrRefreshSession.onClick.AddListener(() => CreateOrRefreshSession());
-    }
-
-    public async void SetupGame() //admin
-    {
-        var initTreasuryIx = treasuryBuilder.InitializeTreasury();
-        var initCrashAuthorityIx = crashBuilder.InitializeAuthority();
-        var delegateCrashAuthorityIx = crashBuilder.DelegateAuthority();
-        var initGameIx = crashBuilder.InitializeGame();
-        var delegateGameIx = crashBuilder.DelegateGame();
-
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
-            initTreasuryIx, 
-            initCrashAuthorityIx, 
-            delegateCrashAuthorityIx, 
-            initGameIx, 
-            delegateGameIx
-        );  
-    }
-
-    public async void SetupUser() //user
-    {
-        var initBalanceIx = treasuryBuilder.InitializeBalance();
-        var delegateUserBalanceIx = treasuryBuilder.DelegateUserBalance();
-        var initPlayerBetIx = crashBuilder.InitializePlayerBet();
-        var delegatePlayerBetIx = crashBuilder.DelegatePlayerBet();
-
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, 
-            initBalanceIx, delegateUserBalanceIx, initPlayerBetIx, delegatePlayerBetIx
-        );
-    }
-
-    public async void SetupUserAccountsFromState()
-    {
-        var instructions = new System.Collections.Generic.List<Solana.Unity.Rpc.Models.TransactionInstruction>();
-
-        // Handle User Balance setup
-        if (!_userBalanceIsInitialized)
-        {
-            Debug.Log("Adding InitializeBalance instruction");
-            instructions.Add(treasuryBuilder.InitializeBalance());
-        }
-        
-        if (_userBalanceIsInitialized && !_userBalanceIsDelegated)
-        {
-            Debug.Log("Adding DelegateUserBalance instruction");
-            instructions.Add(treasuryBuilder.DelegateUserBalance());
-        }
-
-        // Handle Player Bet setup
-        if (!_playerBetIsInitialized)
-        {
-            Debug.Log("Adding InitializePlayerBet instruction");
-            instructions.Add(crashBuilder.InitializePlayerBet());
-        }
-        
-        if (_playerBetIsInitialized && !_playerBetIsDelegated)
-        {
-            Debug.Log("Adding DelegatePlayerBet instruction");
-            instructions.Add(crashBuilder.DelegatePlayerBet());
-        }
-
-        if (instructions.Count == 0)
-        {
-            Debug.Log("All accounts already set up - no transaction needed");
-            return;
-        }
-
-        Debug.Log($"Sending transaction with {instructions.Count} instruction(s)");
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
-        
-        // After successful transaction, refresh subscription states
-        await SetupUserAccountSubscriptions();
-    }
 
     //ENSURE user_balance delegated
-    public async void Deposit(ulong amount) //user
+    public async void DepositAsync(ulong amount) //user
     {
-        // 1. Undelegate on ER
-        var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+        var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
+        bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+        
+        // 1. Undelegate on ER if currently delegated
+        if (userBalanceIsDelegated)
+        {
+            var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+        }
         
         // 2. Deposit + Re-delegate on base layer (together)
         var userDepositIx = treasuryBuilder.UserDeposit(amount);
@@ -272,6 +173,89 @@ public class UserUI : MonoBehaviour
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
     public async void PlaceBet() //user
     {
+        var instructions = new List<TransactionInstruction>();
+
+        var playerBetPk = CrashTransactionBuilder.DerivePlayerBetAccount(Web3.Account.PublicKey);
+        var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
+
+        // Step 1: Initialize any uninitialized accounts
+        var playerBetData = await SubscriptionManager.Instance.LoadAccountData<PlayerBet>(
+            playerBetPk, data => PlayerBet.Deserialize(data), forceDelegated: false
+        );
+        
+        if (playerBetData == null)
+        {
+            Debug.Log("Initializing PlayerBet account");
+            instructions.Add(crashBuilder.InitializePlayerBet());
+        }
+        
+        var userBalanceData = await SubscriptionManager.Instance.LoadAccountData<UserBalance>(
+            userBalancePk, data => UserBalance.Deserialize(data), forceDelegated: false
+        );
+        
+        bool isInitializingUserBalance = userBalanceData == null;
+        if (isInitializingUserBalance)
+        {
+            Debug.Log("Initializing UserBalance account");
+            instructions.Add(treasuryBuilder.InitializeBalance());
+        }
+
+        if (instructions.Count > 0)
+        {
+            Debug.Log($"Sending initialization transaction with {instructions.Count} instruction(s)");
+            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
+            instructions.Clear();
+        }
+
+        // Step 2 & 3: Calculate how much deposit is needed based on existing balance
+        ulong depositAmount = betAmount;
+        if (!isInitializingUserBalance && _userBalanceCache != null && _userBalanceCache.Balance > 0)
+        {
+            if (_userBalanceCache.Balance >= betAmount)
+            {
+                Debug.Log($"Sufficient balance available ({_userBalanceCache.Balance} >= {betAmount}), skipping deposit");
+                depositAmount = 0;
+            }
+            else
+            {
+                depositAmount = betAmount - _userBalanceCache.Balance;
+                Debug.Log($"Partial balance available ({_userBalanceCache.Balance}), depositing remaining {depositAmount}");
+            }
+        }
+        
+        if (depositAmount > 0)
+        {
+            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+            
+            if (userBalanceIsDelegated)
+            {
+                var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+                await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+            }
+            
+            var userDepositIx = treasuryBuilder.UserDeposit(depositAmount);
+            var delegateIx = treasuryBuilder.DelegateUserBalance();
+            instructions.Add(userDepositIx);
+            instructions.Add(delegateIx);
+        }
+
+        // Step 4: Delegate PlayerBet if it wasn't
+        bool playerBetIsDelegated = await solanaManager.CheckIfDelegated(playerBetPk);
+        
+        if (!playerBetIsDelegated)
+        {
+            Debug.Log("Delegating PlayerBet");
+            instructions.Add(crashBuilder.DelegatePlayerBet());
+        }
+
+        if (instructions.Count > 0)
+        {
+            Debug.Log($"Sending deposit and delegation transaction with {instructions.Count} instruction(s)");
+            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
+        }
+
+        // Step 5: Send place_bet transaction on ER layer
+        Debug.Log($"Placing bet of {betAmount}");
         var placeBetIx = crashBuilder.PlaceBet(betAmount);
         await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, placeBetIx);
     }
@@ -290,7 +274,7 @@ public class UserUI : MonoBehaviour
         await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
     }
 
-    private System.Collections.IEnumerator AutoTickCoroutine()
+    private IEnumerator AutoTickCoroutine()
     {
         while (true)
         {
@@ -334,40 +318,32 @@ public class UserUI : MonoBehaviour
         }
     }
 
-    private async System.Threading.Tasks.Task SetupUserAccountSubscriptions()
+    private async Task SetupUserAccountSubscriptions()
     {
-        // Setup both accounts
-        await SetupAccountSubscription(
+        // Setup both accounts and store subscription IDs
+        _playerBetSubscriptionId = await SetupAccountSubscription(
             "PlayerBet",
             CrashTransactionBuilder.DerivePlayerBetAccount(Web3.Account.PublicKey),
             OnPlayerBetUpdate,
-            data => PlayerBet.Deserialize(data),
-            (isDelegated, isInitialized) => {
-                _playerBetIsDelegated = isDelegated;
-                _playerBetIsInitialized = isInitialized;
-            }
+            data => PlayerBet.Deserialize(data)
         );
 
-        await SetupAccountSubscription(
+        _userBalanceSubscriptionId = await SetupAccountSubscription(
             "UserBalance",
             TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey),
             OnUserBalanceUpdate,
-            data => UserBalance.Deserialize(data),
-            (isDelegated, isInitialized) => {
-                _userBalanceIsDelegated = isDelegated;
-                _userBalanceIsInitialized = isInitialized;
-            }
+            data => UserBalance.Deserialize(data)
         );
 
-        UpdateUIGroupsBasedOnAccountState();
+        // Let UpdateUserBetText determine the correct initial UI state
+        UpdateUserBetText(_playerBetCache, _gameCache);
     }
 
-    private async System.Threading.Tasks.Task SetupAccountSubscription<T>(
+    private async Task<string> SetupAccountSubscription<T>(
         string accountName,
         PublicKey accountPk,
-        System.Action<T> callback,
-        System.Func<byte[], T> deserializer,
-        System.Action<bool, bool> setState)
+        Action<T> callback,
+        Func<byte[], T> deserializer)
     {
         // Try loading account using ER
         var initialData = await SubscriptionManager.Instance.LoadAccountData<T>(
@@ -378,21 +354,18 @@ public class UserUI : MonoBehaviour
         {
             // Account is delegated and ready
             Debug.Log($"{accountName} loaded via ER - setting up subscription");
-            setState(true, true);
-            await SubscriptionManager.Instance.SubscribeAndLoad<T>(
+            return await SubscriptionManager.Instance.SubscribeAndLoad<T>(
                 accountPk, callback, deserializer, forceDelegated: true
             );
-            return;
         }
 
         // Check if delegated but not ready
-        bool isDelegated = await SubscriptionManager.Instance.CheckIfDelegated(accountPk);
+        bool isDelegated = await solanaManager.CheckIfDelegated(accountPk);
         
         if (isDelegated)
         {
             // Delegated but not ready - load via normal RPC and subscribe via ER
             Debug.Log($"{accountName} delegated but not ready - loading via RPC and subscribing via ER");
-            setState(true, true);
             
             var normalData = await SubscriptionManager.Instance.LoadAccountData<T>(
                 accountPk, deserializer, forceDelegated: false
@@ -403,7 +376,7 @@ public class UserUI : MonoBehaviour
                 callback(normalData);
             }
             
-            await SubscriptionManager.Instance.Subscribe<T>(
+            return await SubscriptionManager.Instance.Subscribe<T>(
                 accountPk, callback, deserializer, forceDelegated: true
             );
         }
@@ -414,29 +387,8 @@ public class UserUI : MonoBehaviour
                 accountPk, deserializer, forceDelegated: false
             );
             
-            setState(false, baseLayerData != null);
-            Debug.Log($"{accountName} state: delegated=false, initialized={baseLayerData != null}");
-        }
-    }
-
-    private bool AreAccountsReady() => _playerBetIsDelegated && _playerBetIsInitialized 
-                                      && _userBalanceIsDelegated && _userBalanceIsInitialized;
-
-    private void UpdateUIGroupsBasedOnAccountState()
-    {
-        bool ready = AreAccountsReady();
-        
-        if (!ready)
-        {
-            UIFader.FadeIn(setupGroup);
-            UIFader.FadeOut(beforeBettingGroup);
-            UIFader.FadeOut(afterBettingGroup);
-            Debug.Log($"Setup required - PlayerBet(d={_playerBetIsDelegated}, i={_playerBetIsInitialized}), UserBalance(d={_userBalanceIsDelegated}, i={_userBalanceIsInitialized})");
-        }
-        else
-        {
-            UIFader.FadeOut(setupGroup);
-            Debug.Log("All accounts ready");
+            Debug.Log($"{accountName} state: delegated={isDelegated}, initialized={baseLayerData != null}");
+            return null;
         }
     }
 
@@ -453,12 +405,33 @@ public class UserUI : MonoBehaviour
 
     private void UpdateUserBetText(PlayerBet playerBet, Game game)
     {
-        if (!AreAccountsReady()) return;
-
+        // Don't show any betting UI if wallet isn't connected
+        if (Web3.Account == null)
+        {
+            if (playerTextTMP != null)
+                playerTextTMP.enabled = false;
+            UIFader.FadeOut(afterBettingGroup);
+            UIFader.FadeOut(beforeBettingGroup);
+            return;
+        }
+        
+        // If data isn't ready yet, show the before betting UI as default
+        if (playerBet == null || game == null)
+        {
+            if (playerTextTMP != null)
+                playerTextTMP.enabled = false;
+            UIFader.FadeOut(afterBettingGroup);
+            UIFader.FadeIn(beforeBettingGroup);
+            return;
+        }
+        
+        if (playerTextTMP == null || afterBettingText == null)
+            return;
+            
         if (playerBet.Amount == 0 || playerBet.GameNo < game.GameNo || playerBet.Claimed) { //means player hasnt bet.
             playerTextTMP.enabled = false;
-            UIFader.FadeIn(beforeBettingGroup);
             UIFader.FadeOut(afterBettingGroup);
+            UIFader.FadeIn(beforeBettingGroup);
             return;
         }
         
@@ -492,7 +465,7 @@ public class UserUI : MonoBehaviour
             UIFader.FadeOut(beforeBettingGroup);
             UIFader.FadeIn(afterBettingGroup);
             
-            ulong currentValue = (ulong)(playerBet.Amount * System.Math.Pow(1.11, game.Tick));
+            ulong currentValue = (ulong)(playerBet.Amount * Math.Pow(1.11, game.Tick));
             playerTextTMP.text = $"Bet: {currentValue}";
             playerTextTMP.color = new Color(1f, 1f, 1f, 1f);
             
@@ -540,7 +513,8 @@ public class UserUI : MonoBehaviour
         {
             gameAccountTMP.text = $"GAME\nState: {newData.State}, Tick: {newData.Tick}, GameNo: {newData.GameNo}";
         }
-        _balloonSimulator.UpdateBalloon(newData);
+        if (_balloonSimulator != null)
+            _balloonSimulator.UpdateBalloon(newData);
         UpdateUserBetText(_playerBetCache, newData);
         Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
 
@@ -554,14 +528,5 @@ public class UserUI : MonoBehaviour
         {
             StopAutoTick();
         }
-    }
-
-    /// <summary>
-    /// Calls SessionManager to create or refresh a session.
-    /// </summary>
-    public async void CreateOrRefreshSession()
-    {
-        await SessionManager.CreateNewSession();
-        Debug.Log("Session created or refreshed.");
     }
 }
