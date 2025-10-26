@@ -8,7 +8,7 @@ namespace MyGame.VFX
     {
         [Header("Modifiable Parameters")]
         [SerializeField] private Color particleColor = Color.white;
-        [SerializeField, Range(0f, 4f)] private float intensity = 1f;
+        [SerializeField] private float intensity = 1f;
         [SerializeField] private Vector3 windDirection = Vector3.zero;
 
         private ParticleSystem[] particleSystems;

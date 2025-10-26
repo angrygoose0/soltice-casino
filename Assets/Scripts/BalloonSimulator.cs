@@ -8,6 +8,8 @@ public class BalloonSimulator : MonoBehaviour
 {
     public GameObject balloonPrefab;
     public Vector3 defaultSpawnLocation = Vector3.zero;
+    
+    [SerializeField] private FeedbackManager feedbackManager;
 
     [SerializeField] private double currentTick = 0;
     public double crashTick = 40;
@@ -102,6 +104,7 @@ public class BalloonSimulator : MonoBehaviour
             StopCoroutine(smoothScaleCoroutineRef);
         }
         smoothScaleCoroutineRef = StartCoroutine(SmoothScaleCoroutine(spawnedBalloon, (float)sizeScale));
+        feedbackManager?.PlayScreenshake();
     }
 
     private void PopBalloon()
@@ -131,6 +134,7 @@ public class BalloonSimulator : MonoBehaviour
 
         popParticle.Play();
         burstParticle.Play();
+        feedbackManager?.PlayScreenshake();
 
         currentTick = 0;
     }
@@ -196,6 +200,7 @@ public class BalloonSimulator : MonoBehaviour
 				);
 			}
             bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
+            feedbackManager?.PlayScreenshake();
 
             BalloonBasedOnTick(game.Tick);
 

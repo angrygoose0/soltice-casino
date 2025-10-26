@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using Crash.Accounts;
 using Treasury.Accounts;
 using Solana.Unity.SDK;
@@ -28,14 +29,12 @@ public class UserUI : MonoBehaviour
     private string _playerBetSubscriptionId;
     private string _userBalanceSubscriptionId;
 
-    // Auto-tick coroutine tracking
-    private Coroutine _tickCoroutine;
-
     [SerializeField] private GameObject beforeBettingGroup;
     [SerializeField] private GameObject afterBettingGroup;
     [SerializeField] private TextMeshProUGUI afterBettingText;
     [SerializeField] private Button claimButton;
     [SerializeField] private Button startButton;
+    [SerializeField] private Button tickButton;
 
     [SerializeField] private BalloonSimulator _balloonSimulator;
 
@@ -60,8 +59,29 @@ public class UserUI : MonoBehaviour
     {
         SetupGameSubscription();
         SetupDepositModalListeners();
+        SetupTickButton();
         UIFader.HideImmediate(beforeBettingGroup);
         UIFader.HideImmediate(afterBettingGroup);
+    }
+
+    private void SetupTickButton()
+    {
+        if (tickButton != null)
+        {
+            tickButton.onClick.AddListener(() => Tick());
+        }
+    }
+
+    private void Update()
+    {
+        if (Keyboard.current != null && 
+            (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+        {
+            if (startButton != null && startButton.gameObject.activeInHierarchy && startButton.interactable)
+            {
+                StartGame();
+            }
+        }
     }
 
     public void SetPlayerBetText(TextMeshProUGUI betText)
@@ -88,7 +108,6 @@ public class UserUI : MonoBehaviour
     {
         Web3.OnLogin -= OnWalletConnected;
         Web3.OnLogout -= OnWalletDisconnected;
-        StopAutoTick();
     }
 
     private async void OnWalletConnected(Account account)
@@ -272,34 +291,6 @@ public class UserUI : MonoBehaviour
     {
         var tickIx = crashBuilder.Tick();
         await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
-    }
-
-    private IEnumerator AutoTickCoroutine()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(3f);
-            Tick();
-        }
-    }
-
-    private void StartAutoTick()
-    {
-        if (_tickCoroutine == null && coherenceBridge != null && coherenceBridge.IsSimulatorOrHost)
-        {
-            _tickCoroutine = StartCoroutine(AutoTickCoroutine());
-            Debug.Log("Auto-tick started (Host)");
-        }
-    }
-
-    private void StopAutoTick()
-    {
-        if (_tickCoroutine != null)
-        {
-            StopCoroutine(_tickCoroutine);
-            _tickCoroutine = null;
-            Debug.Log("Auto-tick stopped");
-        }
     }
 
     public async void SetupGameSubscription()
@@ -517,16 +508,5 @@ public class UserUI : MonoBehaviour
             _balloonSimulator.UpdateBalloon(newData);
         UpdateUserBetText(_playerBetCache, newData);
         Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
-
-        // Auto-tick management (host only)
-        // State 1 = game running, State 0 = game not running/waiting
-        if (newData.State == 1)
-        {
-            StartAutoTick();
-        }
-        else
-        {
-            StopAutoTick();
-        }
     }
 }

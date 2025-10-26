@@ -448,6 +448,8 @@ MonoBehaviour:
       lodStepsActive: 1
     - component: {fileID: 7015347737726428842}
       lodStepsActive: 1
+    - component: {fileID: 8724398295824715839}
+      lodStepsActive: 1
     GeneratesArchetypeDefinition: 0
   interpolationLocation: 1
   RigidbodyUpdateMode: 0
@@ -1450,6 +1452,7 @@ GameObject:
   - component: {fileID: 8712144666715127149}
   - component: {fileID: 3133633846745055862}
   - component: {fileID: 2788938157961680672}
+  - component: {fileID: 8724398295824715839}
   m_Layer: 0
   m_Name: FreeLook Camera
   m_TagString: Untagged
@@ -1676,6 +1679,30 @@ MonoBehaviour:
         DecelTime: 0
   PlayerIndex: -1
   AutoEnableInputs: 1
+--- !u!114 &8724398295824715839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8456648292231124267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00b2d199b96b516448144ab30fb26aed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseListener
+  ApplyAfter: 2
+  ChannelMask: 1
+  Gain: 1
+  Use2DDistance: 0
+  UseCameraSpace: 1
+  SignalCombinationMode: 0
+  ReactionSettings:
+    m_SecondaryNoise: {fileID: 0}
+    AmplitudeGain: 1
+    FrequencyGain: 1
+    Duration: 1
+    m_NoiseOffsets: {x: 0, y: 0, z: 0}
 --- !u!1001 &7736649631211945895
 PrefabInstance:
   m_ObjectHideFlags: 0
