@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using Solana.Unity.SDK;
 
 public class InteractableObjects : MonoBehaviour
 {
@@ -13,7 +15,10 @@ public class InteractableObjects : MonoBehaviour
         Set,
         PlaceBet,
         StartGame,
-        ClaimBet
+        ClaimBet,
+        ConnectWallet,
+        DisconnectWallet,
+        JoinWorld
     }
 
     [System.Serializable]
@@ -30,6 +35,7 @@ public class InteractableObjects : MonoBehaviour
         public GlowSettings idle;
         public GlowSettings hover;
         public GlowSettings pressed;
+        public GlowSettings disabled;
     }
 
     [System.Serializable]
@@ -49,14 +55,21 @@ public class InteractableObjects : MonoBehaviour
         [Header("Action Parameters (if needed)")]
         public ulong amount; // Used for Add/Set actions
         
+        [Header("UI Disabled Settings")]
+        public float disabledAlpha = 0.5f;
+        
         // Cached components (non-serialized)
         [System.NonSerialized] public TextMeshProUGUI label;
         [System.NonSerialized] public GlowProfile cachedGlowProfile;
+        [System.NonSerialized] public CanvasGroup cachedCanvasGroup;
+        [System.NonSerialized] public bool isEnabled = true;
     }
 
     [SerializeField] private MaterialManager materialManager;
     [SerializeField] private UserUI userUI;
+    [SerializeField] private SimpleWorldJoin simpleWorldJoin;
     [SerializeField] private Camera mainCamera; // Assign in inspector or auto-find
+    [SerializeField] private FeedbackManager feedbackManager;
 
     private GameObject lastHoveredObject; // null when nothing is hovered
     private bool lastHoveredPressed; // whether left click was held on last hovered
@@ -90,15 +103,24 @@ public class InteractableObjects : MonoBehaviour
             entry.cachedGlowProfile = GetGlowProfileByName(entry.glowProfileName);
             if (entry.cachedGlowProfile == null) continue;
 
+            // Cache components
+            entry.label = entry.gameObject.GetComponentInChildren<TextMeshProUGUI>();
+            entry.cachedCanvasGroup = entry.gameObject.GetComponent<CanvasGroup>();
+            
+            // Add CanvasGroup if it's a UI element without one
+            if (entry.cachedCanvasGroup == null && entry.gameObject.GetComponent<RectTransform>() != null)
+            {
+                entry.cachedCanvasGroup = entry.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            // Set initial enabled state
+            entry.isEnabled = true;
             materialManager.SetGlowMaterial(
                 entry.gameObject,
                 scale: entry.cachedGlowProfile.idle.scale,
                 glowColor: entry.cachedGlowProfile.idle.color,
                 glowIntensity: entry.cachedGlowProfile.idle.intensity
             );
-
-            // Cache label component from children
-            entry.label = entry.gameObject.GetComponentInChildren<TextMeshProUGUI>();
         }
     }
 
@@ -181,17 +203,28 @@ public class InteractableObjects : MonoBehaviour
 
             // On click down edge, call interact handler if present
             bool clickStartedThisFrame = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+            bool clickReleasedThisFrame = Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame;
+            
             if (clickStartedThisFrame && hitObjectOverall != null)
             {
+                feedbackManager?.PlayUIClickDown(hitObjectOverall.transform);
+            }
+            
+            if (clickReleasedThisFrame && hitObjectOverall != null)
+            {
+                feedbackManager?.PlayUIClickUp(hitObjectOverall.transform);
+                
                 if (TryGetInteractableEntry(hitObjectOverall, out InteractableEntry entry))
                 {
-                    ExecuteAction(entry);
+                    ExecuteActionAsync(entry);
                 }
             }
             if (lastHoveredObject != hitObjectOverall)
             {
                 if (hitObjectOverall != null)
                 {
+                    feedbackManager?.PlayUIHoverEnter(hitObjectOverall.transform);
+                    
                     materialManager.SetGlowMaterial(
                         hitObjectOverall,
                         scale: isPressed ? profile.pressed.scale : profile.hover.scale,
@@ -202,6 +235,8 @@ public class InteractableObjects : MonoBehaviour
 
                 if (lastHoveredObject != null)
                 {
+                    feedbackManager?.PlayUIHoverExit(lastHoveredObject.transform);
+                    
                     if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile))
                     {
                         materialManager.SetGlowMaterial(
@@ -234,6 +269,8 @@ public class InteractableObjects : MonoBehaviour
         {
             if (lastHoveredObject != null)
             {
+                feedbackManager?.PlayUIHoverExit(lastHoveredObject.transform);
+                
                 if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile))
                 {
                     materialManager.SetGlowMaterial(
@@ -257,7 +294,7 @@ public class InteractableObjects : MonoBehaviour
         for (int i = 0; i < interactables.Count; i++)
         {
             InteractableEntry entry = interactables[i];
-            if (entry != null && entry.gameObject == obj && entry.cachedGlowProfile != null)
+            if (entry != null && entry.gameObject == obj && entry.cachedGlowProfile != null && entry.isEnabled)
             {
                 profile = entry.cachedGlowProfile;
                 return true;
@@ -283,26 +320,38 @@ public class InteractableObjects : MonoBehaviour
         return false;
     }
 
-    private void ExecuteAction(InteractableEntry entry)
+    private async void ExecuteActionAsync(InteractableEntry entry)
     {
-        if (entry == null || userUI == null) return;
+        if (entry == null) return;
+
+        // Yield to prevent blocking the current frame
+        await Task.Yield();
 
         switch (entry.actionType)
         {
             case ActionType.Add:
-                userUI.betAmount += entry.amount;
+                if (userUI != null) userUI.betAmount += entry.amount;
                 break;
             case ActionType.Set:
-                userUI.betAmount = entry.amount;
+                if (userUI != null) userUI.betAmount = entry.amount;
                 break;
             case ActionType.PlaceBet:
-                userUI.PlaceBet();
+                if (userUI != null) userUI.PlaceBet();
                 break;
             case ActionType.StartGame:
-                userUI.StartGame();
+                if (userUI != null) userUI.StartGame();
                 break;
             case ActionType.ClaimBet:
-                userUI.ClaimBet();
+                if (userUI != null) userUI.ClaimBet();
+                break;
+            case ActionType.ConnectWallet:
+                Web3.Instance?.LoginWithWalletAdapter();
+                break;
+            case ActionType.DisconnectWallet:
+                Web3.Instance?.Logout();
+                break;
+            case ActionType.JoinWorld:
+                if (simpleWorldJoin != null) simpleWorldJoin.OnStartClicked();
                 break;
         }
     }
@@ -353,6 +402,72 @@ public class InteractableObjects : MonoBehaviour
         if (value >= (ulong)Thousand) return (value / Thousand).ToString("0.#", CultureInfo.InvariantCulture) + "k";
         return value.ToString(CultureInfo.InvariantCulture);
     }
+
+    public void SetInteractableEnabled(GameObject obj, bool enabled)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj)
+            {
+                entry.isEnabled = enabled;
+
+                if (enabled)
+                {
+                    // Enable: restore to idle state
+                    if (entry.cachedCanvasGroup != null)
+                    {
+                        entry.cachedCanvasGroup.interactable = true;
+                        entry.cachedCanvasGroup.alpha = 1f;
+                    }
+
+                    if (entry.cachedGlowProfile != null)
+                    {
+                        materialManager.SetGlowMaterial(
+                            entry.gameObject,
+                            scale: entry.cachedGlowProfile.idle.scale,
+                            glowColor: entry.cachedGlowProfile.idle.color,
+                            glowIntensity: entry.cachedGlowProfile.idle.intensity
+                        );
+                    }
+                }
+                else
+                {
+                    // Disable: set disabled state
+                    if (entry.cachedCanvasGroup != null)
+                    {
+                        entry.cachedCanvasGroup.interactable = false;
+                        entry.cachedCanvasGroup.alpha = entry.disabledAlpha;
+                    }
+
+                    if (entry.cachedGlowProfile != null)
+                    {
+                        materialManager.SetGlowMaterial(
+                            entry.gameObject,
+                            scale: entry.cachedGlowProfile.disabled.scale,
+                            glowColor: entry.cachedGlowProfile.disabled.color,
+                            glowIntensity: entry.cachedGlowProfile.disabled.intensity
+                        );
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    public void SetInteractableEnabledByAction(ActionType actionType, bool enabled)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.actionType == actionType)
+            {
+                SetInteractableEnabled(entry.gameObject, enabled);
+                return;
+            }
+        }
+    }
+
 }
 
 

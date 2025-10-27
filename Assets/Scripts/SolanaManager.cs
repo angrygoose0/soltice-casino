@@ -1,12 +1,10 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using System.Globalization;
 using Solana.Unity.SDK;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using System.Collections.Generic;
-using UnityEngine.EventSystems;
 using System.Linq;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Rpc.Builders;
@@ -23,9 +21,8 @@ using Treasury;
 
 public class SolanaManager : MonoBehaviour
 {
-    [Header("Wallet Buttons")]
-    [SerializeField] private List<Button> connectButtons;
-    [SerializeField] private List<Button> disconnectButtons;
+    [Header("Dependencies")]
+    [SerializeField] private InteractableObjects interactableObjects;
 
     [Header("Mint")]
     [SerializeField] private string mintAddress;
@@ -61,14 +58,11 @@ public class SolanaManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // Hide connect buttons until game is joined
-        foreach (var btn in connectButtons)
+        // Hide wallet buttons until game is joined
+        if (interactableObjects != null)
         {
-            UIFader.HideImmediate(btn.gameObject);
-        }
-        foreach (var btn in disconnectButtons)
-        {
-            UIFader.HideImmediate(btn.gameObject);
+            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
+            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, false);
         }
 
         // Subscribe to game join event
@@ -83,34 +77,6 @@ public class SolanaManager : MonoBehaviour
         {
             OnLogout();
         }
-
-        // Set button texts and listeners
-        foreach (var btn in connectButtons)
-        {
-            var btnText = btn.GetComponentInChildren<TextMeshProUGUI>();
-            if (btnText != null)
-            {
-                btnText.text = "Connect";
-            }
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => Web3.Instance?.LoginWithWalletAdapter());
-            
-            // Add hover effect with EventTrigger
-            AddHoverEffect(btn);
-        }
-
-        foreach (var btn in disconnectButtons)
-        {
-            var btnText = btn.GetComponentInChildren<TextMeshProUGUI>();
-            if (btnText != null)
-            {
-                btnText.text = "Disconnect";
-            }
-            
-            // Add hover effect with EventTrigger
-            AddHoverEffect(btn);
-        }
-
 
         Web3.OnLogin += OnLogin;
         Web3.OnLogout += OnLogout;
@@ -167,35 +133,6 @@ public class SolanaManager : MonoBehaviour
         }
     }
 
-    private void AddHoverEffect(Button button)
-    {
-        // Add hover effect with EventTrigger
-        EventTrigger eventTrigger = button.gameObject.GetComponent<EventTrigger>();
-        if (eventTrigger == null)
-        {
-            eventTrigger = button.gameObject.AddComponent<EventTrigger>();
-        }
-        
-        // Clear any existing triggers
-        if (eventTrigger.triggers != null)
-        {
-            eventTrigger.triggers.Clear();
-        }
-        else
-        {
-            eventTrigger.triggers = new List<EventTrigger.Entry>();
-        }
-        
-        // Add pointer enter (hover) event
-        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
-        enterEntry.eventID = EventTriggerType.PointerEnter;
-        enterEntry.callback.AddListener((data) => {
-            // Play button hover feedback
-            //feedbackManager?.PlayButtonClickFeedback();
-        });
-        eventTrigger.triggers.Add(enterEntry);
-    }
-
     private void OnDisable()
     {
         SimpleWorldJoin.OnGameJoined -= OnGameJoined;
@@ -210,18 +147,15 @@ public class SolanaManager : MonoBehaviour
         Debug.Log("Game joined - enabling wallet buttons");
         
         // Show appropriate buttons based on wallet state
-        if (Web3.Instance != null && Web3.Account != null)
+        if (interactableObjects != null)
         {
-            foreach (var btn in disconnectButtons)
+            if (Web3.Instance != null && Web3.Account != null)
             {
-                UIFader.FadeIn(btn.gameObject);
+                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
             }
-        }
-        else
-        {
-            foreach (var btn in connectButtons)
+            else
             {
-                UIFader.FadeIn(btn.gameObject);
+                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
             }
         }
     }
@@ -231,19 +165,14 @@ public class SolanaManager : MonoBehaviour
         // Initialize clients when user logs in
         InitializeClients();
 
-        // Update connect/disconnect buttons (only if game already joined)
-        foreach (var btn in connectButtons)
+        // Update connect/disconnect buttons
+        if (interactableObjects != null)
         {
-            UIFader.FadeOut(btn.gameObject);
-        }
-        foreach (var btn in disconnectButtons)
-        {
+            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
             if (_gameJoined)
-                UIFader.FadeIn(btn.gameObject);
-            else
-                UIFader.FadeOut(btn.gameObject);
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => Web3.Instance?.Logout());
+            {
+                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
+            }
         }
 
         // Update public key texts
@@ -288,19 +217,14 @@ public class SolanaManager : MonoBehaviour
 
     private void OnLogout()
     {
-        // Update connect/disconnect buttons (only show if game already joined)
-        foreach (var btn in connectButtons)
+        // Update connect/disconnect buttons
+        if (interactableObjects != null)
         {
+            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, false);
             if (_gameJoined)
-                UIFader.FadeIn(btn.gameObject);
-            else
-                UIFader.FadeOut(btn.gameObject);
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => Web3.Instance?.LoginWithWalletAdapter());
-        }
-        foreach (var btn in disconnectButtons)
-        {
-            UIFader.FadeOut(btn.gameObject);
+            {
+                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
+            }
         }
 
         // Hide and clear public key texts

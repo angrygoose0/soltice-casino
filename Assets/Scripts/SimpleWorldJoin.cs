@@ -14,12 +14,14 @@ public class SimpleWorldJoin : MonoBehaviour
 {
     [Header("UI References")]
     public CanvasGroup uiCanvasGroup;
-    public Button startButton;
     public TMP_InputField usernameInput;
     public TMP_Text errorText;
     
     [Header("Settings")]
     public float fadeOutDuration = 0.5f;
+    
+    [Header("Dependencies")]
+    public InteractableObjects interactableObjects;
 
     private CoherenceBridge bridge;
     private CoherenceCloudLogin cloudLogin;
@@ -50,8 +52,6 @@ public class SimpleWorldJoin : MonoBehaviour
         bridge.onConnectionError.AddListener(OnConnectionError);
         
         HideError();
-        startButton.onClick.AddListener(OnStartClicked);
-        
         StartCoroutine(InitializeWorlds());
     }
 
@@ -64,9 +64,17 @@ public class SimpleWorldJoin : MonoBehaviour
         }
     }
 
+    private void SetButtonEnabled(bool enabled)
+    {
+        if (interactableObjects != null)
+        {
+            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.JoinWorld, enabled);
+        }
+    }
+
     private IEnumerator InitializeWorlds()
     {
-        startButton.interactable = false;
+        SetButtonEnabled(false);
         
         // Check for local world first
         var task = ReplicationServerUtils.PingHttpServerAsync(RuntimeSettings.Instance.LocalHost,
@@ -78,7 +86,7 @@ public class SimpleWorldJoin : MonoBehaviour
             localWorld = WorldData.GetLocalWorld(RuntimeSettings.Instance.LocalHost);
             if (localWorld.WorldId != default(WorldData).WorldId)
             {
-                startButton.interactable = true;
+                SetButtonEnabled(true);
                 yield break;
             }
         }
@@ -125,7 +133,7 @@ public class SimpleWorldJoin : MonoBehaviour
                 availableWorlds = response.Result;
                 if (availableWorlds.Count > 0)
                 {
-                    startButton.interactable = true;
+                    SetButtonEnabled(true);
                 }
                 else
                 {
@@ -142,13 +150,13 @@ public class SimpleWorldJoin : MonoBehaviour
         yield return new WaitUntil(() => fetchComplete);
     }
 
-    private void OnStartClicked()
+    public void OnStartClicked()
     {
         if (isJoining) return;
         
         HideError();
         isJoining = true;
-        startButton.interactable = false;
+        SetButtonEnabled(false);
 
         // Capture username from input field
         if (usernameInput != null && !string.IsNullOrEmpty(usernameInput.text))
@@ -175,7 +183,7 @@ public class SimpleWorldJoin : MonoBehaviour
         else
         {
             ShowError("No world available to join.");
-            startButton.interactable = true;
+            SetButtonEnabled(true);
             isJoining = false;
         }
     }
@@ -196,7 +204,7 @@ public class SimpleWorldJoin : MonoBehaviour
             yield break;
         }
         
-        startButton.interactable = false;
+        SetButtonEnabled(false);
         float elapsed = 0f;
         
         while (elapsed < fadeOutDuration)
@@ -215,7 +223,7 @@ public class SimpleWorldJoin : MonoBehaviour
     {
         var (title, message) = exception.GetPrettyMessage();
         ShowError($"{title}: {message}");
-        startButton.interactable = true;
+        SetButtonEnabled(true);
         isJoining = false;
     }
 
