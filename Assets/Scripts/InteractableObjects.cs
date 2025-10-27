@@ -320,12 +320,9 @@ public class InteractableObjects : MonoBehaviour
         return false;
     }
 
-    private async void ExecuteActionAsync(InteractableEntry entry)
+    private void ExecuteActionAsync(InteractableEntry entry)
     {
         if (entry == null) return;
-
-        // Yield to prevent blocking the current frame
-        await Task.Yield();
 
         switch (entry.actionType)
         {
@@ -468,6 +465,31 @@ public class InteractableObjects : MonoBehaviour
         }
     }
 
+    public void SetInteractableHardEnabled(GameObject obj, bool enabled)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj)
+            {
+                entry.gameObject.SetActive(enabled);
+            }
+        }
+    }
+
+    public void SetInteractableHardEnabledByAction(ActionType actionType, bool enabled)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.actionType == actionType)
+            {
+                entry.gameObject.SetActive(enabled);
+            }
+        }
+    }
+
 }
+
 
 

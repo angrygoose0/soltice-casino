@@ -61,8 +61,8 @@ public class SolanaManager : MonoBehaviour
         // Hide wallet buttons until game is joined
         if (interactableObjects != null)
         {
-            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
-            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, false);
+            interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
+            interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, false);
         }
 
         // Subscribe to game join event
@@ -151,11 +151,11 @@ public class SolanaManager : MonoBehaviour
         {
             if (Web3.Instance != null && Web3.Account != null)
             {
-                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
+                interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
             }
             else
             {
-                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
+                interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
             }
         }
     }
@@ -164,14 +164,16 @@ public class SolanaManager : MonoBehaviour
     {
         // Initialize clients when user logs in
         InitializeClients();
+        Debug.Log("Login successful");
 
         // Update connect/disconnect buttons
         if (interactableObjects != null)
         {
-            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
+            Debug.Log("Setting interactable objects to hard disable connect wallet");
+            interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
             if (_gameJoined)
             {
-                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
+                interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
             }
         }
 
@@ -220,10 +222,10 @@ public class SolanaManager : MonoBehaviour
         // Update connect/disconnect buttons
         if (interactableObjects != null)
         {
-            interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, false);
+            interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, false);
             if (_gameJoined)
             {
-                interactableObjects.SetInteractableEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
+                interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
             }
         }
 

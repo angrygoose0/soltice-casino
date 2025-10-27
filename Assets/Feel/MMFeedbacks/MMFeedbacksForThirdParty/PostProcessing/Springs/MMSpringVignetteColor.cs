@@ -19,11 +19,11 @@ namespace MoreMountains.Feedbacks
 			base.Initialization();
 		}
 		
-		public override Color TargetColor
-		{
-			get => _vignette.color;
-			set => _vignette.color.Override(value);
-		}
+	public override Color TargetColor
+	{
+		get => _vignette != null ? _vignette.color : Color.white;
+		set { if (_vignette != null) _vignette.color.Override(value); }
+	}
 	}
 }
 #endif

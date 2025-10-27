@@ -9,8 +9,8 @@ namespace MoreMountains.Feedbacks
 	{
 		public override Color TargetColor
 		{
-			get => Target.color;
-			set => Target.color = value;
+			get => Target != null ? Target.color : Color.white;
+			set { if (Target != null) Target.color = value; }
 		}
 	}
 }
