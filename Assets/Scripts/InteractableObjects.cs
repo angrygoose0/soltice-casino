@@ -65,7 +65,6 @@ public class InteractableObjects : MonoBehaviour
         [System.NonSerialized] public bool isEnabled = true;
     }
 
-    [SerializeField] private MaterialManager materialManager;
     [SerializeField] private UserUI userUI;
     [SerializeField] private SimpleWorldJoin simpleWorldJoin;
     [SerializeField] private Camera mainCamera; // Assign in inspector or auto-find
@@ -115,12 +114,18 @@ public class InteractableObjects : MonoBehaviour
 
             // Set initial enabled state
             entry.isEnabled = true;
-            materialManager.SetGlowMaterial(
-                entry.gameObject,
-                scale: entry.cachedGlowProfile.idle.scale,
-                glowColor: entry.cachedGlowProfile.idle.color,
-                glowIntensity: entry.cachedGlowProfile.idle.intensity
-            );
+            
+            // Animate to idle state
+            if (feedbackManager != null)
+            {
+                FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
+                {
+                    scale = entry.cachedGlowProfile.idle.scale,
+                    intensity = entry.cachedGlowProfile.idle.intensity,
+                    color = entry.cachedGlowProfile.idle.color
+                };
+                feedbackManager.AnimateGlowMaterial(entry.gameObject, idleState);
+            }
         }
     }
 
@@ -225,26 +230,32 @@ public class InteractableObjects : MonoBehaviour
                 {
                     feedbackManager?.PlayUIHoverEnter(hitObjectOverall.transform);
                     
-                    materialManager.SetGlowMaterial(
-                        hitObjectOverall,
-                        scale: isPressed ? profile.pressed.scale : profile.hover.scale,
-                        glowColor: isPressed ? profile.pressed.color : profile.hover.color,
-                        glowIntensity: isPressed ? profile.pressed.intensity : profile.hover.intensity
-                    );
+                    if (feedbackManager != null)
+                    {
+                        GlowSettings targetSettings = isPressed ? profile.pressed : profile.hover;
+                        FeedbackManager.MaterialGlowState targetState = new FeedbackManager.MaterialGlowState
+                        {
+                            scale = targetSettings.scale,
+                            intensity = targetSettings.intensity,
+                            color = targetSettings.color
+                        };
+                        feedbackManager.AnimateGlowMaterial(hitObjectOverall, targetState);
+                    }
                 }
 
                 if (lastHoveredObject != null)
                 {
                     feedbackManager?.PlayUIHoverExit(lastHoveredObject.transform);
                     
-                    if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile))
+                    if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile) && feedbackManager != null)
                     {
-                        materialManager.SetGlowMaterial(
-                            lastHoveredObject,
-                            scale: lastProfile.idle.scale,
-                            glowColor: lastProfile.idle.color,
-                            glowIntensity: lastProfile.idle.intensity
-                        );
+                        FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
+                        {
+                            scale = lastProfile.idle.scale,
+                            intensity = lastProfile.idle.intensity,
+                            color = lastProfile.idle.color
+                        };
+                        feedbackManager.AnimateGlowMaterial(lastHoveredObject, idleState);
                     }
                 }
 
@@ -253,14 +264,16 @@ public class InteractableObjects : MonoBehaviour
             }
             else if (lastHoveredPressed != isPressed)
             {
-                if (hitObjectOverall != null)
+                if (hitObjectOverall != null && feedbackManager != null)
                 {
-                    materialManager.SetGlowMaterial(
-                        hitObjectOverall,
-                        scale: isPressed ? profile.pressed.scale : profile.hover.scale,
-                        glowColor: isPressed ? profile.pressed.color : profile.hover.color,
-                        glowIntensity: isPressed ? profile.pressed.intensity : profile.hover.intensity
-                    );
+                    GlowSettings targetSettings = isPressed ? profile.pressed : profile.hover;
+                    FeedbackManager.MaterialGlowState targetState = new FeedbackManager.MaterialGlowState
+                    {
+                        scale = targetSettings.scale,
+                        intensity = targetSettings.intensity,
+                        color = targetSettings.color
+                    };
+                    feedbackManager.AnimateGlowMaterial(hitObjectOverall, targetState);
                 }
                 lastHoveredPressed = isPressed;
             }
@@ -271,14 +284,15 @@ public class InteractableObjects : MonoBehaviour
             {
                 feedbackManager?.PlayUIHoverExit(lastHoveredObject.transform);
                 
-                if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile))
+                if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile) && feedbackManager != null)
                 {
-                    materialManager.SetGlowMaterial(
-                        lastHoveredObject,
-                        scale: lastProfile.idle.scale,
-                        glowColor: lastProfile.idle.color,
-                        glowIntensity: lastProfile.idle.intensity
-                    );
+                    FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
+                    {
+                        scale = lastProfile.idle.scale,
+                        intensity = lastProfile.idle.intensity,
+                        color = lastProfile.idle.color
+                    };
+                    feedbackManager.AnimateGlowMaterial(lastHoveredObject, idleState);
                 }
                 lastHoveredObject = null;
                 lastHoveredPressed = false;
@@ -418,14 +432,15 @@ public class InteractableObjects : MonoBehaviour
                         entry.cachedCanvasGroup.alpha = 1f;
                     }
 
-                    if (entry.cachedGlowProfile != null)
+                    if (entry.cachedGlowProfile != null && feedbackManager != null)
                     {
-                        materialManager.SetGlowMaterial(
-                            entry.gameObject,
-                            scale: entry.cachedGlowProfile.idle.scale,
-                            glowColor: entry.cachedGlowProfile.idle.color,
-                            glowIntensity: entry.cachedGlowProfile.idle.intensity
-                        );
+                        FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
+                        {
+                            scale = entry.cachedGlowProfile.idle.scale,
+                            intensity = entry.cachedGlowProfile.idle.intensity,
+                            color = entry.cachedGlowProfile.idle.color
+                        };
+                        feedbackManager.AnimateGlowMaterial(entry.gameObject, idleState);
                     }
                 }
                 else
@@ -437,14 +452,15 @@ public class InteractableObjects : MonoBehaviour
                         entry.cachedCanvasGroup.alpha = entry.disabledAlpha;
                     }
 
-                    if (entry.cachedGlowProfile != null)
+                    if (entry.cachedGlowProfile != null && feedbackManager != null)
                     {
-                        materialManager.SetGlowMaterial(
-                            entry.gameObject,
-                            scale: entry.cachedGlowProfile.disabled.scale,
-                            glowColor: entry.cachedGlowProfile.disabled.color,
-                            glowIntensity: entry.cachedGlowProfile.disabled.intensity
-                        );
+                        FeedbackManager.MaterialGlowState disabledState = new FeedbackManager.MaterialGlowState
+                        {
+                            scale = entry.cachedGlowProfile.disabled.scale,
+                            intensity = entry.cachedGlowProfile.disabled.intensity,
+                            color = entry.cachedGlowProfile.disabled.color
+                        };
+                        feedbackManager.AnimateGlowMaterial(entry.gameObject, disabledState);
                     }
                 }
                 return;

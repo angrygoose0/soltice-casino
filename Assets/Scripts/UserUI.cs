@@ -35,6 +35,7 @@ public class UserUI : MonoBehaviour
     [SerializeField] private Button claimButton;
     [SerializeField] private Button startButton;
     [SerializeField] private Button tickButton;
+    [SerializeField] private Button setupGameButton;
 
     [SerializeField] private BalloonSimulator _balloonSimulator;
 
@@ -60,6 +61,7 @@ public class UserUI : MonoBehaviour
         SetupGameSubscription();
         SetupDepositModalListeners();
         SetupTickButton();
+        SetupSetupGameButton();
         UIFader.HideImmediate(beforeBettingGroup);
         UIFader.HideImmediate(afterBettingGroup);
     }
@@ -69,6 +71,14 @@ public class UserUI : MonoBehaviour
         if (tickButton != null)
         {
             tickButton.onClick.AddListener(() => Tick());
+        }
+    }
+
+    private void SetupSetupGameButton()
+    {
+        if (setupGameButton != null)
+        {
+            setupGameButton.onClick.AddListener(() => SetupGame());
         }
     }
 
@@ -291,6 +301,18 @@ public class UserUI : MonoBehaviour
     {
         var tickIx = crashBuilder.Tick();
         await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
+    }
+
+    public async void SetupGame() //admin? 
+    {
+        var instructions = new List<TransactionInstruction>();
+        instructions.Add(crashBuilder.InitializeGame());
+        instructions.Add(crashBuilder.InitializeAuthority());
+        instructions.Add(treasuryBuilder.InitializeTreasury());
+        instructions.Add(crashBuilder.DelegateGame());
+        instructions.Add(crashBuilder.DelegateAuthority());
+
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, instructions.ToArray());
     }
 
     public async void SetupGameSubscription()

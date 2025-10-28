@@ -255,7 +255,7 @@ namespace Treasury
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("H44zJC7hHffX1bSXQdxcRLUFwv5M2Gd3HHr3hwMRH4Tx");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("CHzHFQ5vNeUwY7krjrcYAXWxUkye9AQ6CTjkqZKjBhR2");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -343,7 +343,7 @@ namespace Treasury
 
         public static class TreasuryProgram
         {
-            public const string ID = "H44zJC7hHffX1bSXQdxcRLUFwv5M2Gd3HHr3hwMRH4Tx";
+            public const string ID = "CHzHFQ5vNeUwY7krjrcYAXWxUkye9AQ6CTjkqZKjBhR2";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, ulong amount, PublicKey programId = null)
             {
                 programId ??= new(ID);

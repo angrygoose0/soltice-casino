@@ -42,7 +42,7 @@ Material:
     - _GlowIntensity: 1
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Scale: 1
+    - _Scale: 1.1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 0}
     - _GlowColor: {r: 1, g: 1, b: 1, a: 1}
