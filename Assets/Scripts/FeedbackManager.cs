@@ -14,6 +14,10 @@ public class FeedbackManager : MonoBehaviour
     }
 
     [SerializeField] private MMF_Player screenshakeFeedback;
+    [SerializeField] private MMF_Player uiSound;
+
+    public float uiBaseVolume = 1f;
+    public float uiBasePitch = 1f;
     
     private SpringManager springManager;
     private MaterialManager materialManager;
@@ -40,6 +44,7 @@ public class FeedbackManager : MonoBehaviour
     private void Start()
     {
         screenshakeFeedback?.Initialization();
+        uiSound?.Initialization();
     }
     
     private Vector3 GetBaseScale(Transform target)
@@ -136,12 +141,40 @@ public class FeedbackManager : MonoBehaviour
         screenshakeFeedback?.PlayFeedbacks();
     }
 
+    public void PlayUISound()
+    {
+        uiSound?.PlayFeedbacks();
+    }
+
+    private void PlayUISoundWithParams(float volumeMultiplier, float pitchMultiplier)
+    {
+        if (uiSound == null) return;
+        
+        // Find and configure audio feedback components
+        var feedbacks = uiSound.GetFeedbacksList();
+        foreach (var feedback in feedbacks)
+        {
+            if (feedback is MMF_Sound soundFeedback)
+            {
+                soundFeedback.MinVolume = uiBaseVolume * volumeMultiplier;
+                soundFeedback.MaxVolume = uiBaseVolume * volumeMultiplier;
+                soundFeedback.MinPitch = uiBasePitch * pitchMultiplier;
+                soundFeedback.MaxPitch = uiBasePitch * pitchMultiplier;
+            }
+        }
+        
+        uiSound.PlayFeedbacks();
+    }
+
     public void PlayUIHoverEnter(Transform target)
     {
         if (target == null || springManager == null) return;
         
         string springKey = GetOrCreateScaleSpringKey(target);
         springManager.MoveTo(springKey, 1.1f);
+        
+        // Volume: 0.3-0.5, Pitch: 1.05-1.15x
+        PlayUISoundWithParams(volumeMultiplier: 0.4f, pitchMultiplier: 1.1f);
     }
 
     public void PlayUIHoverExit(Transform target)
@@ -150,6 +183,9 @@ public class FeedbackManager : MonoBehaviour
         
         string springKey = GetOrCreateScaleSpringKey(target);
         springManager.MoveTo(springKey, 1f);
+        
+        // Volume: 0.2-0.4, Pitch: 0.9-1.0x
+        PlayUISoundWithParams(volumeMultiplier: 0.3f, pitchMultiplier: 0.95f);
     }
 
     public void PlayUIClickDown(Transform target)
@@ -158,6 +194,9 @@ public class FeedbackManager : MonoBehaviour
         
         string springKey = GetOrCreateScaleSpringKey(target);
         springManager.MoveTo(springKey, 0.9f);
+        
+        // Volume: 0.5-0.8, Pitch: 0.95-1.0x
+        PlayUISoundWithParams(volumeMultiplier: 0.65f, pitchMultiplier: 0.975f);
     }
 
     public void PlayUIClickUp(Transform target)
@@ -166,6 +205,9 @@ public class FeedbackManager : MonoBehaviour
         
         string springKey = GetOrCreateScaleSpringKey(target);
         springManager.MoveTo(springKey, 1.1f);
+        
+        // Volume: 0.5-0.8, Pitch: 1.1-1.2x
+        PlayUISoundWithParams(volumeMultiplier: 0.65f, pitchMultiplier: 1.15f);
     }
 
     public void AnimateGlowMaterial(GameObject obj, MaterialGlowState targetState)

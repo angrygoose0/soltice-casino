@@ -213,11 +213,13 @@ public class InteractableObjects : MonoBehaviour
             if (clickStartedThisFrame && hitObjectOverall != null)
             {
                 feedbackManager?.PlayUIClickDown(hitObjectOverall.transform);
+                feedbackManager?.PlayUISound();
             }
             
             if (clickReleasedThisFrame && hitObjectOverall != null)
             {
                 feedbackManager?.PlayUIClickUp(hitObjectOverall.transform);
+                feedbackManager?.PlayUISound();
                 
                 if (TryGetInteractableEntry(hitObjectOverall, out InteractableEntry entry))
                 {
@@ -229,6 +231,7 @@ public class InteractableObjects : MonoBehaviour
                 if (hitObjectOverall != null)
                 {
                     feedbackManager?.PlayUIHoverEnter(hitObjectOverall.transform);
+                    feedbackManager?.PlayUISound();
                     
                     if (feedbackManager != null)
                     {
