@@ -312,7 +312,7 @@ public class UserUI : MonoBehaviour
         instructions.Add(crashBuilder.DelegateGame());
         instructions.Add(crashBuilder.DelegateAuthority());
 
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, instructions.ToArray());
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
     }
 
     public async void SetupGameSubscription()

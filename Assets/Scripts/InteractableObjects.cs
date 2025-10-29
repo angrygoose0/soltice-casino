@@ -356,6 +356,7 @@ public class InteractableObjects : MonoBehaviour
                 if (userUI != null) userUI.ClaimBet();
                 break;
             case ActionType.ConnectWallet:
+                if (simpleWorldJoin != null) simpleWorldJoin.StartWalletConnection();
                 Web3.Instance?.LoginWithWalletAdapter();
                 break;
             case ActionType.DisconnectWallet:

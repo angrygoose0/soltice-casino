@@ -9,24 +9,29 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using Solana.Unity.SDK;
+using Solana.Unity.Wallet;
 
 public class SimpleWorldJoin : MonoBehaviour
 {
     [Header("UI References")]
     public GameObject startUI;
     public TMP_InputField usernameInput;
-    public TMP_Text errorText;
     
     [Header("Dependencies")]
     public InteractableObjects interactableObjects;
     public GameObject loadingCircle;
     public GameObject darkOverlay;
+    public GameObject loadingText;
+    
+    private TMP_Text loadingTextComponent;
 
     private CoherenceBridge bridge;
     private CoherenceCloudLogin cloudLogin;
     private IReadOnlyList<WorldData> availableWorlds = new List<WorldData>();
     private WorldData localWorld;
     private bool isJoining;
+    private bool isConnectingWallet;
 
     public static event Action OnGameJoined;
     public static string PlayerUsername { get; private set; } = "Player";
@@ -42,15 +47,30 @@ public class SimpleWorldJoin : MonoBehaviour
             return;
         }
 
-        UIFader.ShowImmediate(startUI);
-        UIFader.HideImmediate(loadingCircle);
+        // Get loading text component if available
+        if (loadingText != null)
+        {
+            loadingTextComponent = loadingText.GetComponent<TMP_Text>();
+        }
+
+        // Start with loading visible, startUI hidden
+        UIFader.HideImmediate(startUI);
+        UIFader.ShowImmediate(loadingCircle);
         UIFader.ShowImmediate(darkOverlay);
-        UIFader.HideImmediate(errorText.gameObject);
+        
+        if (loadingText != null && loadingTextComponent != null)
+        {
+            loadingTextComponent.text = "initializing...";
+            loadingTextComponent.color = Color.white;
+            UIFader.ShowImmediate(loadingText);
+        }
 
         bridge.onConnected.AddListener(OnConnected);
         bridge.onConnectionError.AddListener(OnConnectionError);
         
-        HideError();
+        // Subscribe to wallet events
+        Web3.OnLogin += OnWalletConnected;
+        
         StartCoroutine(InitializeWorlds());
     }
 
@@ -61,6 +81,9 @@ public class SimpleWorldJoin : MonoBehaviour
             bridge.onConnected.RemoveListener(OnConnected);
             bridge.onConnectionError.RemoveListener(OnConnectionError);
         }
+        
+        // Unsubscribe from wallet events
+        Web3.OnLogin -= OnWalletConnected;
     }
 
     private void SetButtonEnabled(bool enabled)
@@ -86,6 +109,7 @@ public class SimpleWorldJoin : MonoBehaviour
             if (localWorld.WorldId != default(WorldData).WorldId)
             {
                 SetButtonEnabled(true);
+                ShowInitializationSuccess();
                 yield break;
             }
         }
@@ -133,6 +157,7 @@ public class SimpleWorldJoin : MonoBehaviour
                 if (availableWorlds.Count > 0)
                 {
                     SetButtonEnabled(true);
+                    ShowInitializationSuccess();
                 }
                 else
                 {
@@ -155,6 +180,17 @@ public class SimpleWorldJoin : MonoBehaviour
         UIFader.HideImmediate(startUI);
         SetButtonEnabled(false);
         UIFader.ShowImmediate(loadingCircle);
+        
+        if (loadingText != null)
+        {
+            if (loadingTextComponent != null)
+            {
+                loadingTextComponent.text = "joining game...";
+                loadingTextComponent.color = Color.white;
+            }
+            UIFader.ShowImmediate(loadingText);
+        }
+        
         StartCoroutine(JoinWorldAsync());
     }
     
@@ -190,8 +226,8 @@ public class SimpleWorldJoin : MonoBehaviour
         }
         else
         {
-            ShowError("No world available to join.");
             UIFader.HideImmediate(loadingCircle);
+            ShowError("No world available to join.");
             UIFader.ShowImmediate(startUI);
             SetButtonEnabled(true);
             isJoining = false;
@@ -206,29 +242,138 @@ public class SimpleWorldJoin : MonoBehaviour
         
         UIFader.FadeOut(loadingCircle, 0.3f);
         UIFader.FadeOut(darkOverlay, 0.3f);
+        
+        if (loadingText != null)
+        {
+            UIFader.FadeOut(loadingText, 0.3f);
+        }
     }
     
     private void OnConnectionError(CoherenceBridge _, ConnectionException exception)
     {
         var (title, message) = exception.GetPrettyMessage();
-        UIFader.ShowImmediate(startUI);
-        ShowError($"{title}: {message}");
         UIFader.HideImmediate(loadingCircle);
+        ShowError($"{title}: {message}");
+        UIFader.ShowImmediate(startUI);
         
         SetButtonEnabled(true);
         isJoining = false;
     }
 
+    private void ShowInitializationSuccess()
+    {
+        UIFader.HideImmediate(loadingCircle);
+        
+        if (loadingText != null)
+        {
+            UIFader.HideImmediate(loadingText);
+        }
+        
+        UIFader.ShowImmediate(startUI);
+    }
+
     private void ShowError(string message)
     {
-        errorText.text = message;
-        UIFader.FadeIn(errorText.gameObject);
+        if (loadingText != null && loadingTextComponent != null)
+        {
+            loadingTextComponent.text = message;
+            loadingTextComponent.color = Color.red;
+            UIFader.ShowImmediate(loadingText);
+        }
     }
 
     private void HideError()
     {
-        errorText.text = "";
-        UIFader.FadeOut(errorText.gameObject);
+        if (loadingText != null && loadingTextComponent != null && loadingTextComponent.color == Color.red)
+        {
+            UIFader.HideImmediate(loadingText);
+        }
+    }
+    
+    // Wallet connection methods
+    public void StartWalletConnection()
+    {
+        if (isConnectingWallet) return;
+        
+        isConnectingWallet = true;
+        UIFader.ShowImmediate(darkOverlay);
+        UIFader.ShowImmediate(loadingCircle);
+        
+        if (loadingText != null && loadingTextComponent != null)
+        {
+            loadingTextComponent.text = "connecting wallet...";
+            loadingTextComponent.color = Color.white;
+            UIFader.ShowImmediate(loadingText);
+        }
+        
+        // Start timeout coroutine
+        StartCoroutine(WalletConnectionTimeout());
+    }
+    
+    private IEnumerator WalletConnectionTimeout()
+    {
+        // Wait for 30 seconds
+        float timeout = 30f;
+        float elapsed = 0f;
+        
+        while (elapsed < timeout && isConnectingWallet)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        // If still connecting after timeout, show error
+        if (isConnectingWallet)
+        {
+            OnWalletConnectionFailed("Connection timeout - please try again");
+        }
+    }
+    
+    private void OnWalletConnected(Account account)
+    {
+        if (!isConnectingWallet) return;
+        
+        isConnectingWallet = false;
+        
+        // Fade out the loading UI
+        UIFader.FadeOut(loadingCircle, 0.3f);
+        UIFader.FadeOut(darkOverlay, 0.3f);
+        
+        if (loadingText != null)
+        {
+            UIFader.FadeOut(loadingText, 0.3f);
+        }
+    }
+    
+    private void OnWalletConnectionFailed(string errorMessage)
+    {
+        if (!isConnectingWallet) return;
+        
+        isConnectingWallet = false;
+        UIFader.HideImmediate(loadingCircle);
+        
+        // Show error in red
+        if (loadingText != null && loadingTextComponent != null)
+        {
+            loadingTextComponent.text = $"failed to connect: {errorMessage}";
+            loadingTextComponent.color = Color.red;
+        }
+        
+        // Wait and then fade everything away
+        StartCoroutine(FadeOutWalletError());
+    }
+    
+    private IEnumerator FadeOutWalletError()
+    {
+        // Show error for 3 seconds
+        yield return new WaitForSeconds(3f);
+        
+        UIFader.FadeOut(darkOverlay, 0.3f);
+        
+        if (loadingText != null)
+        {
+            UIFader.FadeOut(loadingText, 0.3f);
+        }
     }
 }
 

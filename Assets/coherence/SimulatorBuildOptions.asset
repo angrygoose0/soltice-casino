@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: befff6656c3efe441b6c1365555733d7, type: 3}
   m_Name: SimulatorBuildOptions
   m_EditorClassIdentifier: Coherence.Editor::Coherence.Build.SimulatorBuildOptions
-  scenesToBuild:
-  - {fileID: 102900000, guid: 14510f4fc04f04632aa648062e8f2657, type: 3}
+  scenesToBuild: []
   headlessMode: 1
   scriptingImplementation: 0
   developmentBuild: 0
