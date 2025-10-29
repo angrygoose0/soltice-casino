@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Coherence::Coherence.RuntimeSettings
   schemaID: acf6f626550f75ec2327bef911428d5869605b84
   versionInfo: {fileID: 11400000, guid: 2191b6f902c97477baa32a7919010503, type: 2}
-  runtimeKey: 
+  runtimeKey: 5440d6ba6fe5470a98c29358def481a9
   simulatorSlug: 
   localHost: 127.0.0.1
   localWorldUDPPort: 32001
@@ -29,8 +29,8 @@ MonoBehaviour:
   localDevelopmentMode: 1
   useDebugStreams: 0
   organizationID: 
-  projectID: 
-  projectName: 
+  projectID: d3om2ndbei2vak5ar9o0
+  projectName: solstice
   organizationName: 
   transportType: 0
   transportConfiguration: 0

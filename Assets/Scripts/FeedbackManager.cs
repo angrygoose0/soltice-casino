@@ -16,7 +16,7 @@ public class FeedbackManager : MonoBehaviour
     [SerializeField] private MMF_Player screenshakeFeedback;
     [SerializeField] private MMF_Player uiSound;
 
-    public float uiBaseVolume = 1f;
+    public float uiBaseVolume = 0.2f;
     public float uiBasePitch = 1f;
     
     private SpringManager springManager;
@@ -141,26 +141,17 @@ public class FeedbackManager : MonoBehaviour
         screenshakeFeedback?.PlayFeedbacks();
     }
 
-    public void PlayUISound()
-    {
-        uiSound?.PlayFeedbacks();
-    }
-
     private void PlayUISoundWithParams(float volumeMultiplier, float pitchMultiplier)
     {
-        if (uiSound == null) return;
+        if (uiSound == null || uiSound.FeedbacksList == null || uiSound.FeedbacksList.Count == 0) return;
         
-        // Find and configure audio feedback components
-        var feedbacks = uiSound.GetFeedbacksList();
-        foreach (var feedback in feedbacks)
+        // Get the sound feedback directly (there's only one)
+        if (uiSound.FeedbacksList[0] is MMF_MMSoundManagerSound soundFeedback)
         {
-            if (feedback is MMF_Sound soundFeedback)
-            {
-                soundFeedback.MinVolume = uiBaseVolume * volumeMultiplier;
-                soundFeedback.MaxVolume = uiBaseVolume * volumeMultiplier;
-                soundFeedback.MinPitch = uiBasePitch * pitchMultiplier;
-                soundFeedback.MaxPitch = uiBasePitch * pitchMultiplier;
-            }
+            soundFeedback.MinVolume = uiBaseVolume * volumeMultiplier;
+            soundFeedback.MaxVolume = uiBaseVolume * volumeMultiplier;
+            soundFeedback.MinPitch = uiBasePitch * pitchMultiplier;
+            soundFeedback.MaxPitch = uiBasePitch * pitchMultiplier;
         }
         
         uiSound.PlayFeedbacks();
