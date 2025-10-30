@@ -391,10 +391,27 @@ public class SolanaManager : MonoBehaviour
         bool ephemeralFlag = false, // if true, tx is happening on ER.
         uint computeUnitLimit = 0,
         ulong computeUnitPrice = 0,
+        string loadingMessage = null,
         params TransactionInstruction[] additionalInstructions)
     {
+        bool showedLoading = false;
         try
         {
+            // Show loading UI if message provided
+            if (!string.IsNullOrEmpty(loadingMessage))
+            {
+                showedLoading = true;
+                UIFader.ShowImmediate(darkOverlay);
+                UIFader.ShowImmediate(loadingCircle);
+                
+                if (loadingText != null && loadingTextComponent != null)
+                {
+                    loadingTextComponent.text = loadingMessage;
+                    loadingTextComponent.color = Color.white;
+                    UIFader.ShowImmediate(loadingText);
+                }
+            }
+
             var baseWallet = SessionManager.SessionToken == null
                 ? Web3.Wallet
                 : SessionManager.SessionWallet;
@@ -474,10 +491,33 @@ public class SolanaManager : MonoBehaviour
                 throw new Exception("Transaction confirmation failed");
             }
 
+            // Fade out loading UI on success
+            if (showedLoading)
+            {
+                UIFader.FadeOut(darkOverlay, 0.3f);
+                UIFader.FadeOut(loadingCircle, 0.3f);
+                if (loadingText != null)
+                {
+                    UIFader.FadeOut(loadingText, 0.3f);
+                }
+            }
+
             return result.Result;
         }
         catch (Exception ex)
         {
+            // Show error and fade out after delay
+            if (showedLoading)
+            {
+                if (loadingText != null && loadingTextComponent != null)
+                {
+                    loadingTextComponent.text = "error";
+                    loadingTextComponent.color = Color.red;
+                }
+                
+                StartCoroutine(FadeOutTransactionError());
+            }
+            
             Debug.LogError($"Error in SendAndConfirmTransaction: {ex.Message}");
             throw;
         }
@@ -505,7 +545,7 @@ public class SolanaManager : MonoBehaviour
     }
 
     // Wallet connection methods
-    public async void StartWalletConnection()
+    public void StartWalletConnection()
     {
         if (_isConnectingWallet) return;
         
@@ -520,41 +560,71 @@ public class SolanaManager : MonoBehaviour
             UIFader.ShowImmediate(loadingText);
         }
         
-        // Actually initiate the wallet connection and handle the result
+        // Start monitoring for connection timeout/cancellation
+        StartCoroutine(MonitorWalletConnection());
+        
+        // Actually initiate the wallet connection
         try
         {
-            // Add a timeout as a safety measure (30 seconds)
-            var connectionTask = Web3.Instance.LoginWithWalletAdapter();
-            var timeoutTask = Task.Delay(30000);
-            var completedTask = await Task.WhenAny(connectionTask, timeoutTask);
-            
-            if (completedTask == timeoutTask)
-            {
-                throw new TimeoutException("Connection attempt timed out");
-            }
-            
-            await connectionTask; // Propagate any exceptions
-            // If we get here without exception, connection succeeded
-            // OnLogin will be called via the Web3.OnLogin event
+            Web3.Instance.LoginWithWalletAdapter();
+            // OnLogin will be called via the Web3.OnLogin event if successful
         }
         catch (Exception ex)
         {
             Debug.LogError($"Wallet connection failed: {ex.Message}");
-            OnWalletConnectionFailed(ex.Message);
+            OnWalletConnectionCancelled("connection error");
         }
     }
     
-    private void OnWalletConnectionFailed(string errorMessage)
+    private System.Collections.IEnumerator MonitorWalletConnection()
+    {
+        float timeoutDuration = 10f; // 60 seconds timeout
+        float elapsedTime = 0f;
+        bool hadFocus = Application.isFocused;
+        
+        while (_isConnectingWallet && elapsedTime < timeoutDuration)
+        {
+            // Check if app regained focus (user closed wallet modal)
+            if (!hadFocus && Application.isFocused)
+            {
+                // Wait a moment to see if login succeeds
+                yield return new UnityEngine.WaitForSeconds(0.5f);
+                
+                // If still connecting after regaining focus, user likely cancelled
+                if (_isConnectingWallet)
+                {
+                    Debug.Log("Detected wallet modal closed without login");
+                    OnWalletConnectionCancelled("wallet connection cancelled");
+                    yield break;
+                }
+            }
+            
+            hadFocus = Application.isFocused;
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        
+        // Timeout occurred
+        if (_isConnectingWallet)
+        {
+            Debug.Log("Wallet connection timed out");
+            OnWalletConnectionCancelled("connection timed out");
+        }
+    }
+    
+    private void OnWalletConnectionCancelled(string errorMessage)
     {
         if (!_isConnectingWallet) return;
         
         _isConnectingWallet = false;
+        
+        // Hide loading circle immediately
         UIFader.HideImmediate(loadingCircle);
         
         // Show error in red
         if (loadingText != null && loadingTextComponent != null)
         {
-            loadingTextComponent.text = $"failed to connect: {errorMessage}";
+            loadingTextComponent.text = errorMessage;
             loadingTextComponent.color = Color.red;
         }
         
@@ -567,7 +637,24 @@ public class SolanaManager : MonoBehaviour
         // Show error for 3 seconds
         yield return new UnityEngine.WaitForSeconds(3f);
         
+        // Fade out all elements
         UIFader.FadeOut(darkOverlay, 0.3f);
+        UIFader.FadeOut(loadingCircle, 0.3f);
+        
+        if (loadingText != null)
+        {
+            UIFader.FadeOut(loadingText, 0.3f);
+        }
+    }
+    
+    private System.Collections.IEnumerator FadeOutTransactionError()
+    {
+        // Show error for 3 seconds
+        yield return new UnityEngine.WaitForSeconds(3f);
+        
+        // Fade out all elements
+        UIFader.FadeOut(darkOverlay, 0.3f);
+        UIFader.FadeOut(loadingCircle, 0.3f);
         
         if (loadingText != null)
         {

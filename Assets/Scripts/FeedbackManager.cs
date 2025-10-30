@@ -13,8 +13,9 @@ public class FeedbackManager : MonoBehaviour
         public Color color;
     }
 
-    [SerializeField] private MMF_Player screenshakeFeedback;
+    [SerializeField] private MMF_Player balloonInflateFeedback;
     [SerializeField] private MMF_Player uiSound;
+    [SerializeField] private MMF_Player musicFeedback;
 
     public float uiBaseVolume = 0.2f;
     public float uiBasePitch = 1f;
@@ -43,8 +44,10 @@ public class FeedbackManager : MonoBehaviour
 
     private void Start()
     {
-        screenshakeFeedback?.Initialization();
+        balloonInflateFeedback?.Initialization();
         uiSound?.Initialization();
+        musicFeedback?.Initialization();
+        musicFeedback?.PlayFeedbacks();
     }
     
     private Vector3 GetBaseScale(Transform target)
@@ -136,9 +139,9 @@ public class FeedbackManager : MonoBehaviour
         }
     }
 
-    public void PlayScreenshake()
+    public void PlayBalloonInflate()
     {
-        screenshakeFeedback?.PlayFeedbacks();
+        balloonInflateFeedback?.PlayFeedbacks();
     }
 
     private void PlayUISoundWithParams(float volumeMultiplier, float pitchMultiplier)

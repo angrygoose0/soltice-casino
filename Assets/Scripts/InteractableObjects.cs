@@ -11,6 +11,7 @@ public class InteractableObjects : MonoBehaviour
 {
     public enum ActionType
     {
+        None,
         Add,
         Set,
         PlaceBet,
@@ -70,6 +71,7 @@ public class InteractableObjects : MonoBehaviour
     [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private Camera mainCamera; // Assign in inspector or auto-find
     [SerializeField] private FeedbackManager feedbackManager;
+    [SerializeField] private GameObject darkOverlay;
 
     private GameObject lastHoveredObject; // null when nothing is hovered
     private bool lastHoveredPressed; // whether left click was held on last hovered
@@ -149,6 +151,30 @@ public class InteractableObjects : MonoBehaviour
     {
         // Update labels for interactables
         UpdateLabels();
+
+        // Skip all interaction logic if the dark overlay is active
+        if (darkOverlay != null && darkOverlay.activeSelf)
+        {
+            // If there was a hovered object, clear it and reset to idle
+            if (lastHoveredObject != null)
+            {
+                feedbackManager?.PlayUIHoverExit(lastHoveredObject.transform);
+                
+                if (TryGetProfile(lastHoveredObject, out GlowProfile lastProfile) && feedbackManager != null)
+                {
+                    FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
+                    {
+                        scale = lastProfile.idle.scale,
+                        intensity = lastProfile.idle.intensity,
+                        color = lastProfile.idle.color
+                    };
+                    feedbackManager.AnimateGlowMaterial(lastHoveredObject, idleState);
+                }
+                lastHoveredObject = null;
+                lastHoveredPressed = false;
+            }
+            return;
+        }
 
         Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
 
@@ -341,6 +367,8 @@ public class InteractableObjects : MonoBehaviour
 
         switch (entry.actionType)
         {
+            case ActionType.None:
+                break;
             case ActionType.Add:
                 if (userUI != null) userUI.betAmount += entry.amount;
                 break;
@@ -503,6 +531,149 @@ public class InteractableObjects : MonoBehaviour
             {
                 entry.gameObject.SetActive(enabled);
             }
+        }
+    }
+
+    public async void SimulateClick(GameObject obj, float pressDuration = 0.15f)
+    {
+        if (obj == null || feedbackManager == null) return;
+        
+        // Get profile without checking enabled state (so we can simulate clicks even when disabled)
+        GlowProfile profile = null;
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj && entry.cachedGlowProfile != null)
+            {
+                profile = entry.cachedGlowProfile;
+                break;
+            }
+        }
+        
+        if (profile != null)
+        {
+            // Play click down feedback
+            feedbackManager.PlayUIClickDown(obj.transform);
+            
+            // Animate to pressed state
+            FeedbackManager.MaterialGlowState pressedState = new FeedbackManager.MaterialGlowState
+            {
+                scale = profile.pressed.scale,
+                intensity = profile.pressed.intensity,
+                color = profile.pressed.color
+            };
+            feedbackManager.AnimateGlowMaterial(obj, pressedState);
+            
+            // Wait for press duration
+            await Task.Delay((int)(pressDuration * 1000));
+            
+            // Play click up feedback
+            feedbackManager.PlayUIClickUp(obj.transform);
+            
+            // Return to idle state (or hover if currently hovered)
+            bool isCurrentlyHovered = (obj == lastHoveredObject);
+            GlowSettings targetSettings = isCurrentlyHovered ? profile.hover : profile.idle;
+            
+            FeedbackManager.MaterialGlowState returnState = new FeedbackManager.MaterialGlowState
+            {
+                scale = targetSettings.scale,
+                intensity = targetSettings.intensity,
+                color = targetSettings.color
+            };
+            feedbackManager.AnimateGlowMaterial(obj, returnState);
+        }
+    }
+
+    public void TurnOffGlow(GameObject obj)
+    {
+        if (obj == null || feedbackManager == null) return;
+        
+        FeedbackManager.MaterialGlowState offState = new FeedbackManager.MaterialGlowState
+        {
+            scale = 0f,
+            intensity = 0f,
+            color = Color.black
+        };
+        feedbackManager.AnimateGlowMaterial(obj, offState);
+    }
+
+    public void ToggleInteractable(GameObject obj)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj)
+            {
+                SetInteractableEnabled(obj, !entry.isEnabled);
+                return;
+            }
+        }
+    }
+
+    public GlowProfile GetGlowProfile(GameObject obj)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj)
+            {
+                return entry.cachedGlowProfile;
+            }
+        }
+        return null;
+    }
+
+    public void RegisterInteractable(GameObject obj, string glowProfileName, ActionType actionType, bool startEnabled = true)
+    {
+        // Check if already registered
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            if (interactables[i] != null && interactables[i].gameObject == obj)
+            {
+                return; // Already registered
+            }
+        }
+
+        // Create new entry
+        InteractableEntry entry = new InteractableEntry
+        {
+            gameObject = obj,
+            glowProfileName = glowProfileName,
+            actionType = actionType,
+            amount = 0,
+            disabledAlpha = 0.5f
+        };
+
+        // Cache glow profile
+        entry.cachedGlowProfile = GetGlowProfileByName(glowProfileName);
+        
+        // Cache components
+        entry.label = obj.GetComponentInChildren<TextMeshProUGUI>();
+        entry.cachedCanvasGroup = obj.GetComponent<CanvasGroup>();
+        
+        // Add CanvasGroup if it's a UI element without one
+        if (entry.cachedCanvasGroup == null && obj.GetComponent<RectTransform>() != null)
+        {
+            entry.cachedCanvasGroup = obj.AddComponent<CanvasGroup>();
+        }
+
+        // Set initial enabled state
+        entry.isEnabled = startEnabled;
+
+        // Add to list
+        interactables.Add(entry);
+
+        // Animate to initial state
+        if (feedbackManager != null && entry.cachedGlowProfile != null)
+        {
+            GlowSettings initialSettings = startEnabled ? entry.cachedGlowProfile.idle : entry.cachedGlowProfile.disabled;
+            FeedbackManager.MaterialGlowState initialState = new FeedbackManager.MaterialGlowState
+            {
+                scale = initialSettings.scale,
+                intensity = initialSettings.intensity,
+                color = initialSettings.color
+            };
+            feedbackManager.AnimateGlowMaterial(obj, initialState);
         }
     }
 

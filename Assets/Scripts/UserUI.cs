@@ -164,13 +164,13 @@ public class UserUI : MonoBehaviour
         if (userBalanceIsDelegated)
         {
             var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
         }
         
         // 2. Deposit + Re-delegate on base layer (together)
         var userDepositIx = treasuryBuilder.UserDeposit(amount);
         var delegateIx = treasuryBuilder.DelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, userDepositIx, delegateIx);
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"depositing {amount}...", userDepositIx, delegateIx);
     }
 
     //ENSURE user_balance delegated
@@ -178,25 +178,25 @@ public class UserUI : MonoBehaviour
     {
         // 1. Undelegate on ER
         var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
         
         // 2. Withdraw + Re-delegate on base layer (together)
         var userWithdrawIx = treasuryBuilder.UserWithdraw(amount);
         var delegateIx = treasuryBuilder.DelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, userWithdrawIx, delegateIx);
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"withdrawing {amount}...", userWithdrawIx, delegateIx);
     }
 
     //ENSURE game delegated
     public async void SetupRandomness(byte clientSeed) //user
     {
         var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, requestRandomnessIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "requesting randomness...", requestRandomnessIx);
     }
 
     public async void StartGame() //user
     {
         var startGameIx = crashBuilder.StartGame();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, startGameIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "starting game...", startGameIx);
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
@@ -229,13 +229,6 @@ public class UserUI : MonoBehaviour
             instructions.Add(treasuryBuilder.InitializeBalance());
         }
 
-        if (instructions.Count > 0)
-        {
-            Debug.Log($"Sending initialization transaction with {instructions.Count} instruction(s)");
-            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
-            instructions.Clear();
-        }
-
         // Step 2 & 3: Calculate how much deposit is needed based on existing balance
         ulong depositAmount = betAmount;
         if (!isInitializingUserBalance && _userBalanceCache != null && _userBalanceCache.Balance > 0)
@@ -252,20 +245,25 @@ public class UserUI : MonoBehaviour
             }
         }
         
+        bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+
         if (depositAmount > 0)
         {
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-            
             if (userBalanceIsDelegated)
             {
                 var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-                await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, undelegateIx);
+                await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+                userBalanceIsDelegated = false;
             }
             
             var userDepositIx = treasuryBuilder.UserDeposit(depositAmount);
-            var delegateIx = treasuryBuilder.DelegateUserBalance();
             instructions.Add(userDepositIx);
-            instructions.Add(delegateIx);
+        }
+
+        if (!userBalanceIsDelegated)
+        {
+            Debug.Log("Delegating UserBalance");
+            instructions.Add(treasuryBuilder.DelegateUserBalance());
         }
 
         // Step 4: Delegate PlayerBet if it wasn't
@@ -279,28 +277,28 @@ public class UserUI : MonoBehaviour
 
         if (instructions.Count > 0)
         {
-            Debug.Log($"Sending deposit and delegation transaction with {instructions.Count} instruction(s)");
-            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
+            Debug.Log($"Sending combined transaction with {instructions.Count} instruction(s)");
+            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "initializing and depositing...", instructions.ToArray());
         }
 
         // Step 5: Send place_bet transaction on ER layer
         Debug.Log($"Placing bet of {betAmount}");
         var placeBetIx = crashBuilder.PlaceBet(betAmount);
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, placeBetIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, $"placing bet {betAmount}...", placeBetIx);
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
     public async void ClaimBet() //user
     {
         var claimBetIx = crashBuilder.ClaimBet();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, claimBetIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "claiming bet...", claimBetIx);
     }
 
     //ENSURE game delegated
     public async void Tick() //admin? 
     {
         var tickIx = crashBuilder.Tick();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, tickIx);
+        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "ticking game...", tickIx);
     }
 
     public async void SetupGame() //admin? 
@@ -312,7 +310,7 @@ public class UserUI : MonoBehaviour
         instructions.Add(crashBuilder.DelegateGame());
         instructions.Add(crashBuilder.DelegateAuthority());
 
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, instructions.ToArray());
+        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "setting up game...", instructions.ToArray());
     }
 
     public async void SetupGameSubscription()

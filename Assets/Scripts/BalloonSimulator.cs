@@ -10,6 +10,7 @@ public class BalloonSimulator : MonoBehaviour
     public Vector3 defaultSpawnLocation = Vector3.zero;
     
     [SerializeField] private FeedbackManager feedbackManager;
+    [SerializeField] private InteractableObjects interactableObjects;
 
     [SerializeField] private double currentTick = 0;
     public double crashTick = 40;
@@ -104,7 +105,7 @@ public class BalloonSimulator : MonoBehaviour
             StopCoroutine(smoothScaleCoroutineRef);
         }
         smoothScaleCoroutineRef = StartCoroutine(SmoothScaleCoroutine(spawnedBalloon, (float)sizeScale));
-        feedbackManager?.PlayScreenshake();
+        feedbackManager?.PlayBalloonInflate();
     }
 
     private void PopBalloon()
@@ -134,7 +135,7 @@ public class BalloonSimulator : MonoBehaviour
 
         popParticle.Play();
         burstParticle.Play();
-        feedbackManager?.PlayScreenshake();
+        feedbackManager?.PlayBalloonInflate();
 
         currentTick = 0;
     }
@@ -180,6 +181,11 @@ public class BalloonSimulator : MonoBehaviour
         playerCountText.enabled = false;
         totalBetText.enabled = false;
 
+        // Register balloon as an interactable with glow effects (disabled, not clickable)
+        if (interactableObjects != null)
+        {
+            interactableObjects.RegisterInteractable(spawnedBalloon, "default", InteractableObjects.ActionType.None, false);
+        }
     }
 
     public void UpdateBalloon(Game game)
@@ -200,7 +206,7 @@ public class BalloonSimulator : MonoBehaviour
 				);
 			}
             bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
-            feedbackManager?.PlayScreenshake();
+            feedbackManager?.PlayBalloonInflate();
 
             BalloonBasedOnTick(game.Tick);
 
@@ -250,6 +256,10 @@ public class BalloonSimulator : MonoBehaviour
 	private IEnumerator SmoothScaleCoroutine(GameObject balloon, float scaleFactor)
     {
         if (balloon == null) yield break;
+        
+        // Set balloon to pressed state at start of growth
+        SetBalloonGlowPressed(balloon);
+        
 		Vector3 originalScale = balloon.transform.localScale;
 		Vector3 worldScaleTarget = scaleConstant * scaleFactor;
 		Vector3 parentScale = balloon.transform.parent.lossyScale;
@@ -273,7 +283,11 @@ public class BalloonSimulator : MonoBehaviour
             yield return null;
         }
         if (balloon != null)
+        {
 			balloon.transform.localScale = newLocalScale;
+            // Return balloon to idle state when growth stops
+            SetBalloonGlowIdle(balloon);
+        }
     }
 
     // Animate multiplier text from a start value to an end value quickly
@@ -295,6 +309,51 @@ public class BalloonSimulator : MonoBehaviour
         }
         if (multiplierText != null)
             multiplierText.text = string.Format("{0:0.00}x", endValue);
+    }
+
+    private void SetBalloonGlowPressed(GameObject balloon)
+    {
+        if (interactableObjects != null && feedbackManager != null && balloon != null)
+        {
+            feedbackManager.PlayUIClickDown(balloon.transform);
+            
+            InteractableObjects.GlowProfile profile = GetBalloonGlowProfile(balloon);
+            if (profile != null)
+            {
+                FeedbackManager.MaterialGlowState pressedState = new FeedbackManager.MaterialGlowState
+                {
+                    scale = profile.pressed.scale,
+                    intensity = profile.pressed.intensity,
+                    color = profile.pressed.color
+                };
+                feedbackManager.AnimateGlowMaterial(balloon, pressedState);
+            }
+        }
+    }
+
+    private void SetBalloonGlowIdle(GameObject balloon)
+    {
+        if (interactableObjects != null && feedbackManager != null && balloon != null)
+        {
+            feedbackManager.PlayUIClickUp(balloon.transform);
+            
+            InteractableObjects.GlowProfile profile = GetBalloonGlowProfile(balloon);
+            if (profile != null)
+            {
+                FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
+                {
+                    scale = profile.idle.scale,
+                    intensity = profile.idle.intensity,
+                    color = profile.idle.color
+                };
+                feedbackManager.AnimateGlowMaterial(balloon, idleState);
+            }
+        }
+    }
+
+    private InteractableObjects.GlowProfile GetBalloonGlowProfile(GameObject balloon)
+    {
+        return interactableObjects?.GetGlowProfile(balloon);
     }
 }
 
