@@ -415,7 +415,7 @@ namespace Crash
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("CHzHFQ5vNeUwY7krjrcYAXWxUkye9AQ6CTjkqZKjBhR2");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8WpLyoNzUjpUfVNgvS8TdnMnBYYnyMY7PDxwyqR89hVX");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -433,7 +433,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("BxhQYSrdVJ7r5aP7UbqtfRvE3SDxUnMnqXBJHyvSCH5T");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("EwPN8VWso5dWTrsLwJBK9o11khekbhYm4bczgSnfEt8J");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -450,7 +450,7 @@ namespace Crash
 
             public PublicKey Game { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("BxhQYSrdVJ7r5aP7UbqtfRvE3SDxUnMnqXBJHyvSCH5T");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("EwPN8VWso5dWTrsLwJBK9o11khekbhYm4bczgSnfEt8J");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -467,7 +467,7 @@ namespace Crash
 
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("BxhQYSrdVJ7r5aP7UbqtfRvE3SDxUnMnqXBJHyvSCH5T");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("EwPN8VWso5dWTrsLwJBK9o11khekbhYm4bczgSnfEt8J");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -514,7 +514,7 @@ namespace Crash
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("CHzHFQ5vNeUwY7krjrcYAXWxUkye9AQ6CTjkqZKjBhR2");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8WpLyoNzUjpUfVNgvS8TdnMnBYYnyMY7PDxwyqR89hVX");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -567,7 +567,7 @@ namespace Crash
 
         public static class CrashProgram
         {
-            public const string ID = "BxhQYSrdVJ7r5aP7UbqtfRvE3SDxUnMnqXBJHyvSCH5T";
+            public const string ID = "EwPN8VWso5dWTrsLwJBK9o11khekbhYm4bczgSnfEt8J";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackRandomness(CallbackRandomnessAccounts accounts, byte[] randomness, PublicKey programId = null)
             {
                 programId ??= new(ID);

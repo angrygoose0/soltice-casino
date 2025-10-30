@@ -67,6 +67,7 @@ public class InteractableObjects : MonoBehaviour
 
     [SerializeField] private UserUI userUI;
     [SerializeField] private SimpleWorldJoin simpleWorldJoin;
+    [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private Camera mainCamera; // Assign in inspector or auto-find
     [SerializeField] private FeedbackManager feedbackManager;
 
@@ -356,8 +357,7 @@ public class InteractableObjects : MonoBehaviour
                 if (userUI != null) userUI.ClaimBet();
                 break;
             case ActionType.ConnectWallet:
-                if (simpleWorldJoin != null) simpleWorldJoin.StartWalletConnection();
-                Web3.Instance?.LoginWithWalletAdapter();
+                if (solanaManager != null) solanaManager.StartWalletConnection();
                 break;
             case ActionType.DisconnectWallet:
                 Web3.Instance?.Logout();

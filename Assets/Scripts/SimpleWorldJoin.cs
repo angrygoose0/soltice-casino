@@ -31,7 +31,6 @@ public class SimpleWorldJoin : MonoBehaviour
     private IReadOnlyList<WorldData> availableWorlds = new List<WorldData>();
     private WorldData localWorld;
     private bool isJoining;
-    private bool isConnectingWallet;
 
     public static event Action OnGameJoined;
     public static string PlayerUsername { get; private set; } = "Player";
@@ -68,9 +67,6 @@ public class SimpleWorldJoin : MonoBehaviour
         bridge.onConnected.AddListener(OnConnected);
         bridge.onConnectionError.AddListener(OnConnectionError);
         
-        // Subscribe to wallet events
-        Web3.OnLogin += OnWalletConnected;
-        
         StartCoroutine(InitializeWorlds());
     }
 
@@ -81,9 +77,6 @@ public class SimpleWorldJoin : MonoBehaviour
             bridge.onConnected.RemoveListener(OnConnected);
             bridge.onConnectionError.RemoveListener(OnConnectionError);
         }
-        
-        // Unsubscribe from wallet events
-        Web3.OnLogin -= OnWalletConnected;
     }
 
     private void SetButtonEnabled(bool enabled)
@@ -287,92 +280,6 @@ public class SimpleWorldJoin : MonoBehaviour
         if (loadingText != null && loadingTextComponent != null && loadingTextComponent.color == Color.red)
         {
             UIFader.HideImmediate(loadingText);
-        }
-    }
-    
-    // Wallet connection methods
-    public void StartWalletConnection()
-    {
-        if (isConnectingWallet) return;
-        
-        isConnectingWallet = true;
-        UIFader.ShowImmediate(darkOverlay);
-        UIFader.ShowImmediate(loadingCircle);
-        
-        if (loadingText != null && loadingTextComponent != null)
-        {
-            loadingTextComponent.text = "connecting wallet...";
-            loadingTextComponent.color = Color.white;
-            UIFader.ShowImmediate(loadingText);
-        }
-        
-        // Start timeout coroutine
-        StartCoroutine(WalletConnectionTimeout());
-    }
-    
-    private IEnumerator WalletConnectionTimeout()
-    {
-        // Wait for 30 seconds
-        float timeout = 30f;
-        float elapsed = 0f;
-        
-        while (elapsed < timeout && isConnectingWallet)
-        {
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        
-        // If still connecting after timeout, show error
-        if (isConnectingWallet)
-        {
-            OnWalletConnectionFailed("Connection timeout - please try again");
-        }
-    }
-    
-    private void OnWalletConnected(Account account)
-    {
-        if (!isConnectingWallet) return;
-        
-        isConnectingWallet = false;
-        
-        // Fade out the loading UI
-        UIFader.FadeOut(loadingCircle, 0.3f);
-        UIFader.FadeOut(darkOverlay, 0.3f);
-        
-        if (loadingText != null)
-        {
-            UIFader.FadeOut(loadingText, 0.3f);
-        }
-    }
-    
-    private void OnWalletConnectionFailed(string errorMessage)
-    {
-        if (!isConnectingWallet) return;
-        
-        isConnectingWallet = false;
-        UIFader.HideImmediate(loadingCircle);
-        
-        // Show error in red
-        if (loadingText != null && loadingTextComponent != null)
-        {
-            loadingTextComponent.text = $"failed to connect: {errorMessage}";
-            loadingTextComponent.color = Color.red;
-        }
-        
-        // Wait and then fade everything away
-        StartCoroutine(FadeOutWalletError());
-    }
-    
-    private IEnumerator FadeOutWalletError()
-    {
-        // Show error for 3 seconds
-        yield return new WaitForSeconds(3f);
-        
-        UIFader.FadeOut(darkOverlay, 0.3f);
-        
-        if (loadingText != null)
-        {
-            UIFader.FadeOut(loadingText, 0.3f);
         }
     }
 }

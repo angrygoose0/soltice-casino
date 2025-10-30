@@ -7713,7 +7713,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 998293041717636407, guid: 90e1623d32c0aab41a4478dd9af1e157, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -421.83026
+      value: -422.07898
       objectReference: {fileID: 0}
     - target: {fileID: 998293041717636407, guid: 90e1623d32c0aab41a4478dd9af1e157, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -15083,7 +15083,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FeedbackManager
   screenshakeFeedback: {fileID: 810827222}
   uiSound: {fileID: 1121383402}
-  uiBaseVolume: 1
+  uiBaseVolume: 0.2
   uiBasePitch: 1
 --- !u!1 &1248950475
 GameObject:

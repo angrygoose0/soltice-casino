@@ -32,6 +32,12 @@ public class SolanaManager : MonoBehaviour
     [SerializeField] private List<TextMeshProUGUI> publicKeyTexts;
     [SerializeField] private List<TextMeshProUGUI> balanceTexts;
     [SerializeField] private List<TextMeshProUGUI> tokenBalanceTexts;
+    
+    [Header("Wallet Connection UI")]
+    [SerializeField] private GameObject loadingCircle;
+    [SerializeField] private GameObject darkOverlay;
+    [SerializeField] private GameObject loadingText;
+    private TextMeshProUGUI loadingTextComponent;
 
     // Crash Client properties
     public CrashClient CrashClient { get; private set; }
@@ -49,6 +55,7 @@ public class SolanaManager : MonoBehaviour
     private WalletBase _walletBase;
     private WalletBase _ephemeralWalletBase;
     private bool _gameJoined = false;
+    private bool _isConnectingWallet = false;
 
     public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet.magicblock.app", "wss://devnet.magicblock.app", true);
 
@@ -58,6 +65,12 @@ public class SolanaManager : MonoBehaviour
 
     private void OnEnable()
     {
+        // Initialize loading text component
+        if (loadingText != null)
+        {
+            loadingTextComponent = loadingText.GetComponent<TextMeshProUGUI>();
+        }
+
         // Hide wallet buttons until game is joined
         if (interactableObjects != null)
         {
@@ -162,6 +175,18 @@ public class SolanaManager : MonoBehaviour
 
     private async void OnLogin(Account account)
     {
+        // If we were connecting, hide the loading UI
+        if (_isConnectingWallet)
+        {
+            _isConnectingWallet = false;
+            UIFader.FadeOut(loadingCircle, 0.3f);
+            UIFader.FadeOut(darkOverlay, 0.3f);
+            if (loadingText != null)
+            {
+                UIFader.FadeOut(loadingText, 0.3f);
+            }
+        }
+
         // Initialize clients when user logs in
         InitializeClients();
         Debug.Log("Login successful");
@@ -197,7 +222,7 @@ public class SolanaManager : MonoBehaviour
         }
         
         // Immediately refresh SOL balance and update UI once
-        await System.Threading.Tasks.Task.Delay(300);
+        await Task.Delay(300);
         try
         {
             await Web3.UpdateBalance();
@@ -476,6 +501,77 @@ public class SolanaManager : MonoBehaviour
         {
             Debug.LogWarning($"Failed to check delegation status for {accountAddress}: {ex.Message}");
             return false;
+        }
+    }
+
+    // Wallet connection methods
+    public async void StartWalletConnection()
+    {
+        if (_isConnectingWallet) return;
+        
+        _isConnectingWallet = true;
+        UIFader.ShowImmediate(darkOverlay);
+        UIFader.ShowImmediate(loadingCircle);
+        
+        if (loadingText != null && loadingTextComponent != null)
+        {
+            loadingTextComponent.text = "connecting wallet...";
+            loadingTextComponent.color = Color.white;
+            UIFader.ShowImmediate(loadingText);
+        }
+        
+        // Actually initiate the wallet connection and handle the result
+        try
+        {
+            // Add a timeout as a safety measure (30 seconds)
+            var connectionTask = Web3.Instance.LoginWithWalletAdapter();
+            var timeoutTask = Task.Delay(30000);
+            var completedTask = await Task.WhenAny(connectionTask, timeoutTask);
+            
+            if (completedTask == timeoutTask)
+            {
+                throw new TimeoutException("Connection attempt timed out");
+            }
+            
+            await connectionTask; // Propagate any exceptions
+            // If we get here without exception, connection succeeded
+            // OnLogin will be called via the Web3.OnLogin event
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Wallet connection failed: {ex.Message}");
+            OnWalletConnectionFailed(ex.Message);
+        }
+    }
+    
+    private void OnWalletConnectionFailed(string errorMessage)
+    {
+        if (!_isConnectingWallet) return;
+        
+        _isConnectingWallet = false;
+        UIFader.HideImmediate(loadingCircle);
+        
+        // Show error in red
+        if (loadingText != null && loadingTextComponent != null)
+        {
+            loadingTextComponent.text = $"failed to connect: {errorMessage}";
+            loadingTextComponent.color = Color.red;
+        }
+        
+        // Wait and then fade everything away
+        StartCoroutine(FadeOutWalletError());
+    }
+    
+    private System.Collections.IEnumerator FadeOutWalletError()
+    {
+        // Show error for 3 seconds
+        yield return new UnityEngine.WaitForSeconds(3f);
+        
+        UIFader.FadeOut(darkOverlay, 0.3f);
+        
+        if (loadingText != null)
+        {
+            UIFader.FadeOut(loadingText, 0.3f);
         }
     }
 
