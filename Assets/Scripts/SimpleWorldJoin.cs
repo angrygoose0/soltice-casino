@@ -23,6 +23,7 @@ public class SimpleWorldJoin : MonoBehaviour
     public GameObject loadingCircle;
     public GameObject darkOverlay;
     public GameObject loadingText;
+    [SerializeField] private FeedbackManager feedbackManager;
     
     private TMP_Text loadingTextComponent;
 
@@ -233,6 +234,8 @@ public class SimpleWorldJoin : MonoBehaviour
         OnGameJoined?.Invoke();
         SetButtonEnabled(false);
         
+        feedbackManager?.PlaySuccessSound();
+        
         UIFader.FadeOut(loadingCircle, 0.3f);
         UIFader.FadeOut(darkOverlay, 0.3f);
         
@@ -248,6 +251,8 @@ public class SimpleWorldJoin : MonoBehaviour
         UIFader.HideImmediate(loadingCircle);
         ShowError($"{title}: {message}");
         UIFader.ShowImmediate(startUI);
+        
+        feedbackManager?.PlayErrorSound();
         
         SetButtonEnabled(true);
         isJoining = false;

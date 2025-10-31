@@ -151,6 +151,9 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var delegationRecord = DeriveDelegationRecordAccount(userBalance);
         var delegationBuffer = DeriveDelegationBufferAccount(userBalance);
         
+        // Hardcode validator address
+        validator = new PublicKey("MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57");
+        
         var accounts = new DelegateUserBalanceAccounts
         {
             Signer = signer,

@@ -106,6 +106,7 @@ public class BalloonSimulator : MonoBehaviour
         }
         smoothScaleCoroutineRef = StartCoroutine(SmoothScaleCoroutine(spawnedBalloon, (float)sizeScale));
         feedbackManager?.PlayBalloonInflate();
+        feedbackManager?.PlaySuccessSound();
     }
 
     private void PopBalloon()
@@ -136,6 +137,7 @@ public class BalloonSimulator : MonoBehaviour
         popParticle.Play();
         burstParticle.Play();
         feedbackManager?.PlayBalloonInflate();
+        feedbackManager?.PlayErrorSound();
 
         currentTick = 0;
     }
@@ -184,7 +186,7 @@ public class BalloonSimulator : MonoBehaviour
         // Register balloon as an interactable with glow effects (disabled, not clickable)
         if (interactableObjects != null)
         {
-            interactableObjects.RegisterInteractable(spawnedBalloon, "default", InteractableObjects.ActionType.None, false);
+            interactableObjects.RegisterInteractable(spawnedBalloon, "ui", InteractableObjects.ActionType.None, false);
         }
     }
 
@@ -315,8 +317,6 @@ public class BalloonSimulator : MonoBehaviour
     {
         if (interactableObjects != null && feedbackManager != null && balloon != null)
         {
-            feedbackManager.PlayUIClickDown(balloon.transform);
-            
             InteractableObjects.GlowProfile profile = GetBalloonGlowProfile(balloon);
             if (profile != null)
             {
@@ -335,8 +335,6 @@ public class BalloonSimulator : MonoBehaviour
     {
         if (interactableObjects != null && feedbackManager != null && balloon != null)
         {
-            feedbackManager.PlayUIClickUp(balloon.transform);
-            
             InteractableObjects.GlowProfile profile = GetBalloonGlowProfile(balloon);
             if (profile != null)
             {

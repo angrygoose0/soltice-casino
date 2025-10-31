@@ -23,10 +23,11 @@ public class SolanaManager : MonoBehaviour
 {
     [Header("Dependencies")]
     [SerializeField] private InteractableObjects interactableObjects;
+    [SerializeField] private FeedbackManager feedbackManager;
 
     [Header("Mint")]
     [SerializeField] private string mintAddress;
-    [SerializeField] private int tokenDecimals = 6; // Default to 6 decimals (millions)
+    [SerializeField] private int tokenDecimals = 9; // Default to 6 decimals (millions)
     
     [Header("UI Elements")]
     [SerializeField] private List<TextMeshProUGUI> publicKeyTexts;
@@ -57,7 +58,7 @@ public class SolanaManager : MonoBehaviour
     private bool _gameJoined = false;
     private bool _isConnectingWallet = false;
 
-    public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet.magicblock.app", "wss://devnet.magicblock.app", true);
+    public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet-as.magicblock.app/", "https://devnet-as.magicblock.app/", true);
 
     public PublicKey MintPublicKey => string.IsNullOrWhiteSpace(mintAddress) ? null : new PublicKey(mintAddress);
 
@@ -190,6 +191,8 @@ public class SolanaManager : MonoBehaviour
         // Initialize clients when user logs in
         InitializeClients();
         Debug.Log("Login successful");
+        
+        feedbackManager?.PlaySuccessSound();
 
         // Update connect/disconnect buttons
         if (interactableObjects != null)
@@ -501,6 +504,8 @@ public class SolanaManager : MonoBehaviour
                     UIFader.FadeOut(loadingText, 0.3f);
                 }
             }
+            
+            feedbackManager?.PlaySuccessSound();
 
             return result.Result;
         }
@@ -517,6 +522,8 @@ public class SolanaManager : MonoBehaviour
                 
                 StartCoroutine(FadeOutTransactionError());
             }
+            
+            feedbackManager?.PlayErrorSound();
             
             Debug.LogError($"Error in SendAndConfirmTransaction: {ex.Message}");
             throw;
@@ -572,13 +579,14 @@ public class SolanaManager : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError($"Wallet connection failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
             OnWalletConnectionCancelled("connection error");
         }
     }
     
     private System.Collections.IEnumerator MonitorWalletConnection()
     {
-        float timeoutDuration = 10f; // 60 seconds timeout
+        float timeoutDuration = 5f; // 60 seconds timeout
         float elapsedTime = 0f;
         bool hadFocus = Application.isFocused;
         
@@ -627,6 +635,8 @@ public class SolanaManager : MonoBehaviour
             loadingTextComponent.text = errorMessage;
             loadingTextComponent.color = Color.red;
         }
+        
+        feedbackManager?.PlayErrorSound();
         
         // Wait and then fade everything away
         StartCoroutine(FadeOutWalletError());

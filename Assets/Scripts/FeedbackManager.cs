@@ -16,6 +16,9 @@ public class FeedbackManager : MonoBehaviour
     [SerializeField] private MMF_Player balloonInflateFeedback;
     [SerializeField] private MMF_Player uiSound;
     [SerializeField] private MMF_Player musicFeedback;
+    [SerializeField] private MMF_Player successSoundFeedback;
+    [SerializeField] private MMF_Player errorSoundFeedback;
+    [SerializeField] private MMF_Player cashFountainFeedback;
 
     public float uiBaseVolume = 0.2f;
     public float uiBasePitch = 1f;
@@ -47,6 +50,8 @@ public class FeedbackManager : MonoBehaviour
         balloonInflateFeedback?.Initialization();
         uiSound?.Initialization();
         musicFeedback?.Initialization();
+        successSoundFeedback?.Initialization();
+        errorSoundFeedback?.Initialization();
         musicFeedback?.PlayFeedbacks();
     }
     
@@ -142,6 +147,21 @@ public class FeedbackManager : MonoBehaviour
     public void PlayBalloonInflate()
     {
         balloonInflateFeedback?.PlayFeedbacks();
+    }
+
+    public void PlaySuccessSound()
+    {
+        successSoundFeedback?.PlayFeedbacks();
+    }
+
+    public void PlayErrorSound()
+    {
+        errorSoundFeedback?.PlayFeedbacks();
+    }
+
+    public void PlayCashFountainSound()
+    {
+        cashFountainFeedback?.PlayFeedbacks();
     }
 
     private void PlayUISoundWithParams(float volumeMultiplier, float pitchMultiplier)

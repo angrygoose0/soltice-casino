@@ -173,6 +173,10 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var delegationMetadata = DeriveDelegationMetadataAccount(authority);
 		var delegationRecord = DeriveDelegationRecordAccount(authority);
 		var delegationBuffer = DeriveDelegationBufferAccount(authority);
+		
+		// Hardcode validator address
+		validator = new PublicKey("MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57");
+		
 		var accounts = new DelegateAuthorityAccounts
 		{
 			Signer = user,
@@ -194,6 +198,10 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var delegationMetadata = DeriveDelegationMetadataAccount(game);
 		var delegationRecord = DeriveDelegationRecordAccount(game);
 		var delegationBuffer = DeriveDelegationBufferAccount(game);
+		
+		// Hardcode validator address
+		validator = new PublicKey("MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57");
+		
 		var accounts = new DelegateGameAccounts
 		{
 			Signer = user,
@@ -215,6 +223,10 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var delegationMetadata = DeriveDelegationMetadataAccount(playerBet);
 		var delegationRecord = DeriveDelegationRecordAccount(playerBet);
 		var delegationBuffer = DeriveDelegationBufferAccount(playerBet);
+		
+		// Hardcode validator address
+		validator = new PublicKey("MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57");
+		
 		var accounts = new DelegatePlayerBetAccounts
 		{
 			Signer = user,

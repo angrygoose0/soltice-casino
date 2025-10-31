@@ -20,6 +20,7 @@ public class UserUI : MonoBehaviour
     [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private CoherenceBridge coherenceBridge;
     [SerializeField] private DepositModal depositModal;
+    [SerializeField] private FeedbackManager feedbackManager;
 
     private Game _gameCache;
     private PlayerBet _playerBetCache;
@@ -99,6 +100,11 @@ public class UserUI : MonoBehaviour
         playerTextTMP = betText;
     }
     
+    private ulong ConvertToDisplayAmount(ulong rawAmount)
+    {
+        return (ulong)(rawAmount / Math.Pow(10, solanaManager.TokenDecimals));
+    }
+    
     private void SetupDepositModalListeners()
     {
         if (depositModal != null)
@@ -157,160 +163,241 @@ public class UserUI : MonoBehaviour
     //ENSURE user_balance delegated
     public async void DepositAsync(ulong amount) //user
     {
-        var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
-        bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-        
-        // 1. Undelegate on ER if currently delegated
-        if (userBalanceIsDelegated)
+        try
         {
-            var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+            var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
+            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+            
+            // 1. Undelegate on ER if currently delegated
+            if (userBalanceIsDelegated)
+            {
+                var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+                await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+            }
+            
+            // 2. Deposit + Re-delegate on base layer (together)
+            var userDepositIx = treasuryBuilder.UserDeposit(amount);
+            var delegateIx = treasuryBuilder.DelegateUserBalance();
+            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"depositing {amount}...", userDepositIx, delegateIx);
+            
+            feedbackManager?.PlaySuccessSound();
         }
-        
-        // 2. Deposit + Re-delegate on base layer (together)
-        var userDepositIx = treasuryBuilder.UserDeposit(amount);
-        var delegateIx = treasuryBuilder.DelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"depositing {amount}...", userDepositIx, delegateIx);
+        catch (Exception ex)
+        {
+            Debug.LogError($"Deposit failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     //ENSURE user_balance delegated
     public async void Withdraw(ulong amount) //user
     {
-        // 1. Undelegate on ER
-        var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
-        
-        // 2. Withdraw + Re-delegate on base layer (together)
-        var userWithdrawIx = treasuryBuilder.UserWithdraw(amount);
-        var delegateIx = treasuryBuilder.DelegateUserBalance();
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"withdrawing {amount}...", userWithdrawIx, delegateIx);
+        try
+        {
+            // 1. Undelegate on ER
+            var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+            
+            // 2. Withdraw + Re-delegate on base layer (together)
+            var userWithdrawIx = treasuryBuilder.UserWithdraw(amount);
+            var delegateIx = treasuryBuilder.DelegateUserBalance();
+            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"withdrawing {amount}...", userWithdrawIx, delegateIx);
+            
+            feedbackManager?.PlaySuccessSound();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Withdraw failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     //ENSURE game delegated
     public async void SetupRandomness(byte clientSeed) //user
     {
-        var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "requesting randomness...", requestRandomnessIx);
+        try
+        {
+            var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "requesting randomness...", requestRandomnessIx);
+            
+            feedbackManager?.PlaySuccessSound();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Setup randomness failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     public async void StartGame() //user
     {
-        var startGameIx = crashBuilder.StartGame();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "starting game...", startGameIx);
+        try
+        {
+            var startGameIx = crashBuilder.StartGame();
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "starting game...", startGameIx);
+            
+            feedbackManager?.PlaySuccessSound();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Start game failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
     public async void PlaceBet() //user
     {
-        var instructions = new List<TransactionInstruction>();
-
-        var playerBetPk = CrashTransactionBuilder.DerivePlayerBetAccount(Web3.Account.PublicKey);
-        var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
-
-        // Step 1: Initialize any uninitialized accounts
-        var playerBetData = await SubscriptionManager.Instance.LoadAccountData<PlayerBet>(
-            playerBetPk, data => PlayerBet.Deserialize(data), forceDelegated: false
-        );
-        
-        if (playerBetData == null)
+        try
         {
-            Debug.Log("Initializing PlayerBet account");
-            instructions.Add(crashBuilder.InitializePlayerBet());
-        }
-        
-        var userBalanceData = await SubscriptionManager.Instance.LoadAccountData<UserBalance>(
-            userBalancePk, data => UserBalance.Deserialize(data), forceDelegated: false
-        );
-        
-        bool isInitializingUserBalance = userBalanceData == null;
-        if (isInitializingUserBalance)
-        {
-            Debug.Log("Initializing UserBalance account");
-            instructions.Add(treasuryBuilder.InitializeBalance());
-        }
+            var instructions = new List<TransactionInstruction>();
 
-        // Step 2 & 3: Calculate how much deposit is needed based on existing balance
-        ulong depositAmount = betAmount;
-        if (!isInitializingUserBalance && _userBalanceCache != null && _userBalanceCache.Balance > 0)
-        {
-            if (_userBalanceCache.Balance >= betAmount)
+            var playerBetPk = CrashTransactionBuilder.DerivePlayerBetAccount(Web3.Account.PublicKey);
+            var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
+
+            // Step 1: Initialize any uninitialized accounts
+            var playerBetData = await SubscriptionManager.Instance.LoadAccountData<PlayerBet>(
+                playerBetPk, data => PlayerBet.Deserialize(data), forceDelegated: false
+            );
+            
+            if (playerBetData == null)
             {
-                Debug.Log($"Sufficient balance available ({_userBalanceCache.Balance} >= {betAmount}), skipping deposit");
-                depositAmount = 0;
-            }
-            else
-            {
-                depositAmount = betAmount - _userBalanceCache.Balance;
-                Debug.Log($"Partial balance available ({_userBalanceCache.Balance}), depositing remaining {depositAmount}");
-            }
-        }
-        
-        bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-
-        if (depositAmount > 0)
-        {
-            if (userBalanceIsDelegated)
-            {
-                var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-                await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
-                userBalanceIsDelegated = false;
+                Debug.Log("Initializing PlayerBet account");
+                instructions.Add(crashBuilder.InitializePlayerBet());
             }
             
-            var userDepositIx = treasuryBuilder.UserDeposit(depositAmount);
-            instructions.Add(userDepositIx);
-        }
+            var userBalanceData = await SubscriptionManager.Instance.LoadAccountData<UserBalance>(
+                userBalancePk, data => UserBalance.Deserialize(data), forceDelegated: false
+            );
+            
+            bool isInitializingUserBalance = userBalanceData == null;
+            if (isInitializingUserBalance)
+            {
+                Debug.Log("Initializing UserBalance account");
+                instructions.Add(treasuryBuilder.InitializeBalance());
+            }
 
-        if (!userBalanceIsDelegated)
+            // Step 2 & 3: Calculate how much deposit is needed based on existing balance
+            ulong depositAmount = betAmount;
+            if (!isInitializingUserBalance && _userBalanceCache != null && _userBalanceCache.Balance > 0)
+            {
+                if (_userBalanceCache.Balance >= betAmount)
+                {
+                    Debug.Log($"Sufficient balance available ({_userBalanceCache.Balance} >= {betAmount}), skipping deposit");
+                    depositAmount = 0;
+                }
+                else
+                {
+                    depositAmount = betAmount - _userBalanceCache.Balance;
+                    Debug.Log($"Partial balance available ({_userBalanceCache.Balance}), depositing remaining {depositAmount}");
+                }
+            }
+            
+            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+
+            if (depositAmount > 0)
+            {
+                if (userBalanceIsDelegated)
+                {
+                    var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+                    await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+                    userBalanceIsDelegated = false;
+                }
+                
+                var userDepositIx = treasuryBuilder.UserDeposit(depositAmount);
+                instructions.Add(userDepositIx);
+            }
+
+            if (!userBalanceIsDelegated)
+            {
+                Debug.Log("Delegating UserBalance");
+                instructions.Add(treasuryBuilder.DelegateUserBalance());
+            }
+
+            // Step 4: Delegate PlayerBet if it wasn't
+            bool playerBetIsDelegated = await solanaManager.CheckIfDelegated(playerBetPk);
+            
+            if (!playerBetIsDelegated)
+            {
+                Debug.Log("Delegating PlayerBet");
+                instructions.Add(crashBuilder.DelegatePlayerBet());
+            }
+
+            if (instructions.Count > 0)
+            {
+                Debug.Log($"Sending combined transaction with {instructions.Count} instruction(s)");
+                await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "initializing and depositing...", instructions.ToArray());
+            }
+
+            // Step 5: Send place_bet transaction on ER layer
+            Debug.Log($"Placing bet of {betAmount}");
+            var placeBetIx = crashBuilder.PlaceBet(betAmount);
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, $"placing bet {betAmount}...", placeBetIx);
+            
+            feedbackManager?.PlaySuccessSound();
+        }
+        catch (Exception ex)
         {
-            Debug.Log("Delegating UserBalance");
-            instructions.Add(treasuryBuilder.DelegateUserBalance());
+            Debug.LogError($"Place bet failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
         }
-
-        // Step 4: Delegate PlayerBet if it wasn't
-        bool playerBetIsDelegated = await solanaManager.CheckIfDelegated(playerBetPk);
-        
-        if (!playerBetIsDelegated)
-        {
-            Debug.Log("Delegating PlayerBet");
-            instructions.Add(crashBuilder.DelegatePlayerBet());
-        }
-
-        if (instructions.Count > 0)
-        {
-            Debug.Log($"Sending combined transaction with {instructions.Count} instruction(s)");
-            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "initializing and depositing...", instructions.ToArray());
-        }
-
-        // Step 5: Send place_bet transaction on ER layer
-        Debug.Log($"Placing bet of {betAmount}");
-        var placeBetIx = crashBuilder.PlaceBet(betAmount);
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, $"placing bet {betAmount}...", placeBetIx);
     }
 
     //ENSURE player_bet + ephemeral_balance delegated + user setup + game delegated
     public async void ClaimBet() //user
     {
-        var claimBetIx = crashBuilder.ClaimBet();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "claiming bet...", claimBetIx);
+        try
+        {
+            var claimBetIx = crashBuilder.ClaimBet();
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "claiming bet...", claimBetIx);
+            
+            feedbackManager?.PlaySuccessSound();
+            feedbackManager?.PlayCashFountainSound();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Claim bet failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     //ENSURE game delegated
     public async void Tick() //admin? 
     {
-        var tickIx = crashBuilder.Tick();
-        await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "ticking game...", tickIx);
+        try
+        {
+            var tickIx = crashBuilder.Tick();
+            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "ticking game...", tickIx);
+            
+            feedbackManager?.PlaySuccessSound();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Tick failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     public async void SetupGame() //admin? 
     {
-        var instructions = new List<TransactionInstruction>();
-        instructions.Add(crashBuilder.InitializeGame());
-        instructions.Add(crashBuilder.InitializeAuthority());
-        instructions.Add(treasuryBuilder.InitializeTreasury());
-        instructions.Add(crashBuilder.DelegateGame());
-        instructions.Add(crashBuilder.DelegateAuthority());
+        try
+        {
+            var instructions = new List<TransactionInstruction>();
+            instructions.Add(crashBuilder.InitializeGame());
+            instructions.Add(crashBuilder.InitializeAuthority());
+            instructions.Add(treasuryBuilder.InitializeTreasury());
+            instructions.Add(crashBuilder.DelegateGame());
+            instructions.Add(crashBuilder.DelegateAuthority());
 
-        await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "setting up game...", instructions.ToArray());
+            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "setting up game...", instructions.ToArray());
+            
+            feedbackManager?.PlaySuccessSound();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Setup game failed: {ex.Message}");
+            feedbackManager?.PlayErrorSound();
+        }
     }
 
     public async void SetupGameSubscription()
@@ -408,7 +495,8 @@ public class UserUI : MonoBehaviour
         _playerBetCache = newData;
         if (playerBetAccountTMP != null)
         {
-            playerBetAccountTMP.text = $"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}";
+            ulong displayAmount = ConvertToDisplayAmount(newData.Amount);
+            playerBetAccountTMP.text = $"Game: {newData.Game}, Amount: {displayAmount}, Player: {newData.Player}";
         }
         UpdateUserBetText(newData, _gameCache);
         Debug.Log($"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}");
@@ -452,19 +540,22 @@ public class UserUI : MonoBehaviour
             UIFader.FadeIn(afterBettingGroup);
 
             ulong lastAmount = TextAnimationManager.Instance.GetLastRenderedAmount(playerTextTMP);
-            if (lastAmount != playerBet.Amount)
+            ulong displayAmount = ConvertToDisplayAmount(playerBet.Amount);
+            ulong lastDisplayAmount = ConvertToDisplayAmount(lastAmount);
+            
+            if (lastDisplayAmount != displayAmount)
             {
                 TextAnimationManager.Instance.AnimateNumber(
                     playerTextTMP,
-                    lastAmount,
-                    playerBet.Amount,
+                    lastDisplayAmount,
+                    displayAmount,
                     prefix: "Bet: "
                 );
             }
 
             playerTextTMP.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
             
-            afterBettingText.text = $"Your bet: {playerBet.Amount} (next round)";
+            afterBettingText.text = $"Your bet: {displayAmount} (next round)";
             UIFader.FadeOut(claimButton.gameObject);
             if (game.State == 0)
                 UIFader.FadeIn(startButton.gameObject);
@@ -476,7 +567,8 @@ public class UserUI : MonoBehaviour
             UIFader.FadeOut(beforeBettingGroup);
             UIFader.FadeIn(afterBettingGroup);
             
-            ulong currentValue = (ulong)(playerBet.Amount * Math.Pow(1.11, game.Tick));
+            ulong currentValueRaw = (ulong)(playerBet.Amount * Math.Pow(1.11, game.Tick));
+            ulong currentValue = ConvertToDisplayAmount(currentValueRaw);
             playerTextTMP.text = $"Bet: {currentValue}";
             playerTextTMP.color = new Color(1f, 1f, 1f, 1f);
             
@@ -493,24 +585,27 @@ public class UserUI : MonoBehaviour
         if (userBalanceAccountTMP != null && TextAnimationManager.Instance != null)
         {
             ulong lastBalance = TextAnimationManager.Instance.GetLastRenderedAmount(userBalanceAccountTMP);
-            if (lastBalance != newData.Balance)
+            ulong displayBalance = ConvertToDisplayAmount(newData.Balance);
+            ulong lastDisplayBalance = ConvertToDisplayAmount(lastBalance);
+            
+            if (lastDisplayBalance != displayBalance)
             {
                 TextAnimationManager.Instance.AnimateNumber(
                     userBalanceAccountTMP,
-                    lastBalance,
-                    newData.Balance,
+                    lastDisplayBalance,
+                    displayBalance,
                     prefix: "Balance: "
                 );
             }
             else
             {
-                userBalanceAccountTMP.text = $"Balance: {newData.Balance}";
+                userBalanceAccountTMP.text = $"Balance: {displayBalance}";
             }
         }
         
         if (depositModal != null && depositModal.ephemeralBalance != null)
         {
-            depositModal.ephemeralBalance.text = newData.Balance.ToString();
+            depositModal.ephemeralBalance.text = ConvertToDisplayAmount(newData.Balance).ToString();
         }
         
         Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");

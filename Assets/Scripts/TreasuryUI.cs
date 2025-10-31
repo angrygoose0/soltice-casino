@@ -87,7 +87,7 @@ public class TreasuryUI : MonoBehaviour
     {
         // Hardcoded delegate parameters
         const uint commitMs = 30000u; // 30 seconds commit frequency
-        const string validatorPubkeyString = "mAGicPQYBMvcYveUZA5F5UNNwyHvfYh5xkLS2Fr1mev"; // Oracle queue validator
+        const string validatorPubkeyString = "MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57";
         var validator = new PublicKey(validatorPubkeyString);
         
         await RunAsync(initializePlayerBalanceButton, async () =>

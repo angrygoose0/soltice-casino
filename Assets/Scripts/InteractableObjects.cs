@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Globalization;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -152,8 +151,46 @@ public class InteractableObjects : MonoBehaviour
         // Update labels for interactables
         UpdateLabels();
 
-        // Skip all interaction logic if the dark overlay is active
-        if (darkOverlay != null && darkOverlay.activeSelf)
+        Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+
+        GameObject hitObjectOverall = null;
+        bool hitObjectIsAboveOverlay = false;
+
+        // 1) UI raycast first (UI takes priority)
+        if (EventSystem.current != null)
+        {
+            PointerEventData eventData = new PointerEventData(EventSystem.current);
+            eventData.position = mousePosition;
+            List<RaycastResult> uiHits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventData, uiHits);
+            
+            bool passedDarkOverlay = false;
+            foreach (var uiHit in uiHits)
+            {
+                // Check if we hit the dark overlay
+                if (darkOverlay != null && darkOverlay.activeSelf && uiHit.gameObject == darkOverlay)
+                {
+                    passedDarkOverlay = true;
+                }
+                
+                // Look for interactables
+                Transform t = uiHit.gameObject.transform;
+                while (t != null)
+                {
+                    if (TryGetProfile(t.gameObject, out _))
+                    {
+                        hitObjectOverall = t.gameObject;
+                        hitObjectIsAboveOverlay = !passedDarkOverlay;
+                        break;
+                    }
+                    t = t.parent;
+                }
+                if (hitObjectOverall != null) break;
+            }
+        }
+        
+        // Skip all interaction logic if dark overlay blocks the hit
+        if (darkOverlay != null && darkOverlay.activeSelf && !hitObjectIsAboveOverlay)
         {
             // If there was a hovered object, clear it and reset to idle
             if (lastHoveredObject != null)
@@ -174,33 +211,6 @@ public class InteractableObjects : MonoBehaviour
                 lastHoveredPressed = false;
             }
             return;
-        }
-
-        Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-
-        GameObject hitObjectOverall = null;
-
-        // 1) UI raycast first (UI takes priority)
-        if (EventSystem.current != null)
-        {
-            PointerEventData eventData = new PointerEventData(EventSystem.current);
-            eventData.position = mousePosition;
-            List<RaycastResult> uiHits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(eventData, uiHits);
-            foreach (var uiHit in uiHits)
-            {
-                Transform t = uiHit.gameObject.transform;
-                while (t != null)
-                {
-                    if (TryGetProfile(t.gameObject, out _))
-                    {
-                        hitObjectOverall = t.gameObject;
-                        break;
-                    }
-                    t = t.parent;
-                }
-                if (hitObjectOverall != null) break;
-            }
         }
 
         // 2) If no UI hit, do 3D physics raycast
@@ -426,6 +436,10 @@ public class InteractableObjects : MonoBehaviour
             {
                 entry.label.text = FormatShortAmount(entry.amount);
             }
+            else if (entry.actionType == ActionType.ClaimBet)
+            {
+                entry.label.text = "Claim";
+            }
         }
     }
 
@@ -510,18 +524,6 @@ public class InteractableObjects : MonoBehaviour
         }
     }
 
-    public void SetInteractableHardEnabled(GameObject obj, bool enabled)
-    {
-        for (int i = 0; i < interactables.Count; i++)
-        {
-            InteractableEntry entry = interactables[i];
-            if (entry != null && entry.gameObject == obj)
-            {
-                entry.gameObject.SetActive(enabled);
-            }
-        }
-    }
-
     public void SetInteractableHardEnabledByAction(ActionType actionType, bool enabled)
     {
         for (int i = 0; i < interactables.Count; i++)
@@ -530,82 +532,6 @@ public class InteractableObjects : MonoBehaviour
             if (entry != null && entry.actionType == actionType)
             {
                 entry.gameObject.SetActive(enabled);
-            }
-        }
-    }
-
-    public async void SimulateClick(GameObject obj, float pressDuration = 0.15f)
-    {
-        if (obj == null || feedbackManager == null) return;
-        
-        // Get profile without checking enabled state (so we can simulate clicks even when disabled)
-        GlowProfile profile = null;
-        for (int i = 0; i < interactables.Count; i++)
-        {
-            InteractableEntry entry = interactables[i];
-            if (entry != null && entry.gameObject == obj && entry.cachedGlowProfile != null)
-            {
-                profile = entry.cachedGlowProfile;
-                break;
-            }
-        }
-        
-        if (profile != null)
-        {
-            // Play click down feedback
-            feedbackManager.PlayUIClickDown(obj.transform);
-            
-            // Animate to pressed state
-            FeedbackManager.MaterialGlowState pressedState = new FeedbackManager.MaterialGlowState
-            {
-                scale = profile.pressed.scale,
-                intensity = profile.pressed.intensity,
-                color = profile.pressed.color
-            };
-            feedbackManager.AnimateGlowMaterial(obj, pressedState);
-            
-            // Wait for press duration
-            await Task.Delay((int)(pressDuration * 1000));
-            
-            // Play click up feedback
-            feedbackManager.PlayUIClickUp(obj.transform);
-            
-            // Return to idle state (or hover if currently hovered)
-            bool isCurrentlyHovered = (obj == lastHoveredObject);
-            GlowSettings targetSettings = isCurrentlyHovered ? profile.hover : profile.idle;
-            
-            FeedbackManager.MaterialGlowState returnState = new FeedbackManager.MaterialGlowState
-            {
-                scale = targetSettings.scale,
-                intensity = targetSettings.intensity,
-                color = targetSettings.color
-            };
-            feedbackManager.AnimateGlowMaterial(obj, returnState);
-        }
-    }
-
-    public void TurnOffGlow(GameObject obj)
-    {
-        if (obj == null || feedbackManager == null) return;
-        
-        FeedbackManager.MaterialGlowState offState = new FeedbackManager.MaterialGlowState
-        {
-            scale = 0f,
-            intensity = 0f,
-            color = Color.black
-        };
-        feedbackManager.AnimateGlowMaterial(obj, offState);
-    }
-
-    public void ToggleInteractable(GameObject obj)
-    {
-        for (int i = 0; i < interactables.Count; i++)
-        {
-            InteractableEntry entry = interactables[i];
-            if (entry != null && entry.gameObject == obj)
-            {
-                SetInteractableEnabled(obj, !entry.isEnabled);
-                return;
             }
         }
     }
