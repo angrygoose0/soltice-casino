@@ -260,7 +260,8 @@ public class UserUI : MonoBehaviour
                 playerBetPk, data => PlayerBet.Deserialize(data), forceDelegated: false
             );
             
-            if (playerBetData == null)
+            bool isInitializingPlayerBet = playerBetData == null;
+            if (isInitializingPlayerBet)
             {
                 Debug.Log("Initializing PlayerBet account");
                 instructions.Add(crashBuilder.InitializePlayerBet());
@@ -323,10 +324,19 @@ public class UserUI : MonoBehaviour
                 instructions.Add(crashBuilder.DelegatePlayerBet());
             }
 
+            bool needsSubscriptionSetup = isInitializingPlayerBet || isInitializingUserBalance;
+
             if (instructions.Count > 0)
             {
                 Debug.Log($"Sending combined transaction with {instructions.Count} instruction(s)");
                 await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "initializing and depositing...", instructions.ToArray());
+                
+                // If we initialized accounts, setup subscriptions after delegation
+                if (needsSubscriptionSetup)
+                {
+                    Debug.Log("Accounts initialized - setting up subscriptions");
+                    await SetupUserAccountSubscriptions();
+                }
             }
 
             // Step 5: Send place_bet transaction on ER layer
@@ -418,6 +428,19 @@ public class UserUI : MonoBehaviour
 
     private async Task SetupUserAccountSubscriptions()
     {
+        // Unsubscribe from existing subscriptions if they exist
+        if (!string.IsNullOrEmpty(_playerBetSubscriptionId))
+        {
+            await SubscriptionManager.Instance.Unsubscribe(_playerBetSubscriptionId);
+            _playerBetSubscriptionId = null;
+        }
+        
+        if (!string.IsNullOrEmpty(_userBalanceSubscriptionId))
+        {
+            await SubscriptionManager.Instance.Unsubscribe(_userBalanceSubscriptionId);
+            _userBalanceSubscriptionId = null;
+        }
+
         // Setup both accounts and store subscription IDs
         _playerBetSubscriptionId = await SetupAccountSubscription(
             "PlayerBet",
@@ -562,7 +585,7 @@ public class UserUI : MonoBehaviour
             else
                 UIFader.FadeOut(startButton.gameObject);
         } 
-        else if (playerBet.GameNo == game.GameNo) {
+        else if (playerBet.GameNo == game.GameNo && game.State == 1) {
             playerTextTMP.enabled = true;
             UIFader.FadeOut(beforeBettingGroup);
             UIFader.FadeIn(afterBettingGroup);
@@ -575,6 +598,12 @@ public class UserUI : MonoBehaviour
             afterBettingText.text = $"Your bet: {currentValue}";
             UIFader.FadeIn(claimButton.gameObject);
             UIFader.FadeOut(startButton.gameObject);
+        }
+        else if (playerBet.GameNo == game.GameNo && game.State != 1) {
+            // Game has crashed or not started yet, show betting UI even though bet hasn't been claimed
+            playerTextTMP.enabled = false;
+            UIFader.FadeOut(afterBettingGroup);
+            UIFader.FadeIn(beforeBettingGroup);
         }
     }
 
