@@ -19,8 +19,8 @@ public class UserUI : MonoBehaviour
     [SerializeField] private CrashTransactionBuilder crashBuilder;
     [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private CoherenceBridge coherenceBridge;
-    [SerializeField] private DepositModal depositModal;
     [SerializeField] private FeedbackManager feedbackManager;
+    [SerializeField] private Button withdrawButton;
 
     private Game _gameCache;
     private PlayerBet _playerBetCache;
@@ -60,7 +60,7 @@ public class UserUI : MonoBehaviour
     private void Start()
     {
         SetupGameSubscription();
-        SetupDepositModalListeners();
+        SetupWithdrawButton();
         SetupTickButton();
         SetupSetupGameButton();
         UIFader.HideImmediate(beforeBettingGroup);
@@ -105,12 +105,12 @@ public class UserUI : MonoBehaviour
         return (ulong)(rawAmount / Math.Pow(10, solanaManager.TokenDecimals));
     }
     
-    private void SetupDepositModalListeners()
+    private void SetupWithdrawButton()
     {
-        if (depositModal != null)
+        if (withdrawButton != null)
         {
-            depositModal.onDeposit.AddListener(DepositAsync);
-            depositModal.onWithdraw.AddListener(Withdraw);
+            withdrawButton.onClick.AddListener(() => Withdraw(withdrawAmount));
+            UIFader.HideImmediate(withdrawButton.gameObject);
         }
     }
 
@@ -128,8 +128,8 @@ public class UserUI : MonoBehaviour
 
     private async void OnWalletConnected(Account account)
     {
-        if (depositModal != null)
-            depositModal.ShowToggleButton();
+        if (withdrawButton != null)
+            UIFader.FadeIn(withdrawButton.gameObject);
         
         await SetupUserAccountSubscriptions();
     }
@@ -153,8 +153,8 @@ public class UserUI : MonoBehaviour
         UIFader.FadeOut(beforeBettingGroup);
         UIFader.FadeOut(afterBettingGroup);
         
-        if (depositModal != null)
-            depositModal.HideToggleButton();
+        if (withdrawButton != null)
+            UIFader.FadeOut(withdrawButton.gameObject);
         
         Debug.Log("Wallet disconnected - UI reset");
     }
@@ -630,11 +630,6 @@ public class UserUI : MonoBehaviour
             {
                 userBalanceAccountTMP.text = $"Balance: {displayBalance}";
             }
-        }
-        
-        if (depositModal != null && depositModal.ephemeralBalance != null)
-        {
-            depositModal.ephemeralBalance.text = ConvertToDisplayAmount(newData.Balance).ToString();
         }
         
         Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");
