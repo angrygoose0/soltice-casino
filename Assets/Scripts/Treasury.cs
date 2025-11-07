@@ -29,7 +29,17 @@ namespace Treasury
             public static string ACCOUNT_DISCRIMINATOR_B58 => "gxyTsYaqFet";
             public byte Bump { get; set; }
 
+            public ulong FeePercentage { get; set; }
+
+            public ulong BufferAmount { get; set; }
+
             public byte TreasuryTokenAccountBump { get; set; }
+
+            public byte TreasuryStakeTokenAccountBump { get; set; }
+
+            public byte StakingTokenMintBump { get; set; }
+
+            public long WithdrawalTime { get; set; }
 
             public static Treasury Deserialize(ReadOnlySpan<byte> _data)
             {
@@ -44,8 +54,18 @@ namespace Treasury
                 Treasury result = new Treasury();
                 result.Bump = _data.GetU8(offset);
                 offset += 1;
+                result.FeePercentage = _data.GetU64(offset);
+                offset += 8;
+                result.BufferAmount = _data.GetU64(offset);
+                offset += 8;
                 result.TreasuryTokenAccountBump = _data.GetU8(offset);
                 offset += 1;
+                result.TreasuryStakeTokenAccountBump = _data.GetU8(offset);
+                offset += 1;
+                result.StakingTokenMintBump = _data.GetU8(offset);
+                offset += 1;
+                result.WithdrawalTime = _data.GetS64(offset);
+                offset += 8;
                 return result;
             }
         }
@@ -58,6 +78,8 @@ namespace Treasury
             public PublicKey User { get; set; }
 
             public ulong Balance { get; set; }
+
+            public ulong BufferAmount { get; set; }
 
             public byte Bump { get; set; }
 
@@ -76,6 +98,8 @@ namespace Treasury
                 offset += 32;
                 result.Balance = _data.GetU64(offset);
                 offset += 8;
+                result.BufferAmount = _data.GetU64(offset);
+                offset += 8;
                 result.Bump = _data.GetU8(offset);
                 offset += 1;
                 return result;
@@ -91,7 +115,10 @@ namespace Treasury
             UnauthorizedCaller = 6001U,
             InvalidOwner = 6002U,
             InvalidPlayerBalanceType = 6003U,
-            InvalidAmount = 6004U
+            InvalidAmount = 6004U,
+            InvalidStakeAmount = 6005U,
+            ActiveBetInProgress = 6006U,
+            InsufficientTreasuryFunds = 6007U
         }
     }
 
@@ -213,7 +240,7 @@ namespace Treasury
 
         protected override Dictionary<uint, ProgramError<TreasuryErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<TreasuryErrorKind>>{{6000U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientBalance, "Insufficient balance")}, {6001U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedCaller, "Unauthorized caller")}, {6002U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidOwner, "Invalid owner for balance account")}, {6003U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidPlayerBalanceType, "Invalid player balance type")}, {6004U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidAmount, "Invalid amount")}, };
+            return new Dictionary<uint, ProgramError<TreasuryErrorKind>>{{6000U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientBalance, "Insufficient balance")}, {6001U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedCaller, "Unauthorized caller")}, {6002U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidOwner, "Invalid owner for balance account")}, {6003U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidPlayerBalanceType, "Invalid player balance type")}, {6004U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidAmount, "Invalid amount")}, {6005U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidStakeAmount, "Invalid stake amount")}, {6006U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.ActiveBetInProgress, "Active bet in progress")}, {6007U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientTreasuryFunds, "Insufficient treasury funds")}, };
         }
     }
 
@@ -224,6 +251,10 @@ namespace Treasury
             public PublicKey Signer { get; set; }
 
             public PublicKey UserBalance { get; set; }
+
+            public PublicKey Treasury { get; set; }
+
+            public PublicKey TreasuryTokenAccount { get; set; }
 
             public PublicKey Authority { get; set; }
 
@@ -236,6 +267,10 @@ namespace Treasury
             public PublicKey Signer { get; set; }
 
             public PublicKey UserBalance { get; set; }
+
+            public PublicKey Treasury { get; set; }
+
+            public PublicKey TreasuryTokenAccount { get; set; }
 
             public PublicKey Authority { get; set; }
 
@@ -275,7 +310,11 @@ namespace Treasury
             public PublicKey Treasury { get; set; }
 
             public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
+            public PublicKey StakingTokenMint { get; set; }
+
             public PublicKey TreasuryTokenAccount { get; set; }
+
+            public PublicKey TreasuryStakeTokenAccount { get; set; }
 
             public PublicKey TokenProgram { get; set; }
 
@@ -291,6 +330,22 @@ namespace Treasury
             public PublicKey Payer { get; set; }
 
             public PublicKey SystemProgram { get; set; }
+        }
+
+        public class SettleLossAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey UserBalance { get; set; }
+
+            public PublicKey Treasury { get; set; }
+
+            public PublicKey TreasuryTokenAccount { get; set; }
+
+            public PublicKey Authority { get; set; }
+
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
         }
 
         public class UndelegateUserBalanceAccounts
@@ -311,6 +366,48 @@ namespace Treasury
 
             public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
             public PublicKey UserTokenAccount { get; set; }
+
+            public PublicKey Treasury { get; set; }
+
+            public PublicKey TreasuryTokenAccount { get; set; }
+
+            public PublicKey AssociatedTokenProgram { get; set; } = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+            public PublicKey TokenProgram { get; set; }
+
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+        }
+
+        public class UserStakeAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
+            public PublicKey StakingTokenMint { get; set; }
+
+            public PublicKey UserTokenAccount { get; set; }
+
+            public PublicKey UserStakeTokenAccount { get; set; }
+
+            public PublicKey Treasury { get; set; }
+
+            public PublicKey TreasuryTokenAccount { get; set; }
+
+            public PublicKey AssociatedTokenProgram { get; set; } = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+            public PublicKey TokenProgram { get; set; }
+
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+        }
+
+        public class UserStakeWithdrawAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey TokenMint { get; set; } = new PublicKey("D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos");
+            public PublicKey StakingTokenMint { get; set; }
+
+            public PublicKey UserTokenAccount { get; set; }
+
+            public PublicKey UserStakeTokenAccount { get; set; }
 
             public PublicKey Treasury { get; set; }
 
@@ -348,7 +445,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(8012807824712303984UL, offset);
@@ -360,16 +457,18 @@ namespace Treasury
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction DebitPlayer(DebitPlayerAccounts accounts, ulong amount, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction DebitPlayer(DebitPlayerAccounts accounts, ulong amount, ulong possible_payout, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(14427466938512022116UL, offset);
                 offset += 8;
                 _data.WriteU64(amount, offset);
+                offset += 8;
+                _data.WriteU64(possible_payout, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
@@ -409,7 +508,7 @@ namespace Treasury
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.StakingTokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryStakeTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(11998052670067948156UL, offset);
@@ -443,6 +542,20 @@ namespace Treasury
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
+            public static Solana.Unity.Rpc.Models.TransactionInstruction SettleLoss(SettleLossAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(2443967572725000004UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
             public static Solana.Unity.Rpc.Models.TransactionInstruction UndelegateUserBalance(UndelegateUserBalanceAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
@@ -467,6 +580,38 @@ namespace Treasury
                 _data.WriteU64(11052439874443200186UL, offset);
                 offset += 8;
                 _data.WriteU64(amount, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction UserStake(UserStakeAccounts accounts, ulong amount, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.StakingTokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserStakeTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(7167166551223355506UL, offset);
+                offset += 8;
+                _data.WriteU64(amount, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
+            public static Solana.Unity.Rpc.Models.TransactionInstruction UserStakeWithdraw(UserStakeWithdrawAccounts accounts, ulong share_amount, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.StakingTokenMint, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserStakeTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.AssociatedTokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TokenProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(11490422540893450577UL, offset);
+                offset += 8;
+                _data.WriteU64(share_amount, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);

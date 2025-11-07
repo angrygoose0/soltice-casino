@@ -57,6 +57,7 @@ public class SolanaManager : MonoBehaviour
     private WalletBase _ephemeralWalletBase;
     private bool _gameJoined = false;
     private bool _isConnectingWallet = false;
+    private bool _isWalletConnected = false;
 
     public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet-as.magicblock.app/", "https://devnet-as.magicblock.app/", true);
 
@@ -163,11 +164,13 @@ public class SolanaManager : MonoBehaviour
         // Show appropriate buttons based on wallet state
         if (interactableObjects != null)
         {
-            if (Web3.Instance != null && Web3.Account != null)
+            // Only enable disconnect button if wallet is connected
+            if (_isWalletConnected)
             {
                 interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.DisconnectWallet, true);
             }
-            else
+            // Only enable connect button if wallet is NOT connected and we're not in the middle of connecting
+            else if (!_isConnectingWallet)
             {
                 interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.ConnectWallet, true);
             }
@@ -176,6 +179,9 @@ public class SolanaManager : MonoBehaviour
 
     private async void OnLogin(Account account)
     {
+        // Mark wallet as connected
+        _isWalletConnected = true;
+        
         // If we were connecting, hide the loading UI
         if (_isConnectingWallet)
         {
@@ -247,6 +253,9 @@ public class SolanaManager : MonoBehaviour
 
     private void OnLogout()
     {
+        // Mark wallet as disconnected
+        _isWalletConnected = false;
+        
         // Update connect/disconnect buttons
         if (interactableObjects != null)
         {
