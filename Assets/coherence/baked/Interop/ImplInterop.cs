@@ -313,7 +313,7 @@ namespace Coherence.Generated
                   case 3: return AdoptOrphan.FromInterop(data, dataSize);
                   case 4: return PersistenceReady.FromInterop(data, dataSize);
                   case 5: return SceneIndexChanged.FromInterop(data, dataSize);
-                  case 6: return _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00.FromInterop(data, dataSize);
+                  case 6: return _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f.FromInterop(data, dataSize);
             }
 
             throw new ArgumentException($"Unkown command type {type}", nameof(type));
@@ -393,15 +393,16 @@ namespace Coherence.Generated
                 }
                 case 6:
                 {
-                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00)command;
-                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00.Interop();
+                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f)command;
+                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f.Interop();
 
                     var pinnedusername = orig.username != null ? Encoding.UTF8.GetBytes(orig.username) : null; fixed (void* pinnedPtrusername = pinnedusername) { val.username = new ByteArray { Data = pinnedPtrusername, Length =  pinnedusername?.Length ?? 0 };
                     var pinnedmessage = orig.message != null ? Encoding.UTF8.GetBytes(orig.message) : null; fixed (void* pinnedPtrmessage = pinnedmessage) { val.message = new ByteArray { Data = pinnedPtrmessage, Length =  pinnedmessage?.Length ?? 0 };
+                    var pinnedstyleType = orig.styleType != null ? Encoding.UTF8.GetBytes(orig.styleType) : null; fixed (void* pinnedPtrstyleType = pinnedstyleType) { val.styleType = new ByteArray { Data = pinnedPtrstyleType, Length =  pinnedstyleType?.Length ?? 0 };
 
-                    return sender.SendCommand(entity, target, type, val, 32);
+                    return sender.SendCommand(entity, target, type, val, 48);
 
-}}                }
+}}}                }
             }
 
             throw new NotImplementedException($"Failed to send a command with type {type}.");

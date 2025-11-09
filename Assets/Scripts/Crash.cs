@@ -16,6 +16,7 @@ using Crash;
 using Crash.Program;
 using Crash.Errors;
 using Crash.Accounts;
+using Crash.Events;
 using Crash.Types;
 
 namespace Crash
@@ -205,6 +206,10 @@ namespace Crash
             RandomnessNotResolved = 6007U,
             AlreadyClaimed = 6008U
         }
+    }
+
+    namespace Events
+    {
     }
 
     namespace Types

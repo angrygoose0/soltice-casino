@@ -14,7 +14,8 @@ component _60786269438aa4c6c8c3c4f9b60e4b9b_9064713401945964142 [id "20"]
   playerMetallic Float [range-min "-9223372036854775808", range-max "9223372036854775807", compression "None"]
   playerSmoothness Float [range-min "-9223372036854775808", range-max "9223372036854775807", compression "None"]
 
-command _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00 [id "6", routing "All"]
+command _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f [id "6", routing "All"]
   username String 
   message String 
+  styleType String 
 

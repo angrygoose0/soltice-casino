@@ -186,8 +186,16 @@ public class SubscriptionManager : MonoBehaviour
 
         if (deserializer != null && result.Result.Value.Data?.Count > 0)
         {
-            byte[] data = Convert.FromBase64String(result.Result.Value.Data[0]);
-            return deserializer(data);
+            try
+            {
+                byte[] data = Convert.FromBase64String(result.Result.Value.Data[0]);
+                return deserializer(data);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to deserialize account data for {accountAddress}: {ex.Message}");
+                return default;
+            }
         }
 
         return default;
@@ -300,8 +308,16 @@ public class SubscriptionManager : MonoBehaviour
 
                 if (accountInfo.Value?.Data?.Count > 0 && deserializer != null)
                 {
-                    byte[] data = Convert.FromBase64String(accountInfo.Value.Data[0]);
-                    result = deserializer(data);
+                    try
+                    {
+                        byte[] data = Convert.FromBase64String(accountInfo.Value.Data[0]);
+                        result = deserializer(data);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"Failed to deserialize account update for {accountAddress}: {ex.Message}");
+                        return;
+                    }
                 }
                 else if (typeof(T) == typeof(AccountInfo))
                 {

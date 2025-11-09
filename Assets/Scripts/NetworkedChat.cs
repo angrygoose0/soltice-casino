@@ -1,12 +1,13 @@
 using UnityEngine;
 using Coherence;
 using Coherence.Toolkit;
+using TankAndHealerStudioAssets;
 
 /// <summary>
-/// Networked chat component attached to each player.
-/// Handles sending and receiving chat messages via Coherence.
-/// Only the local player can send messages (authority check).
-/// All players receive and relay messages to the ChatUI.
+/// Minimal network transport for chat messages.
+/// Attached to each player prefab - required for Coherence commands.
+/// Only handles sending commands over the network and receiving them.
+/// All logic lives in ChatUI.
 /// </summary>
 [RequireComponent(typeof(CoherenceSync))]
 public class NetworkedChat : MonoBehaviour
@@ -20,51 +21,50 @@ public class NetworkedChat : MonoBehaviour
         networkedPlayer = GetComponent<NetworkedPlayer>();
     }
 
-    /// <summary>
-    /// Send a chat message (only works if this is the local player with authority)
-    /// </summary>
-    public void SendMessage(string message)
+    private void Start()
     {
-        if (string.IsNullOrWhiteSpace(message))
-            return;
-
-        if (!coherenceSync.HasStateAuthority)
+        // Register with ChatUI if this is the local player
+        if (coherenceSync.HasStateAuthority)
         {
-            Debug.LogWarning("NetworkedChat: Cannot send message - no authority over this player");
-            return;
+            ChatUI.Instance?.RegisterNetworkedChat(this);
         }
+    }
 
-        string username = networkedPlayer != null ? networkedPlayer.playerUsername : "Player";
+    private void OnDestroy()
+    {
+        // Unregister from ChatUI if this is the local player
+        if (coherenceSync.HasStateAuthority)
+        {
+            ChatUI.Instance?.UnregisterNetworkedChat();
+        }
+    }
+
+    /// <summary>
+    /// Send a message over the network to other players (network transport only)
+    /// </summary>
+    public void SendToOthers(string message, string styleType, bool includeUsername)
+    {
+        if (string.IsNullOrWhiteSpace(message) || !coherenceSync.HasStateAuthority)
+            return;
+
+        string username = includeUsername && networkedPlayer != null ? networkedPlayer.playerUsername : "";
         
-        Debug.Log($"NetworkedChat: Sending message from {username}: {message}");
-        
-        // Send command to all clients (including self)
         coherenceSync.SendCommand<NetworkedChat>(
             nameof(ReceiveMessage),
-            MessageTarget.All,
+            MessageTarget.Other,
             username,
-            message
+            message,
+            styleType
         );
     }
 
     /// <summary>
-    /// Coherence command - called on all clients when any player sends a message
+    /// Coherence command - receives messages from other players and forwards to ChatUI
     /// </summary>
     [Command]
-    public void ReceiveMessage(string username, string message)
+    public void ReceiveMessage(string username, string message, string styleType = "")
     {
-        Debug.Log($"NetworkedChat: Received message from {username}: {message}");
-        
-        // Forward the message to the ChatUI (which exists in the scene)
-        ChatUI chatUI = FindFirstObjectByType<ChatUI>();
-        if (chatUI != null)
-        {
-            chatUI.DisplayMessage(username, message);
-        }
-        else
-        {
-            Debug.LogError("NetworkedChat: ChatUI not found in scene!");
-        }
+        ChatUI.Instance?.DisplayMessage(username, message, ChatUI.Instance.GetStyleFromType(styleType));
     }
 }
 

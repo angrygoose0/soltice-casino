@@ -17,7 +17,7 @@ namespace Coherence.Generated
     using System.Runtime.InteropServices;
     using UnityEngine;
 
-    public struct _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00 : IEntityCommand
+    public struct _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f : IEntityCommand
     {
         [StructLayout(LayoutKind.Explicit)]
         public struct Interop
@@ -26,24 +26,28 @@ namespace Coherence.Generated
             public ByteArray username;
             [FieldOffset(16)]
             public ByteArray message;
+            [FieldOffset(32)]
+            public ByteArray styleType;
         }
 
-        public static unsafe _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00 FromInterop(System.IntPtr data, System.Int32 dataSize) 
+        public static unsafe _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f FromInterop(System.IntPtr data, System.Int32 dataSize) 
         {
-            if (dataSize != 32) {
-                throw new System.Exception($"Given data size is not equal to the struct size. ({dataSize} != 32) " +
+            if (dataSize != 48) {
+                throw new System.Exception($"Given data size is not equal to the struct size. ({dataSize} != 48) " +
                     "for command with ID 6");
             }
 
-            var orig = new _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00();
+            var orig = new _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f();
             var comp = (Interop*)data;
             orig.username = comp->username.Data != null ? System.Text.Encoding.UTF8.GetString((byte*)comp->username.Data, (int)comp->username.Length) : null;
             orig.message = comp->message.Data != null ? System.Text.Encoding.UTF8.GetString((byte*)comp->message.Data, (int)comp->message.Length) : null;
+            orig.styleType = comp->styleType.Data != null ? System.Text.Encoding.UTF8.GetString((byte*)comp->styleType.Data, (int)comp->styleType.Length) : null;
             return orig;
         }
 
         public System.String username;
         public System.String message;
+        public System.String styleType;
         
         public Entity Entity { get; set; }
         public Coherence.ChannelID ChannelID { get; set; }
@@ -91,10 +95,11 @@ namespace Coherence.Generated
         public void NullEntityRefs(Entity entity) {
         }
         
-        public _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00(
+        public _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f(
             Entity entity,
             System.String username,
-            System.String message
+            System.String message,
+            System.String styleType
         )
         {
             Entity = entity;
@@ -108,26 +113,30 @@ namespace Coherence.Generated
 
             this.username = username; 
             this.message = message; 
+            this.styleType = styleType; 
         }
         
-        public static void Serialize(_60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00 commandData, IOutProtocolBitStream bitStream)
+        public static void Serialize(_60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f commandData, IOutProtocolBitStream bitStream)
         {
             bitStream.WriteShortString(commandData.username);
             bitStream.WriteShortString(commandData.message);
+            bitStream.WriteShortString(commandData.styleType);
         }
         
-        public static _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00 Deserialize(IInProtocolBitStream bitStream, Entity entity, MessageTarget target)
+        public static _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f Deserialize(IInProtocolBitStream bitStream, Entity entity, MessageTarget target)
         {
             var datausername = bitStream.ReadShortString();
             var datamessage = bitStream.ReadShortString();
+            var datastyleType = bitStream.ReadShortString();
     
-            return new _60786269438aa4c6c8c3c4f9b60e4b9b_cff3e7b2a1804b3b803b84611d55ad00()
+            return new _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f()
             {
                 Entity = entity,
                 Routing = target,
                 Target = target,
                 username = datausername,
-                message = datamessage
+                message = datamessage,
+                styleType = datastyleType
             };   
         }
     }

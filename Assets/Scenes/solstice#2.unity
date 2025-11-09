@@ -3832,7 +3832,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -4862,14 +4862,12 @@ MonoBehaviour:
   publicKeyTexts:
   - {fileID: 1214632015}
   - {fileID: 93460935}
-  - {fileID: 0}
   balanceTexts:
   - {fileID: 308598064}
   - {fileID: 1260167598}
   tokenBalanceTexts:
   - {fileID: 1690829007}
   - {fileID: 147812473}
-  - {fileID: 0}
   loadingCircle: {fileID: 388311395}
   darkOverlay: {fileID: 871214702}
   loadingText: {fileID: 568184090}
@@ -5506,11 +5504,25 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!224 &474206611 stripped
+--- !u!224 &474206611
 RectTransform:
+  m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 8635369526111870997, guid: 6012be5fb74284e049c2801b68559f78, type: 3}
   m_PrefabInstance: {fileID: 1288465175540980767}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1211453351}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1248950479}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &477134287
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12422,6 +12434,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1178411202}
   m_CullTransparentMesh: 1
+--- !u!1 &1211453351
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 6578395426729819217, guid: 6012be5fb74284e049c2801b68559f78, type: 3}
+  m_PrefabInstance: {fileID: 1288465175540980767}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 474206611}
+  - component: {fileID: 1211453352}
+  m_Layer: 5
+  m_Name: WalletConnectGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1211453352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 8563212299153798344, guid: 6012be5fb74284e049c2801b68559f78, type: 3}
+  m_PrefabInstance: {fileID: 1288465175540980767}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1211453351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c6f044899034844b7b569b2f1875501, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.solana.unity_sdk::Solana.Unity.SDK.WalletAdapterScreen
+  buttonPrefab: {fileID: 8905157834606203636, guid: fdc2d5d3e2eb54943b98c87c8ce17f59, type: 3}
+  viewPortContent: {fileID: 474206611}
 --- !u!1 &1214632013
 GameObject:
   m_ObjectHideFlags: 0

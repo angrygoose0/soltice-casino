@@ -52,12 +52,13 @@ public class SolanaManager : MonoBehaviour
 
     private IRpcClient _rpcClient;
     private IRpcClient _ephemeralRpcClient;
-
-    private WalletBase _walletBase;
-    private WalletBase _ephemeralWalletBase;
     private bool _gameJoined = false;
     private bool _isConnectingWallet = false;
     private bool _isWalletConnected = false;
+    
+    // Wallet adapter UI monitoring
+    private GameObject _walletAdapterUI;
+    private bool _wasWalletAdapterActive;
 
     public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet-as.magicblock.app/", "https://devnet-as.magicblock.app/", true);
 
@@ -108,12 +109,8 @@ public class SolanaManager : MonoBehaviour
 
         try
         {
-            // Initialize main client
             _rpcClient = Web3.Instance.WalletBase.ActiveRpcClient;
             _ephemeralRpcClient = EphemeralWallet?.ActiveRpcClient;
-
-            _walletBase = Web3.Instance.WalletBase;
-            _ephemeralWalletBase = EphemeralWallet;
 
             var streamingClient = Web3.Instance.WalletBase.ActiveStreamingRpcClient;
             if (streamingClient == null)
@@ -156,6 +153,71 @@ public class SolanaManager : MonoBehaviour
         Web3.OnBalanceChange -= OnBalanceChange;
     }
 
+    private void Update()
+    {
+        // Monitor WalletAdapterUI only when we're connecting
+        if (!_isConnectingWallet) return;
+
+        // Ensure loading overlay stays visible while connecting
+        EnsureLoadingVisible();
+
+        // Find the WalletAdapterUI if we don't have a reference yet
+        if (_walletAdapterUI == null)
+        {
+            _walletAdapterUI = GameObject.Find("WalletAdapterUI(Clone)");
+            if (_walletAdapterUI != null)
+            {
+                _wasWalletAdapterActive = _walletAdapterUI.activeSelf;
+            }
+            return;
+        }
+
+        // Check if the UI was just deactivated
+        bool isCurrentlyActive = _walletAdapterUI.activeSelf;
+        
+        if (_wasWalletAdapterActive && !isCurrentlyActive)
+        {
+            // UI was closed - wait briefly to see if OnLogin gets called
+            // If user selected a wallet, OnLogin will be called soon and will set _isConnectingWallet to false
+            // If user clicked exit, OnLogin won't be called, so we'll cancel after the delay
+            StartCoroutine(CheckForCancellation());
+            _walletAdapterUI = null;
+        }
+        
+        _wasWalletAdapterActive = isCurrentlyActive;
+    }
+
+    private void EnsureLoadingVisible()
+    {
+        // Keep loading overlay visible while connecting
+        if (darkOverlay != null && !darkOverlay.activeSelf)
+        {
+            UIFader.ShowImmediate(darkOverlay);
+        }
+        
+        if (loadingCircle != null && !loadingCircle.activeSelf)
+        {
+            UIFader.ShowImmediate(loadingCircle);
+        }
+        
+        if (loadingText != null && !loadingText.activeSelf)
+        {
+            UIFader.ShowImmediate(loadingText);
+        }
+    }
+
+    private System.Collections.IEnumerator CheckForCancellation()
+    {
+        // Wait a brief moment to give OnLogin a chance to be called
+        yield return new WaitForSeconds(0.3f);
+        
+        // If we're still in connecting state, user must have clicked exit
+        if (_isConnectingWallet)
+        {
+            CancelWalletConnection();
+        }
+    }
+
     private void OnGameJoined()
     {
         _gameJoined = true;
@@ -182,15 +244,17 @@ public class SolanaManager : MonoBehaviour
         // Mark wallet as connected
         _isWalletConnected = true;
         
-        // If we were connecting, hide the loading UI
+        // If we were connecting, update loading text to show subscription setup
         if (_isConnectingWallet)
         {
             _isConnectingWallet = false;
-            UIFader.FadeOut(loadingCircle, 0.3f);
-            UIFader.FadeOut(darkOverlay, 0.3f);
-            if (loadingText != null)
+            _walletAdapterUI = null; // Clean up reference since login succeeded
+            
+            // Keep loading visible but update text
+            if (loadingText != null && loadingTextComponent != null)
             {
-                UIFader.FadeOut(loadingText, 0.3f);
+                loadingTextComponent.text = "setting up subscriptions...";
+                loadingTextComponent.color = Color.white;
             }
         }
 
@@ -320,15 +384,8 @@ public class SolanaManager : MonoBehaviour
 
     private async void UpdateTokenBalance()
     {
-        if (string.IsNullOrEmpty(mintAddress))
-        {
+        if (string.IsNullOrEmpty(mintAddress) || Web3.Account == null)
             return;
-        }
-
-        if (Web3.Account == null)
-        {
-            return;
-        }
 
         try
         {
@@ -352,45 +409,26 @@ public class SolanaManager : MonoBehaviour
 
     private async Task<double> GetSPLTokenBalance()
     {
-        if (Web3.Account == null || string.IsNullOrEmpty(mintAddress))
-        {
-            return 0.0;
-        }
-
         try
         {
-            // Get all token accounts for the current wallet
             var tokenAccounts = await Web3.Wallet.GetTokenAccounts(Commitment.Confirmed);
+            var matchingAccount = tokenAccounts?.FirstOrDefault(t => 
+                t.Account.Data.Parsed.Info.Mint == mintAddress);
             
-            if (tokenAccounts != null)
+            if (matchingAccount == null)
+                return 0.0;
+            
+            var tokenAmount = matchingAccount.Account.Data.Parsed.Info.TokenAmount;
+            
+            // Try to get the UI amount (properly decimalized)
+            if (!string.IsNullOrEmpty(tokenAmount.UiAmountString) &&
+                double.TryParse(tokenAmount.UiAmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out double balance))
             {
-                // Find the token account that matches our mint address
-                var matchingAccount = tokenAccounts.FirstOrDefault(t => 
-                    t.Account.Data.Parsed.Info.Mint == mintAddress);
-                
-                if (matchingAccount != null)
-                {
-                    var tokenAmount = matchingAccount.Account.Data.Parsed.Info.TokenAmount;
-                    
-                    // Try to get the UI amount (properly decimalized)
-                    if (!string.IsNullOrEmpty(tokenAmount.UiAmountString))
-                    {
-                        if (double.TryParse(tokenAmount.UiAmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out double balance))
-                        {
-                            // Convert to raw amount based on decimals
-                            return balance * Math.Pow(10, tokenDecimals);
-                        }
-                    }
-                    
-                    // Fallback to raw amount if UiAmountString is not available
-                    if (ulong.TryParse(tokenAmount.Amount, out ulong rawAmount))
-                    {
-                        return (double)rawAmount;
-                    }
-                }
+                return balance * Math.Pow(10, tokenDecimals);
             }
             
-            return 0.0;
+            // Fallback to raw amount
+            return ulong.TryParse(tokenAmount.Amount, out ulong rawAmount) ? (double)rawAmount : 0.0;
         }
         catch (System.Exception)
         {
@@ -406,23 +444,11 @@ public class SolanaManager : MonoBehaviour
         string loadingMessage = null,
         params TransactionInstruction[] additionalInstructions)
     {
-        bool showedLoading = false;
+        bool showedLoading = !string.IsNullOrEmpty(loadingMessage);
         try
         {
-            // Show loading UI if message provided
-            if (!string.IsNullOrEmpty(loadingMessage))
-            {
-                showedLoading = true;
-                UIFader.ShowImmediate(darkOverlay);
-                UIFader.ShowImmediate(loadingCircle);
-                
-                if (loadingText != null && loadingTextComponent != null)
-                {
-                    loadingTextComponent.text = loadingMessage;
-                    loadingTextComponent.color = Color.white;
-                    UIFader.ShowImmediate(loadingText);
-                }
-            }
+            if (showedLoading)
+                ShowLoadingOverlay(loadingMessage);
 
             var baseWallet = SessionManager.SessionToken == null
                 ? Web3.Wallet
@@ -432,42 +458,24 @@ public class SolanaManager : MonoBehaviour
 
             var blockHashResult = await rpcClient.GetLatestBlockHashAsync(Commitment.Confirmed);
 
-            // Create a list to store our instructions
-            var instructions = new List<TransactionInstruction>();
+            var transaction = new Transaction
+            {
+                FeePayer = baseWallet.Account.PublicKey,
+                RecentBlockHash = blockHashResult.Result.Value.Blockhash,
+                Signatures = new List<SignaturePubKeyPair>(),
+                Instructions = new List<TransactionInstruction>()
+            };
 
             // Add compute unit limit and price if specified
             if (computeUnitLimit > 0)
-            {
-                var computeLimitInstruction = ComputeBudgetProgram.SetComputeUnitLimit(computeUnitLimit);
-                instructions.Add(computeLimitInstruction);
-            }
+                transaction.Instructions.Add(ComputeBudgetProgram.SetComputeUnitLimit(computeUnitLimit));
+            
             if (computeUnitPrice > 0)
-            {
-                var computePriceInstruction = ComputeBudgetProgram.SetComputeUnitPrice(computeUnitPrice);
-                instructions.Add(computePriceInstruction);
-            }
+                transaction.Instructions.Add(ComputeBudgetProgram.SetComputeUnitPrice(computeUnitPrice));
 
             // Add any additional instructions
             if (additionalInstructions != null)
-            {
-                foreach (var instruction in additionalInstructions)
-                {
-                    instructions.Add(instruction);
-                }
-            }
-
-            // Create the transaction object
-            var transaction = new Transaction();
-
-            transaction.FeePayer = baseWallet.Account.PublicKey;
-            transaction.RecentBlockHash = blockHashResult.Result.Value.Blockhash;
-            transaction.Signatures = new List<SignaturePubKeyPair>();
-            transaction.Instructions = new List<TransactionInstruction>();
-
-            foreach (var instruction in instructions)
-            {
-                transaction.Instructions.Add(instruction);
-            }
+                transaction.Instructions.AddRange(additionalInstructions);
             
             var signedTransaction = await baseWallet.SignTransaction(transaction);
 
@@ -503,16 +511,8 @@ public class SolanaManager : MonoBehaviour
                 throw new Exception("Transaction confirmation failed");
             }
 
-            // Fade out loading UI on success
             if (showedLoading)
-            {
-                UIFader.FadeOut(darkOverlay, 0.3f);
-                UIFader.FadeOut(loadingCircle, 0.3f);
-                if (loadingText != null)
-                {
-                    UIFader.FadeOut(loadingText, 0.3f);
-                }
-            }
+                HideLoadingOverlay(0f);
             
             feedbackManager?.PlaySuccessSound();
 
@@ -529,7 +529,7 @@ public class SolanaManager : MonoBehaviour
                     loadingTextComponent.color = Color.red;
                 }
                 
-                StartCoroutine(FadeOutTransactionError());
+                StartCoroutine(FadeOutError());
             }
             
             feedbackManager?.PlayErrorSound();
@@ -560,125 +560,78 @@ public class SolanaManager : MonoBehaviour
         }
     }
 
-    // Wallet connection methods
     public void StartWalletConnection()
     {
         if (_isConnectingWallet) return;
         
         _isConnectingWallet = true;
+        ShowLoadingOverlay("connecting wallet...");
+        
+        try
+        {
+            Web3.Instance.LoginWithWalletAdapter();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Wallet connection failed: {ex.Message}");
+            CancelWalletConnection();
+            
+            if (loadingTextComponent != null)
+            {
+                loadingTextComponent.text = "connection error";
+                loadingTextComponent.color = Color.red;
+            }
+            
+            feedbackManager?.PlayErrorSound();
+            StartCoroutine(FadeOutError());
+        }
+    }
+
+    public void CancelWalletConnection()
+    {
+        _isConnectingWallet = false;
+        HideLoadingOverlay(0f);
+    }
+
+    public void HideConnectionLoadingOverlay()
+    {
+        HideLoadingOverlay(0.3f);
+    }
+    
+    private void ShowLoadingOverlay(string message)
+    {
         UIFader.ShowImmediate(darkOverlay);
         UIFader.ShowImmediate(loadingCircle);
         
         if (loadingText != null && loadingTextComponent != null)
         {
-            loadingTextComponent.text = "connecting wallet...";
+            loadingTextComponent.text = message;
             loadingTextComponent.color = Color.white;
             UIFader.ShowImmediate(loadingText);
         }
-        
-        // Start monitoring for connection timeout/cancellation
-        StartCoroutine(MonitorWalletConnection());
-        
-        // Actually initiate the wallet connection
-        try
+    }
+    
+    private void HideLoadingOverlay(float duration)
+    {
+        if (duration == 0f)
         {
-            Web3.Instance.LoginWithWalletAdapter();
-            // OnLogin will be called via the Web3.OnLogin event if successful
+            UIFader.HideImmediate(darkOverlay);
+            UIFader.HideImmediate(loadingCircle);
+            if (loadingText != null)
+                UIFader.HideImmediate(loadingText);
         }
-        catch (Exception ex)
+        else
         {
-            Debug.LogError($"Wallet connection failed: {ex.Message}");
-            feedbackManager?.PlayErrorSound();
-            OnWalletConnectionCancelled("connection error");
+            UIFader.FadeOut(darkOverlay, duration);
+            UIFader.FadeOut(loadingCircle, duration);
+            if (loadingText != null)
+                UIFader.FadeOut(loadingText, duration);
         }
     }
     
-    private System.Collections.IEnumerator MonitorWalletConnection()
+    private System.Collections.IEnumerator FadeOutError()
     {
-        float timeoutDuration = 5f; // 60 seconds timeout
-        float elapsedTime = 0f;
-        bool hadFocus = Application.isFocused;
-        
-        while (_isConnectingWallet && elapsedTime < timeoutDuration)
-        {
-            // Check if app regained focus (user closed wallet modal)
-            if (!hadFocus && Application.isFocused)
-            {
-                // Wait a moment to see if login succeeds
-                yield return new UnityEngine.WaitForSeconds(0.5f);
-                
-                // If still connecting after regaining focus, user likely cancelled
-                if (_isConnectingWallet)
-                {
-                    Debug.Log("Detected wallet modal closed without login");
-                    OnWalletConnectionCancelled("wallet connection cancelled");
-                    yield break;
-                }
-            }
-            
-            hadFocus = Application.isFocused;
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-        
-        // Timeout occurred
-        if (_isConnectingWallet)
-        {
-            Debug.Log("Wallet connection timed out");
-            OnWalletConnectionCancelled("connection timed out");
-        }
+        HideLoadingOverlay(3f);
+        yield break;
     }
-    
-    private void OnWalletConnectionCancelled(string errorMessage)
-    {
-        if (!_isConnectingWallet) return;
-        
-        _isConnectingWallet = false;
-        
-        // Hide loading circle immediately
-        UIFader.HideImmediate(loadingCircle);
-        
-        // Show error in red
-        if (loadingText != null && loadingTextComponent != null)
-        {
-            loadingTextComponent.text = errorMessage;
-            loadingTextComponent.color = Color.red;
-        }
-        
-        feedbackManager?.PlayErrorSound();
-        
-        // Wait and then fade everything away
-        StartCoroutine(FadeOutWalletError());
-    }
-    
-    private System.Collections.IEnumerator FadeOutWalletError()
-    {
-        // Show error for 3 seconds
-        yield return new UnityEngine.WaitForSeconds(3f);
-        
-        // Fade out all elements
-        UIFader.FadeOut(darkOverlay, 0.3f);
-        UIFader.FadeOut(loadingCircle, 0.3f);
-        
-        if (loadingText != null)
-        {
-            UIFader.FadeOut(loadingText, 0.3f);
-        }
-    }
-    
-    private System.Collections.IEnumerator FadeOutTransactionError()
-    {
-        // Show error for 3 seconds
-        yield return new UnityEngine.WaitForSeconds(3f);
-        
-        // Fade out all elements
-        UIFader.FadeOut(darkOverlay, 0.3f);
-        UIFader.FadeOut(loadingCircle, 0.3f);
-        
-        if (loadingText != null)
-        {
-            UIFader.FadeOut(loadingText, 0.3f);
-        }
-    }
-
 } 

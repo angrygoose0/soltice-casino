@@ -60,27 +60,21 @@ public class UserUI : MonoBehaviour
     private void Start()
     {
         SetupGameSubscription();
-        SetupWithdrawButton();
-        SetupTickButton();
-        SetupSetupGameButton();
+        
+        if (withdrawButton != null)
+        {
+            withdrawButton.onClick.AddListener(() => Withdraw(withdrawAmount));
+            UIFader.HideImmediate(withdrawButton.gameObject);
+        }
+        
+        if (tickButton != null)
+            tickButton.onClick.AddListener(Tick);
+        
+        if (setupGameButton != null)
+            setupGameButton.onClick.AddListener(SetupGame);
+        
         UIFader.HideImmediate(beforeBettingGroup);
         UIFader.HideImmediate(afterBettingGroup);
-    }
-
-    private void SetupTickButton()
-    {
-        if (tickButton != null)
-        {
-            tickButton.onClick.AddListener(() => Tick());
-        }
-    }
-
-    private void SetupSetupGameButton()
-    {
-        if (setupGameButton != null)
-        {
-            setupGameButton.onClick.AddListener(() => SetupGame());
-        }
     }
 
     private void Update()
@@ -104,15 +98,6 @@ public class UserUI : MonoBehaviour
     {
         return (ulong)(rawAmount / Math.Pow(10, solanaManager.TokenDecimals));
     }
-    
-    private void SetupWithdrawButton()
-    {
-        if (withdrawButton != null)
-        {
-            withdrawButton.onClick.AddListener(() => Withdraw(withdrawAmount));
-            UIFader.HideImmediate(withdrawButton.gameObject);
-        }
-    }
 
     private void OnEnable()
     {
@@ -131,7 +116,19 @@ public class UserUI : MonoBehaviour
         if (withdrawButton != null)
             UIFader.FadeIn(withdrawButton.gameObject);
         
+        try
+        {
         await SetupUserAccountSubscriptions();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Subscription setup failed: {ex.Message}");
+        }
+        finally
+        {
+            // Always hide the loading overlay, even if subscriptions failed
+            solanaManager?.HideConnectionLoadingOverlay();
+        }
     }
 
     private async void OnWalletDisconnected()

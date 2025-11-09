@@ -16,6 +16,7 @@ using Treasury;
 using Treasury.Program;
 using Treasury.Errors;
 using Treasury.Accounts;
+using Treasury.Events;
 using Treasury.Types;
 
 namespace Treasury
@@ -120,6 +121,10 @@ namespace Treasury
             ActiveBetInProgress = 6006U,
             InsufficientTreasuryFunds = 6007U
         }
+    }
+
+    namespace Events
+    {
     }
 
     namespace Types

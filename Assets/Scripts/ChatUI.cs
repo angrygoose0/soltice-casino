@@ -2,11 +2,12 @@ using UnityEngine;
 using TankAndHealerStudioAssets;
 using Coherence.Toolkit;
 using Coherence.Connection;
+using UnityEngine.InputSystem;
 
 /// <summary>
-/// Chat UI manager - handles the chat UI and input.
+/// Chat manager - handles UI, input, display, and network messaging.
 /// Lives in the scene (not on player prefab).
-/// Finds the local player and uses their NetworkedChat to send messages.
+/// Communicates with NetworkedChat components on players for network transport.
 /// </summary>
 public class ChatUI : MonoBehaviour
 {
@@ -15,10 +16,16 @@ public class ChatUI : MonoBehaviour
     private UltimateChatBox chatBox;
     private CoherenceBridge coherenceBridge;
     private bool isConnected;
+    private static ChatUI instance;
+    private NetworkedChat cachedNetworkedChat;
+
+    private void Awake()
+    {
+        instance = this;
+    }
 
     private void Start()
     {
-        // Find the ChatBox in the scene
         chatBox = FindFirstObjectByType<UltimateChatBox>();
         
         if (chatBox != null)
@@ -36,6 +43,33 @@ public class ChatUI : MonoBehaviour
         {
             coherenceBridge.onConnected.AddListener(OnConnected);
             coherenceBridge.onDisconnected.AddListener(OnDisconnected);
+        }
+    }
+
+    public void RegisterNetworkedChat(NetworkedChat networkedChat)
+    {
+        cachedNetworkedChat = networkedChat;
+    }
+
+    public void UnregisterNetworkedChat()
+    {
+        cachedNetworkedChat = null;
+    }
+
+    public static ChatUI Instance => instance;
+
+    private void Update()
+    {
+        // Test: Press '9' to broadcast local hello world message
+        if (Keyboard.current != null && Keyboard.current.digit9Key.wasPressedThisFrame)
+        {
+            var testStyle = CreateCustomStyle(
+                usernameColor: Color.cyan,
+                messageColor: Color.yellow,
+                usernameBold: true,
+                messageBold: true
+            );
+            DisplayMessage("TEST", "Hello World! (Local Only)", testStyle);
         }
     }
 
@@ -74,61 +108,84 @@ public class ChatUI : MonoBehaviour
 
     private void OnMessageSubmitted(string message)
     {
-        if (string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(message) || !isConnected || cachedNetworkedChat == null)
             return;
 
-        if (!isConnected)
-        {
-            Debug.LogWarning("ChatUI: Cannot send message - not connected to Coherence");
+        NetworkedPlayer localPlayer = playerManager.GetLocalPlayer();
+        if (localPlayer == null)
             return;
-        }
 
-        // Find the local player and use their NetworkedChat to send the message
-        if (playerManager != null)
-        {
-            NetworkedPlayer localPlayer = playerManager.GetLocalPlayer();
-            if (localPlayer != null)
-            {
-                NetworkedChat chat = localPlayer.GetComponent<NetworkedChat>();
-                if (chat != null)
-                {
-                    chat.SendMessage(message);
-                }
-                else
-                {
-                    Debug.LogError("ChatUI: Local player doesn't have NetworkedChat component!");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("ChatUI: Local player not spawned yet");
-            }
-        }
-        else
-        {
-            Debug.LogError("ChatUI: PlayerManager not assigned!");
-        }
+        // Display local version with cyan styling
+        DisplayMessage(localPlayer.playerUsername, message, GetStyleFromType("local_player"));
+
+        // Send to others with normal styling
+        cachedNetworkedChat.SendToOthers(message, "", includeUsername: true);
     }
 
     /// <summary>
-    /// Called by NetworkedChat when a message is received from any player
+    /// Display a message with a custom style. Called by NetworkedChat or used directly for local messages.
+    /// Default style is UltimateChatBoxStyles.none if not specified.
     /// </summary>
-    public void DisplayMessage(string username, string message)
+    public void DisplayMessage(string username, string message, UltimateChatBox.ChatStyle style = default)
     {
-        // Find the local chatbox (in case it changed or was late-initialized)
         if (chatBox == null)
-        {
             chatBox = FindFirstObjectByType<UltimateChatBox>();
-        }
         
-        if (chatBox != null)
+        chatBox?.RegisterChat(username, message, style);
+    }
+
+    /// <summary>
+    /// Create a custom chat style with specific settings
+    /// </summary>
+    public UltimateChatBox.ChatStyle CreateCustomStyle(
+        Color? usernameColor = null,
+        Color? messageColor = null,
+        bool usernameBold = false,
+        bool messageBold = false,
+        bool usernameItalic = false,
+        bool messageItalic = false,
+        bool usernameUnderlined = false,
+        bool messageUnderlined = false,
+        bool disableInteraction = false,
+        bool noUsernameFollowupText = false)
+    {
+        return new UltimateChatBox.ChatStyle
         {
-            chatBox.RegisterChat(username, message);
-        }
-        else
+            usernameColor = usernameColor ?? Color.clear,
+            messageColor = messageColor ?? Color.clear,
+            usernameBold = usernameBold,
+            messageBold = messageBold,
+            usernameItalic = usernameItalic,
+            messageItalic = messageItalic,
+            usernameUnderlined = usernameUnderlined,
+            messageUnderlined = messageUnderlined,
+            disableInteraction = disableInteraction,
+            noUsernameFollowupText = noUsernameFollowupText
+        };
+    }
+
+    /// <summary>
+    /// Get a ChatStyle from a string identifier
+    /// </summary>
+    public UltimateChatBox.ChatStyle GetStyleFromType(string styleType)
+    {
+        return styleType switch
         {
-            Debug.LogError("ChatUI: Cannot display message - UltimateChatBox not found!");
-        }
+            "local_player" => new UltimateChatBox.ChatStyle
+            {
+                usernameColor = new Color(0f, 0.8f, 0.8f), // Cyan/teal for your own messages
+                messageColor = Color.white,
+                usernameBold = true
+            },
+            "bold" => UltimateChatBoxStyles.boldUsername,
+            "blue" => UltimateChatBoxStyles.blueUsername,
+            "green" => UltimateChatBoxStyles.greenUsername,
+            "whisper" => UltimateChatBoxStyles.whisperUsername,
+            "notice" => UltimateChatBoxStyles.noticeMessage,
+            "warning" => UltimateChatBoxStyles.warningMessage,
+            "error" => UltimateChatBoxStyles.errorMessage,
+            _ => UltimateChatBoxStyles.none
+        };
     }
 }
 
