@@ -115,11 +115,11 @@ public class ChatUI : MonoBehaviour
         if (localPlayer == null)
             return;
 
-        // Display local version with cyan styling
+        // Display local version with bold white styling
         DisplayMessage(localPlayer.playerUsername, message, GetStyleFromType("local_player"));
 
-        // Send to others with normal styling
-        cachedNetworkedChat.SendToOthers(message, "", includeUsername: true);
+        // Send to others with normal white styling
+        cachedNetworkedChat.SendToOthers(message, "other_player", includeUsername: true);
     }
 
     /// <summary>
@@ -132,6 +132,92 @@ public class ChatUI : MonoBehaviour
             chatBox = FindFirstObjectByType<UltimateChatBox>();
         
         chatBox?.RegisterChat(username, message, style);
+    }
+
+    /// <summary>
+    /// Display an announcement (e.g., player joined/left) without the colon after username
+    /// </summary>
+    public void DisplayAnnouncement(string message, bool bold = false)
+    {
+        if (chatBox == null)
+            chatBox = FindFirstObjectByType<UltimateChatBox>();
+        
+        var announcementStyle = CreateCustomStyle(
+            messageColor: Color.yellow,
+            messageBold: bold,
+            noUsernameFollowupText: true
+        );
+        
+        chatBox?.RegisterChat("", message, announcementStyle);
+    }
+
+    /// <summary>
+    /// Display a bet announcement in white/italic text without the colon after username
+    /// </summary>
+    public void DisplayBetAnnouncement(string message, bool bold = false)
+    {
+        if (chatBox == null)
+            chatBox = FindFirstObjectByType<UltimateChatBox>();
+        
+        var betStyle = CreateCustomStyle(
+            messageColor: Color.white,
+            messageItalic: true,
+            messageBold: bold,
+            noUsernameFollowupText: true
+        );
+        
+        chatBox?.RegisterChat("", message, betStyle);
+    }
+
+    /// <summary>
+    /// Display a win announcement in green text without the colon after username
+    /// </summary>
+    public void DisplayWinAnnouncement(string message, bool bold = false)
+    {
+        if (chatBox == null)
+            chatBox = FindFirstObjectByType<UltimateChatBox>();
+        
+        var winStyle = CreateCustomStyle(
+            messageColor: Color.green,
+            messageBold: bold,
+            noUsernameFollowupText: true
+        );
+        
+        chatBox?.RegisterChat("", message, winStyle);
+    }
+
+    /// <summary>
+    /// Display a crash announcement in red text without the colon after username
+    /// </summary>
+    public void DisplayCrashAnnouncement(string message, bool bold = false)
+    {
+        if (chatBox == null)
+            chatBox = FindFirstObjectByType<UltimateChatBox>();
+        
+        var crashStyle = CreateCustomStyle(
+            messageColor: Color.red,
+            messageBold: bold,
+            noUsernameFollowupText: true
+        );
+        
+        chatBox?.RegisterChat("", message, crashStyle);
+    }
+
+    /// <summary>
+    /// Display a tick/multiplier announcement in green text without the colon after username
+    /// </summary>
+    public void DisplayTickAnnouncement(string message, bool bold = false)
+    {
+        if (chatBox == null)
+            chatBox = FindFirstObjectByType<UltimateChatBox>();
+        
+        var tickStyle = CreateCustomStyle(
+            messageColor: Color.green,
+            messageBold: bold,
+            noUsernameFollowupText: true
+        );
+        
+        chatBox?.RegisterChat("", message, tickStyle);
     }
 
     /// <summary>
@@ -173,9 +259,15 @@ public class ChatUI : MonoBehaviour
         {
             "local_player" => new UltimateChatBox.ChatStyle
             {
-                usernameColor = new Color(0f, 0.8f, 0.8f), // Cyan/teal for your own messages
+                usernameColor = Color.white,
                 messageColor = Color.white,
-                usernameBold = true
+                usernameBold = true,
+                messageBold = true
+            },
+            "other_player" => new UltimateChatBox.ChatStyle
+            {
+                usernameColor = Color.white,
+                messageColor = Color.white
             },
             "bold" => UltimateChatBoxStyles.boldUsername,
             "blue" => UltimateChatBoxStyles.blueUsername,

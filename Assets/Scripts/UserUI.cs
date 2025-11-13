@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using Crash.Accounts;
 using Treasury.Accounts;
+using TreasuryAccount = Treasury.Accounts.Treasury;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
@@ -21,10 +22,12 @@ public class UserUI : MonoBehaviour
     [SerializeField] private CoherenceBridge coherenceBridge;
     [SerializeField] private FeedbackManager feedbackManager;
     [SerializeField] private Button withdrawButton;
+    [SerializeField] private PlayerManager playerManager;
 
     private Game _gameCache;
     private PlayerBet _playerBetCache;
     private UserBalance _userBalanceCache;
+    private TreasuryAccount _treasuryCache;
 
     // Subscription tracking
     private string _playerBetSubscriptionId;
@@ -35,11 +38,11 @@ public class UserUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI afterBettingText;
     [SerializeField] private Button claimButton;
     [SerializeField] private Button startButton;
-    [SerializeField] private Button tickButton;
-    [SerializeField] private Button setupGameButton;
+    [SerializeField] private TextMeshProUGUI countdownText;
 
     [SerializeField] private BalloonSimulator _balloonSimulator;
 
+    private Coroutine _countdownCoroutine;
 
     // Public fields for input values (editable in Inspector)
     [Header("Input Values")]
@@ -47,6 +50,9 @@ public class UserUI : MonoBehaviour
     public ulong withdrawAmount = 1000;
     public ulong betAmount = 0;
     public byte clientSeed = 42;
+    
+    [Header("Bet Limits")]
+    public ulong maxBetAmount = 9000000;
 
     // Account Data Display
     [Header("Account Data Display")]
@@ -60,6 +66,7 @@ public class UserUI : MonoBehaviour
     private void Start()
     {
         SetupGameSubscription();
+        SetupTreasurySubscription();
         
         if (withdrawButton != null)
         {
@@ -67,11 +74,8 @@ public class UserUI : MonoBehaviour
             UIFader.HideImmediate(withdrawButton.gameObject);
         }
         
-        if (tickButton != null)
-            tickButton.onClick.AddListener(Tick);
-        
-        if (setupGameButton != null)
-            setupGameButton.onClick.AddListener(SetupGame);
+        if (countdownText != null)
+            countdownText.gameObject.SetActive(false);
         
         UIFader.HideImmediate(beforeBettingGroup);
         UIFader.HideImmediate(afterBettingGroup);
@@ -97,6 +101,36 @@ public class UserUI : MonoBehaviour
     private ulong ConvertToDisplayAmount(ulong rawAmount)
     {
         return (ulong)(rawAmount / Math.Pow(10, solanaManager.TokenDecimals));
+    }
+
+    private IEnumerator CountdownToStartAvailable(long nextActionTime)
+    {
+        // Hide start button and show countdown text
+        if (startButton != null)
+            startButton.gameObject.SetActive(false);
+        if (countdownText != null)
+            countdownText.gameObject.SetActive(true);
+        
+        while (true)
+        {
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long timeRemaining = nextActionTime - currentTime;
+            
+            if (timeRemaining <= 0)
+            {
+                // Hide countdown text and show start button
+                if (countdownText != null)
+                    countdownText.gameObject.SetActive(false);
+                if (startButton != null)
+                    startButton.gameObject.SetActive(true);
+                yield break;
+            }
+            
+            if (countdownText != null)
+                countdownText.text = timeRemaining.ToString();
+            
+            yield return new WaitForSeconds(1f);
+        }
     }
 
     private void OnEnable()
@@ -145,6 +179,10 @@ public class UserUI : MonoBehaviour
             await SubscriptionManager.Instance.Unsubscribe(_userBalanceSubscriptionId);
             _userBalanceSubscriptionId = null;
         }
+        
+        // Reset cache for next connection
+        _playerBetCache = null;
+        _userBalanceCache = null;
         
         // Hide all UI groups when wallet disconnects
         UIFader.FadeOut(beforeBettingGroup);
@@ -368,44 +406,6 @@ public class UserUI : MonoBehaviour
         }
     }
 
-    //ENSURE game delegated
-    public async void Tick() //admin? 
-    {
-        try
-        {
-            var tickIx = crashBuilder.Tick();
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "ticking game...", tickIx);
-            
-            feedbackManager?.PlaySuccessSound();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Tick failed: {ex.Message}");
-            feedbackManager?.PlayErrorSound();
-        }
-    }
-
-    public async void SetupGame() //admin? 
-    {
-        try
-        {
-            var instructions = new List<TransactionInstruction>();
-            instructions.Add(crashBuilder.InitializeGame());
-            instructions.Add(crashBuilder.InitializeAuthority());
-            instructions.Add(treasuryBuilder.InitializeTreasury());
-            instructions.Add(crashBuilder.DelegateGame());
-            instructions.Add(crashBuilder.DelegateAuthority());
-
-            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "setting up game...", instructions.ToArray());
-            
-            feedbackManager?.PlaySuccessSound();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Setup game failed: {ex.Message}");
-            feedbackManager?.PlayErrorSound();
-        }
-    }
 
     public async void SetupGameSubscription()
     {
@@ -423,6 +423,22 @@ public class UserUI : MonoBehaviour
         }
     }
 
+    public async void SetupTreasurySubscription()
+    {
+        var treasuryPk = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var id = await SubscriptionManager.Instance.SubscribeAndLoad<TreasuryAccount>(
+            treasuryPk,
+            OnTreasuryUpdate,
+            data => TreasuryAccount.Deserialize(data),
+            forceDelegated: false
+        );
+
+        if (string.IsNullOrEmpty(id))
+        {
+            Debug.LogError("Failed to subscribe to treasury account");
+        }
+    }
+
     private async Task SetupUserAccountSubscriptions()
     {
         // Unsubscribe from existing subscriptions if they exist
@@ -437,6 +453,10 @@ public class UserUI : MonoBehaviour
             await SubscriptionManager.Instance.Unsubscribe(_userBalanceSubscriptionId);
             _userBalanceSubscriptionId = null;
         }
+        
+        // Reset cache when setting up new subscriptions
+        _playerBetCache = null;
+        _userBalanceCache = null;
 
         // Setup both accounts and store subscription IDs
         _playerBetSubscriptionId = await SetupAccountSubscription(
@@ -512,12 +532,65 @@ public class UserUI : MonoBehaviour
 
     private void OnPlayerBetUpdate(PlayerBet newData)
     {
-        _playerBetCache = newData;
         if (playerBetAccountTMP != null)
         {
             ulong displayAmount = ConvertToDisplayAmount(newData.Amount);
             playerBetAccountTMP.text = $"Game: {newData.Game}, Amount: {displayAmount}, Player: {newData.Player}";
         }
+        
+        // Detect new bet placement (new game number means new bet)
+        // Skip announcement if _playerBetCache is null (initial load)
+        bool isNewBet = _playerBetCache != null && 
+                       newData.Amount > 0 && 
+                       newData.GameNo > _playerBetCache.GameNo;
+        
+        if (isNewBet)
+        {
+            // Announce bet to chat
+            NetworkedPlayer localPlayer = playerManager?.GetLocalPlayer();
+            if (localPlayer != null)
+            {
+                ulong displayAmount = ConvertToDisplayAmount(newData.Amount);
+                string username = localPlayer.playerUsername;
+                string betMessage = $"{username} bet: {displayAmount}";
+                
+                // Display locally in bold
+                ChatUI.Instance?.DisplayBetAnnouncement(betMessage, bold: true);
+                
+                // Broadcast to others (they'll see it non-bold)
+                NetworkedChat networkedChat = localPlayer.GetComponent<NetworkedChat>();
+                networkedChat?.BroadcastBet(displayAmount);
+            }
+        }
+        
+        // Detect claim/win (claimed changed from false to true)
+        bool isWin = _playerBetCache != null && 
+                    !_playerBetCache.Claimed && 
+                    newData.Claimed && 
+                    newData.Amount > 0;
+        
+        if (isWin)
+        {
+            // Announce win to chat
+            NetworkedPlayer localPlayer = playerManager?.GetLocalPlayer();
+            if (localPlayer != null)
+            {
+                ulong displayAmount = ConvertToDisplayAmount(newData.Amount);
+                string username = localPlayer.playerUsername;
+                string winMessage = $"{username} won: {displayAmount}";
+                
+                // Display locally in bold
+                ChatUI.Instance?.DisplayWinAnnouncement(winMessage, bold: true);
+                
+                // Broadcast to others (they'll see it non-bold)
+                NetworkedChat networkedChat = localPlayer.GetComponent<NetworkedChat>();
+                networkedChat?.BroadcastWin(displayAmount);
+            }
+        }
+        
+        // Update cache
+        _playerBetCache = newData;
+        
         UpdateUserBetText(newData, _gameCache);
         Debug.Log($"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}");
     }
@@ -578,9 +651,40 @@ public class UserUI : MonoBehaviour
             afterBettingText.text = $"Your bet: {displayAmount} (next round)";
             UIFader.FadeOut(claimButton.gameObject);
             if (game.State == 0)
-                UIFader.FadeIn(startButton.gameObject);
+            {
+                // Check if start is available or needs countdown
+                long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                if (game.NextActionTime > currentTime)
+                {
+                    // Start countdown
+                    if (_countdownCoroutine != null)
+                        StopCoroutine(_countdownCoroutine);
+                    _countdownCoroutine = StartCoroutine(CountdownToStartAvailable(game.NextActionTime));
+                }
+                else
+                {
+                    // Start is available
+                    if (_countdownCoroutine != null)
+                    {
+                        StopCoroutine(_countdownCoroutine);
+                        _countdownCoroutine = null;
+                    }
+                    if (countdownText != null)
+                        countdownText.gameObject.SetActive(false);
+                    UIFader.FadeIn(startButton.gameObject);
+                }
+            }
             else
+            {
+                if (_countdownCoroutine != null)
+                {
+                    StopCoroutine(_countdownCoroutine);
+                    _countdownCoroutine = null;
+                }
+                if (countdownText != null)
+                    countdownText.gameObject.SetActive(false);
                 UIFader.FadeOut(startButton.gameObject);
+            }
         } 
         else if (playerBet.GameNo == game.GameNo && game.State == 1) {
             playerTextTMP.enabled = true;
@@ -595,6 +699,14 @@ public class UserUI : MonoBehaviour
             afterBettingText.text = $"Your bet: {currentValue}";
             UIFader.FadeIn(claimButton.gameObject);
             UIFader.FadeOut(startButton.gameObject);
+            
+            if (_countdownCoroutine != null)
+            {
+                StopCoroutine(_countdownCoroutine);
+                _countdownCoroutine = null;
+            }
+            if (countdownText != null)
+                countdownText.gameObject.SetActive(false);
         }
         else if (playerBet.GameNo == game.GameNo && game.State != 1) {
             // Game has crashed or not started yet, show betting UI even though bet hasn't been claimed
@@ -632,14 +744,133 @@ public class UserUI : MonoBehaviour
         Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");
     }
 
+    private void OnTreasuryUpdate(TreasuryAccount newData)
+    {
+        _treasuryCache = newData;
+        
+        Debug.Log($"TREASURY UPDATE:\n" +
+                  $"  Bump: {newData.Bump}\n" +
+                  $"  FeePercentage: {newData.FeePercentage}\n" +
+                  $"  BufferAmount: {newData.BufferAmount}\n" +
+                  $"  UserOwnedAmount: {newData.UserOwnedAmount}\n" +
+                  $"  TreasuryTokenAccountBump: {newData.TreasuryTokenAccountBump}\n" +
+                  $"  TreasuryStakeTokenAccountBump: {newData.TreasuryStakeTokenAccountBump}\n" +
+                  $"  StakingTokenMintBump: {newData.StakingTokenMintBump}\n" +
+                  $"  WithdrawalTime: {newData.WithdrawalTime}");
+    }
+
+    // Calculate available house funds using the same logic as the Rust contract
+    // Available house funds = total tokens - buffer amount - user owned amount
+    private ulong CalculateAvailableHouseFunds(ulong totalTokens)
+    {
+        if (_treasuryCache == null)
+        {
+            Debug.LogWarning("Treasury cache is null, cannot calculate available house funds");
+            return 0;
+        }
+
+        // Calculate available house funds: total - buffer - user_owned
+        ulong availableHouseFunds = totalTokens;
+        
+        if (availableHouseFunds >= _treasuryCache.BufferAmount)
+        {
+            availableHouseFunds -= _treasuryCache.BufferAmount;
+        }
+        else
+        {
+            availableHouseFunds = 0;
+        }
+        
+        if (availableHouseFunds >= _treasuryCache.UserOwnedAmount)
+        {
+            availableHouseFunds -= _treasuryCache.UserOwnedAmount;
+        }
+        else
+        {
+            availableHouseFunds = 0;
+        }
+        
+        return availableHouseFunds;
+    }
+
     
     private void OnGameUpdate(Game newData)
     {
-        _gameCache = newData;
         if (gameAccountTMP != null)
         {
             gameAccountTMP.text = $"GAME\nState: {newData.State}, Tick: {newData.Tick}, GameNo: {newData.GameNo}";
         }
+        
+        // Detect game start (state changes from 0 to 1)
+        bool isGameStart = _gameCache != null && _gameCache.State == 0 && newData.State == 1;
+        
+        if (isGameStart)
+        {
+            // Check if player has a bet in this game
+            bool playerHasBet = _playerBetCache != null && 
+                               _playerBetCache.GameNo == newData.GameNo && 
+                               _playerBetCache.Amount > 0;
+            
+            string startMessage = $"Game #{newData.GameNo} started";
+            
+            ChatUI.Instance?.DisplayBetAnnouncement(startMessage, bold: playerHasBet);
+        }
+        
+        // Detect tick increase (game is running and tick increased)
+        bool isTick = _gameCache != null && 
+                     newData.State == 1 && 
+                     newData.Tick > _gameCache.Tick;
+        
+        if (isTick)
+        {
+            // Calculate multiplier from new tick
+            double multiplier = System.Math.Pow(1.11, newData.Tick);
+            string multiplierText = $"{multiplier:0.00}x";
+            
+            // Check if player has a bet in this game
+            bool playerHasBet = _playerBetCache != null && 
+                               _playerBetCache.GameNo == newData.GameNo && 
+                               _playerBetCache.Amount > 0 &&
+                               !_playerBetCache.Claimed;
+            
+            string tickMessage = $"Balloon at {multiplierText}";
+            
+            if (playerHasBet)
+            {
+                ulong betAmount = ConvertToDisplayAmount(_playerBetCache.Amount);
+                tickMessage += $", your bet: {betAmount}";
+            }
+            
+            ChatUI.Instance?.DisplayTickAnnouncement(tickMessage, bold: playerHasBet);
+        }
+        
+        // Detect crash (state changes from 1 to 0)
+        bool isCrash = _gameCache != null && _gameCache.State == 1 && newData.State == 0;
+        
+        if (isCrash)
+        {
+            // Calculate multiplier from crash tick
+            double multiplier = System.Math.Pow(1.11, newData.CrashTick);
+            string multiplierText = $"{multiplier:0.00}x";
+            
+            // Check if player had a bet in this crashed game
+            bool playerHadBet = _playerBetCache != null && 
+                               _playerBetCache.GameNo == newData.GameNo && 
+                               _playerBetCache.Amount > 0 &&
+                               !_playerBetCache.Claimed;
+            
+            string crashMessage = $"Balloon popped at {multiplierText}";
+            
+            if (playerHadBet)
+            {
+                ulong lossAmount = ConvertToDisplayAmount(_playerBetCache.Amount);
+                crashMessage += $", you lost: {lossAmount}";
+            }
+            
+            ChatUI.Instance?.DisplayCrashAnnouncement(crashMessage, bold: playerHadBet);
+        }
+        
+        _gameCache = newData;
         if (_balloonSimulator != null)
             _balloonSimulator.UpdateBalloon(newData);
         UpdateUserBetText(_playerBetCache, newData);

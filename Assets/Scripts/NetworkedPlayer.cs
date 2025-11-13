@@ -75,10 +75,16 @@ public class NetworkedPlayer : MonoBehaviour
             {
                 materialManager.SetRandomPlayerColor(gameObject);
             }
+            
+            // Announce when local player joins (bold)
+            ChatUI.Instance?.DisplayAnnouncement($"{playerUsername} joined the game.", bold: true);
         }
         else
         {
             SetupRemotePlayer();
+            
+            // Announce when a remote player joins
+            ChatUI.Instance?.DisplayAnnouncement($"{playerUsername} joined the game.");
         }
 
         // Setup UI (both local and remote)
@@ -110,6 +116,15 @@ public class NetworkedPlayer : MonoBehaviour
 
         // Update UI for all players
         UpdateUI();
+    }
+
+    private void OnDestroy()
+    {
+        // Announce when a remote player leaves
+        if (!coherenceSync.HasStateAuthority)
+        {
+            ChatUI.Instance?.DisplayAnnouncement($"{playerUsername} left the game.");
+        }
     }
 
     private void SetupLocalPlayer()

@@ -59,12 +59,66 @@ public class NetworkedChat : MonoBehaviour
     }
 
     /// <summary>
+    /// Broadcast a bet announcement to all other players
+    /// </summary>
+    public void BroadcastBet(ulong betAmount)
+    {
+        if (!coherenceSync.HasStateAuthority || networkedPlayer == null)
+            return;
+
+        string username = networkedPlayer.playerUsername;
+        string message = $"{username} bet: {betAmount}";
+        
+        coherenceSync.SendCommand<NetworkedChat>(
+            nameof(ReceiveBetAnnouncement),
+            MessageTarget.Other,
+            message
+        );
+    }
+
+    /// <summary>
+    /// Broadcast a win announcement to all other players
+    /// </summary>
+    public void BroadcastWin(ulong winAmount)
+    {
+        if (!coherenceSync.HasStateAuthority || networkedPlayer == null)
+            return;
+
+        string username = networkedPlayer.playerUsername;
+        string message = $"{username} won: {winAmount}";
+        
+        coherenceSync.SendCommand<NetworkedChat>(
+            nameof(ReceiveWinAnnouncement),
+            MessageTarget.Other,
+            message
+        );
+    }
+
+    /// <summary>
     /// Coherence command - receives messages from other players and forwards to ChatUI
     /// </summary>
     [Command]
     public void ReceiveMessage(string username, string message, string styleType = "")
     {
         ChatUI.Instance?.DisplayMessage(username, message, ChatUI.Instance.GetStyleFromType(styleType));
+    }
+
+    /// <summary>
+    /// Coherence command - receives bet announcements from other players
+    /// </summary>
+    [Command]
+    public void ReceiveBetAnnouncement(string message)
+    {
+        ChatUI.Instance?.DisplayBetAnnouncement(message, bold: false);
+    }
+
+    /// <summary>
+    /// Coherence command - receives win announcements from other players
+    /// </summary>
+    [Command]
+    public void ReceiveWinAnnouncement(string message)
+    {
+        ChatUI.Instance?.DisplayWinAnnouncement(message, bold: false);
     }
 }
 

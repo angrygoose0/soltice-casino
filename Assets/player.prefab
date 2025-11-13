@@ -479,6 +479,8 @@ MonoBehaviour:
   - rid: 205977465403212082
   - rid: 205977465403212084
   - rid: 5836400290804269161
+  - rid: 5836400290804269194
+  - rid: 5836400290804269195
   scenePrefabInstanceUUID: 
   coherenceUUID: 
   assetVersion: 
@@ -1079,6 +1081,90 @@ MonoBehaviour:
         parameterAssemblyTypes:
         - System.String, mscorlib
         - System.String, mscorlib
+        - System.String, mscorlib
+        ownerType:
+          assemblyQualifiedName: NetworkedChat, Assembly-CSharp, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        defaultSyncMode: 0
+        CustomData:
+          rid: -2
+        bindingType:
+          assemblyQualifiedName: Coherence.Toolkit.Bindings.CommandBinding, Coherence.Toolkit,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        oldName: 
+        oldParameterAssemblyTypes: []
+    - rid: 5836400290804269194
+      type: {class: CommandBinding, ns: Coherence.Toolkit.Bindings, asm: Coherence.Toolkit}
+      data:
+        descriptor:
+          rid: 5836400290804269196
+        routing: 1
+        syncMode: 0
+        isPredicted: 0
+        predictionMode: 0
+        guid: 6c41276e5edb42cb9643d0d9e417bf77
+        archetypeData:
+          type: 0
+          minRange: 0
+          maxRange: 0
+          sampleRate: 0
+          floatCompression: 0
+          fields: []
+        unityComponent: {fileID: 7850762226109915838}
+        coherenceSync: {fileID: 8343125905185111944}
+        interpolationSettings: {fileID: 0}
+    - rid: 5836400290804269195
+      type: {class: CommandBinding, ns: Coherence.Toolkit.Bindings, asm: Coherence.Toolkit}
+      data:
+        descriptor:
+          rid: 5836400290804269197
+        routing: 1
+        syncMode: 0
+        isPredicted: 0
+        predictionMode: 0
+        guid: eb6f4128fa8c4a16a35f041a202f4715
+        archetypeData:
+          type: 0
+          minRange: 0
+          maxRange: 0
+          sampleRate: 0
+          floatCompression: 0
+          fields: []
+        unityComponent: {fileID: 7850762226109915838}
+        coherenceSync: {fileID: 8343125905185111944}
+        interpolationSettings: {fileID: 0}
+    - rid: 5836400290804269196
+      type: {class: Descriptor, ns: Coherence.Toolkit.Bindings, asm: Coherence.Toolkit}
+      data:
+        name: ReceiveBetAnnouncement
+        monoAssemblyType: 
+        required: 1
+        enforcesLODingWhenFieldsOverriden: 0
+        valueSyncCallbackName: 
+        memberType: 8
+        parameterAssemblyTypes:
+        - System.String, mscorlib
+        ownerType:
+          assemblyQualifiedName: NetworkedChat, Assembly-CSharp, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        defaultSyncMode: 0
+        CustomData:
+          rid: -2
+        bindingType:
+          assemblyQualifiedName: Coherence.Toolkit.Bindings.CommandBinding, Coherence.Toolkit,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        oldName: 
+        oldParameterAssemblyTypes: []
+    - rid: 5836400290804269197
+      type: {class: Descriptor, ns: Coherence.Toolkit.Bindings, asm: Coherence.Toolkit}
+      data:
+        name: ReceiveWinAnnouncement
+        monoAssemblyType: 
+        required: 1
+        enforcesLODingWhenFieldsOverriden: 0
+        valueSyncCallbackName: 
+        memberType: 8
+        parameterAssemblyTypes:
         - System.String, mscorlib
         ownerType:
           assemblyQualifiedName: NetworkedChat, Assembly-CSharp, Version=0.0.0.0,

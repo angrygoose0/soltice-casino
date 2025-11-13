@@ -314,6 +314,8 @@ namespace Coherence.Generated
                   case 4: return PersistenceReady.FromInterop(data, dataSize);
                   case 5: return SceneIndexChanged.FromInterop(data, dataSize);
                   case 6: return _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f.FromInterop(data, dataSize);
+                  case 7: return _60786269438aa4c6c8c3c4f9b60e4b9b_6c41276e5edb42cb9643d0d9e417bf77.FromInterop(data, dataSize);
+                  case 8: return _60786269438aa4c6c8c3c4f9b60e4b9b_eb6f4128fa8c4a16a35f041a202f4715.FromInterop(data, dataSize);
             }
 
             throw new ArgumentException($"Unkown command type {type}", nameof(type));
@@ -403,6 +405,26 @@ namespace Coherence.Generated
                     return sender.SendCommand(entity, target, type, val, 48);
 
 }}}                }
+                case 7:
+                {
+                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_6c41276e5edb42cb9643d0d9e417bf77)command;
+                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_6c41276e5edb42cb9643d0d9e417bf77.Interop();
+
+                    var pinnedmessage = orig.message != null ? Encoding.UTF8.GetBytes(orig.message) : null; fixed (void* pinnedPtrmessage = pinnedmessage) { val.message = new ByteArray { Data = pinnedPtrmessage, Length =  pinnedmessage?.Length ?? 0 };
+
+                    return sender.SendCommand(entity, target, type, val, 16);
+
+}                }
+                case 8:
+                {
+                    var orig = (_60786269438aa4c6c8c3c4f9b60e4b9b_eb6f4128fa8c4a16a35f041a202f4715)command;
+                    var val = new _60786269438aa4c6c8c3c4f9b60e4b9b_eb6f4128fa8c4a16a35f041a202f4715.Interop();
+
+                    var pinnedmessage = orig.message != null ? Encoding.UTF8.GetBytes(orig.message) : null; fixed (void* pinnedPtrmessage = pinnedmessage) { val.message = new ByteArray { Data = pinnedPtrmessage, Length =  pinnedmessage?.Length ?? 0 };
+
+                    return sender.SendCommand(entity, target, type, val, 16);
+
+}                }
             }
 
             throw new NotImplementedException($"Failed to send a command with type {type}.");

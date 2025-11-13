@@ -78,6 +78,8 @@ namespace Crash
 
             public ulong NextTotalBet { get; set; }
 
+            public long NextActionTime { get; set; }
+
             public static Game Deserialize(ReadOnlySpan<byte> _data)
             {
                 int offset = 0;
@@ -106,6 +108,8 @@ namespace Crash
                 result.NextPlayers = _data.GetU32(offset);
                 offset += 4;
                 result.NextTotalBet = _data.GetU64(offset);
+                offset += 8;
+                result.NextActionTime = _data.GetS64(offset);
                 offset += 8;
                 return result;
             }
@@ -204,7 +208,9 @@ namespace Crash
             InsufficientBalance = 6005U,
             ActiveBetInProgress = 6006U,
             RandomnessNotResolved = 6007U,
-            AlreadyClaimed = 6008U
+            AlreadyClaimed = 6008U,
+            TickNotReady = 6009U,
+            StartTooSoon = 6010U
         }
     }
 
@@ -394,7 +400,7 @@ namespace Crash
 
         protected override Dictionary<uint, ProgramError<CrashErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, {6008U, new ProgramError<CrashErrorKind>(CrashErrorKind.AlreadyClaimed, "Bet already claimed")}, };
+            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, {6008U, new ProgramError<CrashErrorKind>(CrashErrorKind.AlreadyClaimed, "Bet already claimed")}, {6009U, new ProgramError<CrashErrorKind>(CrashErrorKind.TickNotReady, "Tick not ready")}, {6010U, new ProgramError<CrashErrorKind>(CrashErrorKind.StartTooSoon, "Too soon to start a new game after crash")}, };
         }
     }
 
@@ -424,7 +430,7 @@ namespace Crash
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("GWKspieMW3131AAkCVvoVTUDwkdfoume4dNuwnzw8i6J");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("9V3SvTsSo77xHnwKRmuR2edBYPDrZ25wgt9nCyGRkjnE");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -442,7 +448,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("He8a1qcRE5zQo5ZYsKoj9CtVdAXRhS14jPxAmHCpEJW3");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("6UcKM6wSC4E4g59MRGtNJm1XRTECHxME8XhFjj1Umkj1");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -459,7 +465,7 @@ namespace Crash
 
             public PublicKey Game { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("He8a1qcRE5zQo5ZYsKoj9CtVdAXRhS14jPxAmHCpEJW3");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("6UcKM6wSC4E4g59MRGtNJm1XRTECHxME8XhFjj1Umkj1");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -476,14 +482,15 @@ namespace Crash
 
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("He8a1qcRE5zQo5ZYsKoj9CtVdAXRhS14jPxAmHCpEJW3");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("6UcKM6wSC4E4g59MRGtNJm1XRTECHxME8XhFjj1Umkj1");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
         public class InitializeAuthorityAccounts
         {
-            public PublicKey Signer { get; set; } = new PublicKey("Fn1XAMy3qdqxkyTViJca2gBqTDjXJH6GYsthQggjweCP");
+            public PublicKey Signer { get; set; }
+
             public PublicKey Authority { get; set; }
 
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
@@ -527,7 +534,7 @@ namespace Crash
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("GWKspieMW3131AAkCVvoVTUDwkdfoume4dNuwnzw8i6J");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("9V3SvTsSo77xHnwKRmuR2edBYPDrZ25wgt9nCyGRkjnE");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -580,7 +587,7 @@ namespace Crash
 
         public static class CrashProgram
         {
-            public const string ID = "He8a1qcRE5zQo5ZYsKoj9CtVdAXRhS14jPxAmHCpEJW3";
+            public const string ID = "6UcKM6wSC4E4g59MRGtNJm1XRTECHxME8XhFjj1Umkj1";
             public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackRandomness(CallbackRandomnessAccounts accounts, byte[] randomness, PublicKey programId = null)
             {
                 programId ??= new(ID);

@@ -19,6 +19,7 @@ public class FeedbackManager : MonoBehaviour
     [SerializeField] private MMF_Player successSoundFeedback;
     [SerializeField] private MMF_Player errorSoundFeedback;
     [SerializeField] private MMF_Player cashFountainFeedback;
+    [SerializeField] private MMF_Player maxBetShakeFeedback;
 
     public float uiBaseVolume = 0.2f;
     public float uiBasePitch = 1f;
@@ -52,6 +53,7 @@ public class FeedbackManager : MonoBehaviour
         musicFeedback?.Initialization();
         successSoundFeedback?.Initialization();
         errorSoundFeedback?.Initialization();
+        maxBetShakeFeedback?.Initialization();
         musicFeedback?.PlayFeedbacks();
     }
     
@@ -89,10 +91,10 @@ public class FeedbackManager : MonoBehaviour
             
             // Initialize springs with initial state and set them instantly
             var scaleSpring = springManager.GetSpring(_glowScaleSpringKeys[obj], damping: 0.3f, frequency: 5f, initialValue: initialState.scale);
-            var intensitySpring = springManager.GetSpring(_glowIntensitySpringKeys[obj], damping: 0.3f, frequency: 5f, initialValue: initialState.intensity);
-            var rSpring = springManager.GetSpring(_glowColorRSpringKeys[obj], damping: 0.3f, frequency: 5f, initialValue: initialState.color.r);
-            var gSpring = springManager.GetSpring(_glowColorGSpringKeys[obj], damping: 0.3f, frequency: 5f, initialValue: initialState.color.g);
-            var bSpring = springManager.GetSpring(_glowColorBSpringKeys[obj], damping: 0.3f, frequency: 5f, initialValue: initialState.color.b);
+            var intensitySpring = springManager.GetSpring(_glowIntensitySpringKeys[obj], damping: 0.25f, frequency: 8f, initialValue: initialState.intensity);
+            var rSpring = springManager.GetSpring(_glowColorRSpringKeys[obj], damping: 0.25f, frequency: 8f, initialValue: initialState.color.r);
+            var gSpring = springManager.GetSpring(_glowColorGSpringKeys[obj], damping: 0.25f, frequency: 8f, initialValue: initialState.color.g);
+            var bSpring = springManager.GetSpring(_glowColorBSpringKeys[obj], damping: 0.25f, frequency: 8f, initialValue: initialState.color.b);
             
             // Set to initial state instantly to avoid flickering
             scaleSpring.MoveToInstant(initialState.scale);
@@ -162,6 +164,64 @@ public class FeedbackManager : MonoBehaviour
     public void PlayCashFountainSound()
     {
         cashFountainFeedback?.PlayFeedbacks();
+    }
+
+    public void PlayMaxBetShake()
+    {
+        maxBetShakeFeedback?.PlayFeedbacks();
+    }
+
+    public void FlashGlowRed(List<GameObject> objects, float duration = 0.5f)
+    {
+        if (objects == null || springManager == null) return;
+        
+        foreach (GameObject obj in objects)
+        {
+            if (obj == null) continue;
+            
+            // Get current glow state or create new springs
+            bool hasExistingSpring = _glowScaleSpringKeys.ContainsKey(obj);
+            
+            if (!hasExistingSpring)
+            {
+                // Initialize with default state
+                MaterialGlowState defaultState = new MaterialGlowState
+                {
+                    scale = 1f,
+                    intensity = 1f,
+                    color = Color.white
+                };
+                GetOrCreateGlowSpringKeys(obj, defaultState);
+            }
+            
+            // Store original color and intensity
+            float originalR = springManager.GetValue(_glowColorRSpringKeys[obj]);
+            float originalG = springManager.GetValue(_glowColorGSpringKeys[obj]);
+            float originalB = springManager.GetValue(_glowColorBSpringKeys[obj]);
+            float originalIntensity = springManager.GetValue(_glowIntensitySpringKeys[obj]);
+            
+            // Flash to red with increased intensity
+            springManager.MoveTo(_glowColorRSpringKeys[obj], 1f);
+            springManager.MoveTo(_glowColorGSpringKeys[obj], 0f);
+            springManager.MoveTo(_glowColorBSpringKeys[obj], 0f);
+            springManager.MoveTo(_glowIntensitySpringKeys[obj], 3f);
+            
+            // Return to original color and intensity after duration
+            StartCoroutine(ReturnToOriginalGlowState(obj, originalR, originalG, originalB, originalIntensity, duration));
+        }
+    }
+
+    private System.Collections.IEnumerator ReturnToOriginalGlowState(GameObject obj, float r, float g, float b, float intensity, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (obj != null && springManager != null && _glowColorRSpringKeys.ContainsKey(obj))
+        {
+            springManager.MoveTo(_glowColorRSpringKeys[obj], r);
+            springManager.MoveTo(_glowColorGSpringKeys[obj], g);
+            springManager.MoveTo(_glowColorBSpringKeys[obj], b);
+            springManager.MoveTo(_glowIntensitySpringKeys[obj], intensity);
+        }
     }
 
     private void PlayUISoundWithParams(float volumeMultiplier, float pitchMultiplier)

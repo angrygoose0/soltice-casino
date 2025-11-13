@@ -19,3 +19,9 @@ command _60786269438aa4c6c8c3c4f9b60e4b9b_214d4bb7b7e54ce08b322137ad61806f [id "
   message String 
   styleType String 
 
+command _60786269438aa4c6c8c3c4f9b60e4b9b_6c41276e5edb42cb9643d0d9e417bf77 [id "7", routing "All"]
+  message String 
+
+command _60786269438aa4c6c8c3c4f9b60e4b9b_eb6f4128fa8c4a16a35f041a202f4715 [id "8", routing "All"]
+  message String 
+

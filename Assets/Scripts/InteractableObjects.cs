@@ -380,10 +380,33 @@ public class InteractableObjects : MonoBehaviour
             case ActionType.None:
                 break;
             case ActionType.Add:
-                if (userUI != null) userUI.betAmount += entry.amount;
+                if (userUI != null)
+                {
+                    ulong newAmount = userUI.betAmount + entry.amount;
+                    if (newAmount > userUI.maxBetAmount)
+                    {
+                        userUI.betAmount = userUI.maxBetAmount;
+                        TriggerMaxBetFeedback();
+                    }
+                    else
+                    {
+                        userUI.betAmount = newAmount;
+                    }
+                }
                 break;
             case ActionType.Set:
-                if (userUI != null) userUI.betAmount = entry.amount;
+                if (userUI != null)
+                {
+                    if (entry.amount > userUI.maxBetAmount)
+                    {
+                        userUI.betAmount = userUI.maxBetAmount;
+                        TriggerMaxBetFeedback();
+                    }
+                    else
+                    {
+                        userUI.betAmount = entry.amount;
+                    }
+                }
                 break;
             case ActionType.PlaceBet:
                 if (userUI != null) userUI.PlaceBet();
@@ -403,6 +426,31 @@ public class InteractableObjects : MonoBehaviour
             case ActionType.JoinWorld:
                 if (simpleWorldJoin != null) simpleWorldJoin.OnStartClicked();
                 break;
+        }
+    }
+
+    private void TriggerMaxBetFeedback()
+    {
+        if (feedbackManager == null) return;
+        
+        // Play shake feedback on beforeBettingGroup
+        feedbackManager.PlayMaxBetShake();
+        
+        // Flash all chip buttons red
+        List<GameObject> chipObjects = new List<GameObject>();
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject != null && 
+                (entry.actionType == ActionType.Add || entry.actionType == ActionType.Set))
+            {
+                chipObjects.Add(entry.gameObject);
+            }
+        }
+        
+        if (chipObjects.Count > 0)
+        {
+            feedbackManager.FlashGlowRed(chipObjects, 0.5f);
         }
     }
 
