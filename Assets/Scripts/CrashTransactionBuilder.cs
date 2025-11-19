@@ -278,6 +278,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var playerBet = DerivePlayerBetAccount(signer);
 		var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
+        var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 		PublicKey sessionToken = null;
 		if (SessionManager.SessionToken != null)
 		{
@@ -293,6 +295,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Game = game,
 			Authority = authority,
 			UserBalance = userBalance,
+			Treasury = treasury,
+			TreasuryTokenAccount = treasuryTokenAccount,
 			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
 
@@ -309,6 +313,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var playerBet = DerivePlayerBetAccount(signer);
 		var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
+        var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 		PublicKey sessionToken = null;
 		if (SessionManager.SessionToken != null)
 		{
@@ -323,6 +329,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Game = game,
 			Authority = authority,
 			UserBalance = userBalance,
+			Treasury = treasury,
+			TreasuryTokenAccount = treasuryTokenAccount,
 			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
         var ix = CrashProgram.ClaimBet(accounts);

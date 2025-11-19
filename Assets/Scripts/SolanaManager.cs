@@ -293,25 +293,9 @@ public class SolanaManager : MonoBehaviour
         {
             UIFader.FadeIn(txt.gameObject);
         }
-        
-        // Immediately refresh SOL balance and update UI once
-        await Task.Delay(300);
-        try
-        {
-            await Web3.UpdateBalance();
-            if (Web3.Instance?.WalletBase != null)
-            {
-                var sol = await Web3.Instance.WalletBase.GetBalance();
-                foreach (var txt in balanceTexts)
-                {
-                    txt.text = FormatAmount(sol);
-                }
-            }
-        }
-        catch (Exception) { }
 
         // Update token balance
-        UpdateTokenBalance();
+        await UpdateTokenBalance();
 
     }
 
@@ -357,7 +341,7 @@ public class SolanaManager : MonoBehaviour
         // Update all balance texts
         foreach (var txt in balanceTexts)
         {
-            txt.text = FormatAmount(amount);
+            txt.text = "Wallet balance: " + FormatAmount(amount);
         }
     }
 
@@ -382,18 +366,24 @@ public class SolanaManager : MonoBehaviour
         }
     }
 
-    private async void UpdateTokenBalance()
+    private async Task UpdateTokenBalance()
     {
+        Debug.Log($"Updating token balance: {mintAddress}, {Web3.Account}");
         if (string.IsNullOrEmpty(mintAddress) || Web3.Account == null)
+        {
+            Debug.LogWarning($"Cannot update token balance - mintAddress: {mintAddress}, Web3.Account: {Web3.Account}");
             return;
+        }
 
         try
         {
             double tokenBalance = await GetSPLTokenBalance();
+            Debug.Log($"Token balance: {tokenBalance}");
             
             // Update all token balance texts
             foreach (var txt in tokenBalanceTexts)
             {
+                Debug.Log($"Token balance text: {txt.text}");
                 txt.text = FormatAmount(tokenBalance, applyTokenDecimals: true);
             }
         }
@@ -407,7 +397,7 @@ public class SolanaManager : MonoBehaviour
         }
     }
 
-    private async Task<double> GetSPLTokenBalance()
+    public async Task<double> GetSPLTokenBalance()
     {
         try
         {
@@ -433,6 +423,23 @@ public class SolanaManager : MonoBehaviour
         catch (System.Exception)
         {
             return 0.0;
+        }
+    }
+
+    public async Task<ulong> GetTokenAccountBalance(PublicKey tokenAccount)
+    {
+        try
+        {
+            var accountInfo = await _rpcClient.GetTokenAccountBalanceAsync(tokenAccount, Commitment.Confirmed);
+            if (accountInfo.Result?.Value?.Amount != null)
+            {
+                return ulong.TryParse(accountInfo.Result.Value.Amount, out ulong amount) ? amount : 0;
+            }
+            return 0;
+        }
+        catch (Exception)
+        {
+            return 0;
         }
     }
 
@@ -546,7 +553,7 @@ public class SolanaManager : MonoBehaviour
     {
         try
         {
-            var accountInfo = await Web3.Wallet.ActiveRpcClient.GetAccountInfoAsync(
+            var accountInfo = await _rpcClient.GetAccountInfoAsync(
                 accountAddress,
                 Commitment.Processed
             );

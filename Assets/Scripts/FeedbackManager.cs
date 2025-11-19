@@ -38,6 +38,9 @@ public class FeedbackManager : MonoBehaviour
     private readonly Dictionary<GameObject, string> _glowColorGSpringKeys = new Dictionary<GameObject, string>();
     private readonly Dictionary<GameObject, string> _glowColorBSpringKeys = new Dictionary<GameObject, string>();
     
+    // Store base glow states for each object (for flash effects to return to)
+    private readonly Dictionary<GameObject, MaterialGlowState> _baseGlowStates = new Dictionary<GameObject, MaterialGlowState>();
+    
     private int springCounter = 0;
 
     private void Awake()
@@ -88,6 +91,9 @@ public class FeedbackManager : MonoBehaviour
             _glowColorRSpringKeys[obj] = $"glow_r_{springCounter++}_{id}";
             _glowColorGSpringKeys[obj] = $"glow_g_{springCounter++}_{id}";
             _glowColorBSpringKeys[obj] = $"glow_b_{springCounter++}_{id}";
+            
+            // Store the base glow state for this object
+            _baseGlowStates[obj] = initialState;
             
             // Initialize springs with initial state and set them instantly
             var scaleSpring = springManager.GetSpring(_glowScaleSpringKeys[obj], damping: 0.3f, frequency: 5f, initialValue: initialState.scale);
@@ -194,11 +200,8 @@ public class FeedbackManager : MonoBehaviour
                 GetOrCreateGlowSpringKeys(obj, defaultState);
             }
             
-            // Store original color and intensity
-            float originalR = springManager.GetValue(_glowColorRSpringKeys[obj]);
-            float originalG = springManager.GetValue(_glowColorGSpringKeys[obj]);
-            float originalB = springManager.GetValue(_glowColorBSpringKeys[obj]);
-            float originalIntensity = springManager.GetValue(_glowIntensitySpringKeys[obj]);
+            // Get the base state to return to (not current spring values, which might be mid-animation)
+            MaterialGlowState baseState = _baseGlowStates[obj];
             
             // Flash to red with increased intensity
             springManager.MoveTo(_glowColorRSpringKeys[obj], 1f);
@@ -206,8 +209,8 @@ public class FeedbackManager : MonoBehaviour
             springManager.MoveTo(_glowColorBSpringKeys[obj], 0f);
             springManager.MoveTo(_glowIntensitySpringKeys[obj], 3f);
             
-            // Return to original color and intensity after duration
-            StartCoroutine(ReturnToOriginalGlowState(obj, originalR, originalG, originalB, originalIntensity, duration));
+            // Return to base color and intensity after duration
+            StartCoroutine(ReturnToOriginalGlowState(obj, baseState.color.r, baseState.color.g, baseState.color.b, baseState.intensity, duration));
         }
     }
 
@@ -332,6 +335,7 @@ public class FeedbackManager : MonoBehaviour
             _glowColorRSpringKeys.Remove(obj);
             _glowColorGSpringKeys.Remove(obj);
             _glowColorBSpringKeys.Remove(obj);
+            _baseGlowStates.Remove(obj);
         }
     }
 }

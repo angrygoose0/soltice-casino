@@ -48,25 +48,147 @@ public class UserUI : MonoBehaviour
     [Header("Input Values")]
     public ulong depositAmount = 1000;
     public ulong withdrawAmount = 1000;
-    public ulong betAmount = 0;
+    private ulong _betAmount = 0;
+    public ulong betAmount
+    {
+        get => _betAmount;
+        set
+        {
+            _betAmount = value;
+            UpdateMaxBetUI();
+        }
+    }
     public byte clientSeed = 42;
-    
-    [Header("Bet Limits")]
-    public ulong maxBetAmount = 9000000;
 
     // Account Data Display
     [Header("Account Data Display")]
-    [SerializeField] private TextMeshProUGUI gameAccountTMP;
-    [SerializeField] private TextMeshProUGUI playerBetAccountTMP;
     [SerializeField] private TextMeshProUGUI userBalanceAccountTMP;
 
     [SerializeField] private TextMeshProUGUI playerTextTMP;
+    [SerializeField] private TextMeshProUGUI maxBetTextTMP;
 
+    // Cached max bet amount (updated dynamically)
+    public ulong maxBetAmount { get; private set; } = 0;
+    private string maxBetReason = "";
+
+    private async void UpdateMaxBet()
+    {
+        // Default to 0 if wallet not connected or data not available
+        if (Web3.Account == null || solanaManager == null)
+        {
+            maxBetAmount = 0;
+            return;
+        }
+
+        try
+        {
+            // Limit 1: wallet token balance + ephemeral balance
+            double walletBalanceDouble = await solanaManager.GetSPLTokenBalance();
+            ulong walletBalance = (ulong)walletBalanceDouble;
+            ulong ephemeralBalance = _userBalanceCache?.Balance ?? 0;
+            Debug.Log($"Ephemeral balance: {ephemeralBalance}");
+            Debug.Log($"Wallet balance: {walletBalance}");
+            ulong userLimit = walletBalance + ephemeralBalance;
+
+            // Limit 2: (treasury token account balance - userOwnedAmount - buffer_amount) * 0.5
+            var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
+            Debug.Log($"Treasury token account: {treasuryTokenAccount}");
+            ulong treasuryTokenBalance = await solanaManager.GetTokenAccountBalance(treasuryTokenAccount);
+            Debug.Log($"Treasury token balance: {treasuryTokenBalance}");
+            
+            ulong houseLimit = 0;
+            if (_treasuryCache != null)
+            {
+                ulong availableHouseFunds = treasuryTokenBalance;
+                
+                Debug.Log($"Available house funds: {availableHouseFunds}");
+                Debug.Log($"Buffer amount: {_treasuryCache.BufferAmount}");
+                Debug.Log($"User owned amount: {_treasuryCache.UserOwnedAmount}");
+                if (availableHouseFunds >= _treasuryCache.BufferAmount)
+                    availableHouseFunds -= _treasuryCache.BufferAmount;
+                else
+                    availableHouseFunds = 0;
+                
+                if (availableHouseFunds >= _treasuryCache.UserOwnedAmount)
+                    availableHouseFunds -= _treasuryCache.UserOwnedAmount;
+                else
+                    availableHouseFunds = 0;
+                
+                houseLimit = availableHouseFunds / 2; // 50% of available house funds
+            }
+            
+            Debug.Log($"userLimit: {userLimit}, houseLimit: {houseLimit}");
+
+            // Set to the minimum of the two limits and track the reason
+            if (userLimit <= houseLimit)
+            {
+                maxBetAmount = userLimit;
+                maxBetReason = "user balance";
+            }
+            else
+            {
+                maxBetAmount = houseLimit;
+                maxBetReason = "house limit";
+            }
+            
+            // Clamp current bet amount if it exceeds the new limit
+            if (betAmount > maxBetAmount)
+            {
+                betAmount = maxBetAmount;
+                Debug.Log($"Bet amount clamped to new limit: {maxBetAmount}");
+            }
+            
+            UpdateMaxBetUI();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Failed to calculate max bet: {ex.Message}");
+            maxBetAmount = 0;
+            betAmount = 0;
+            maxBetReason = "";
+            UpdateMaxBetUI();
+        }
+    }
+
+    private void UpdateMaxBetUI()
+    {
+        if (maxBetTextTMP == null)
+            return;
+        
+        // Show max bet UI when bet amount equals max bet
+        if (betAmount >= maxBetAmount)
+        {
+            ulong displayAmount = ConvertToDisplayAmount(maxBetAmount);
+            maxBetTextTMP.text = $"max bet: {displayAmount} ({maxBetReason})";
+            UIFader.FadeIn(maxBetTextTMP.gameObject);
+        }
+        else
+        {
+            UIFader.FadeOut(maxBetTextTMP.gameObject);
+        }
+    }
+
+    private void UpdateWithdrawButtonVisibility()
+    {
+        if (withdrawButton == null)
+            return;
+        
+        ulong ephemeralBalance = _userBalanceCache?.Balance ?? 0;
+        
+        if (Web3.Account != null)
+        {
+            UIFader.FadeIn(withdrawButton.gameObject);
+            withdrawButton.interactable = ephemeralBalance > 0;
+        }
+        else
+        {
+            UIFader.FadeOut(withdrawButton.gameObject);
+        }
+    }
 
     private void Start()
     {
         SetupGameSubscription();
-        SetupTreasurySubscription();
         
         if (withdrawButton != null)
         {
@@ -76,6 +198,12 @@ public class UserUI : MonoBehaviour
         
         if (countdownText != null)
             countdownText.gameObject.SetActive(false);
+        
+        if (maxBetTextTMP != null)
+            UIFader.HideImmediate(maxBetTextTMP.gameObject);
+        
+        if (userBalanceAccountTMP != null)
+            userBalanceAccountTMP.gameObject.SetActive(false);
         
         UIFader.HideImmediate(beforeBettingGroup);
         UIFader.HideImmediate(afterBettingGroup);
@@ -147,12 +275,15 @@ public class UserUI : MonoBehaviour
 
     private async void OnWalletConnected(Account account)
     {
-        if (withdrawButton != null)
-            UIFader.FadeIn(withdrawButton.gameObject);
+        if (userBalanceAccountTMP != null)
+            userBalanceAccountTMP.gameObject.SetActive(true);
         
         try
         {
+        await SetupTreasurySubscription();
         await SetupUserAccountSubscriptions();
+        UpdateMaxBet();
+        UpdateWithdrawButtonVisibility();
         }
         catch (Exception ex)
         {
@@ -184,12 +315,22 @@ public class UserUI : MonoBehaviour
         _playerBetCache = null;
         _userBalanceCache = null;
         
+        // Reset max bet
+        maxBetAmount = 0;
+        betAmount = 0;
+        
         // Hide all UI groups when wallet disconnects
         UIFader.FadeOut(beforeBettingGroup);
         UIFader.FadeOut(afterBettingGroup);
         
         if (withdrawButton != null)
             UIFader.FadeOut(withdrawButton.gameObject);
+        
+        if (maxBetTextTMP != null)
+            UIFader.FadeOut(maxBetTextTMP.gameObject);
+        
+        if (userBalanceAccountTMP != null)
+            userBalanceAccountTMP.gameObject.SetActive(false);
         
         Debug.Log("Wallet disconnected - UI reset");
     }
@@ -207,13 +348,13 @@ public class UserUI : MonoBehaviour
             if (userBalanceIsDelegated)
             {
                 var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-                await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+                await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
             }
             
             // 2. Deposit + Re-delegate on base layer (together)
             var userDepositIx = treasuryBuilder.UserDeposit(amount);
             var delegateIx = treasuryBuilder.DelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"depositing {amount}...", userDepositIx, delegateIx);
+            await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"depositing {amount}...", userDepositIx, delegateIx);
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -231,12 +372,12 @@ public class UserUI : MonoBehaviour
         {
             // 1. Undelegate on ER
             var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
             
             // 2. Withdraw + Re-delegate on base layer (together)
             var userWithdrawIx = treasuryBuilder.UserWithdraw(amount);
             var delegateIx = treasuryBuilder.DelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, $"withdrawing {amount}...", userWithdrawIx, delegateIx);
+            await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"withdrawing {amount}...", userWithdrawIx, delegateIx);
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -253,7 +394,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "requesting randomness...", requestRandomnessIx);
+            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "requesting randomness...", requestRandomnessIx);
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -269,7 +410,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var startGameIx = crashBuilder.StartGame();
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "starting game...", startGameIx);
+            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "starting game...", startGameIx);
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -336,7 +477,7 @@ public class UserUI : MonoBehaviour
                 if (userBalanceIsDelegated)
                 {
                     var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-                    await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "undelegating balance...", undelegateIx);
+                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
                     userBalanceIsDelegated = false;
                 }
                 
@@ -364,7 +505,7 @@ public class UserUI : MonoBehaviour
             if (instructions.Count > 0)
             {
                 Debug.Log($"Sending combined transaction with {instructions.Count} instruction(s)");
-                await solanaManager.SendAndConfirmTransaction(false, 0u, 0ul, "initializing and depositing...", instructions.ToArray());
+                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "initializing and depositing...", instructions.ToArray());
                 
                 // If we initialized accounts, setup subscriptions after delegation
                 if (needsSubscriptionSetup)
@@ -377,7 +518,7 @@ public class UserUI : MonoBehaviour
             // Step 5: Send place_bet transaction on ER layer
             Debug.Log($"Placing bet of {betAmount}");
             var placeBetIx = crashBuilder.PlaceBet(betAmount);
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, $"placing bet {betAmount}...", placeBetIx);
+            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, $"placing bet {betAmount}...", placeBetIx);
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -394,7 +535,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var claimBetIx = crashBuilder.ClaimBet();
-            await solanaManager.SendAndConfirmTransaction(true, 0u, 0ul, "claiming bet...", claimBetIx);
+            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "claiming bet...", claimBetIx);
             
             feedbackManager?.PlaySuccessSound();
             feedbackManager?.PlayCashFountainSound();
@@ -423,7 +564,7 @@ public class UserUI : MonoBehaviour
         }
     }
 
-    public async void SetupTreasurySubscription()
+    public async Task SetupTreasurySubscription()
     {
         var treasuryPk = TreasuryTransactionBuilder.DeriveTreasuryAccount();
         var id = await SubscriptionManager.Instance.SubscribeAndLoad<TreasuryAccount>(
@@ -532,11 +673,6 @@ public class UserUI : MonoBehaviour
 
     private void OnPlayerBetUpdate(PlayerBet newData)
     {
-        if (playerBetAccountTMP != null)
-        {
-            ulong displayAmount = ConvertToDisplayAmount(newData.Amount);
-            playerBetAccountTMP.text = $"Game: {newData.Game}, Amount: {displayAmount}, Player: {newData.Player}";
-        }
         
         // Detect new bet placement (new game number means new bet)
         // Skip announcement if _playerBetCache is null (initial load)
@@ -720,6 +856,14 @@ public class UserUI : MonoBehaviour
     private void OnUserBalanceUpdate(UserBalance newData)
     {
         _userBalanceCache = newData;
+        
+        if (Web3.Account == null)
+        {
+            if (userBalanceAccountTMP != null)
+                userBalanceAccountTMP.gameObject.SetActive(false);
+            return;
+        }
+        
         if (userBalanceAccountTMP != null && TextAnimationManager.Instance != null)
         {
             ulong lastBalance = TextAnimationManager.Instance.GetLastRenderedAmount(userBalanceAccountTMP);
@@ -741,12 +885,17 @@ public class UserUI : MonoBehaviour
             }
         }
         
+        UpdateMaxBet();
+        UpdateWithdrawButtonVisibility();
+        
         Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");
     }
 
     private void OnTreasuryUpdate(TreasuryAccount newData)
     {
         _treasuryCache = newData;
+        
+        UpdateMaxBet();
         
         Debug.Log($"TREASURY UPDATE:\n" +
                   $"  Bump: {newData.Bump}\n" +
@@ -796,11 +945,6 @@ public class UserUI : MonoBehaviour
     
     private void OnGameUpdate(Game newData)
     {
-        if (gameAccountTMP != null)
-        {
-            gameAccountTMP.text = $"GAME\nState: {newData.State}, Tick: {newData.Tick}, GameNo: {newData.GameNo}";
-        }
-        
         // Detect game start (state changes from 0 to 1)
         bool isGameStart = _gameCache != null && _gameCache.State == 0 && newData.State == 1;
         

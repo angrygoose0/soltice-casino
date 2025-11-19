@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 using System.Collections;
 using TMPro;
 using Crash.Accounts;
@@ -14,6 +15,10 @@ public class BalloonSimulator : MonoBehaviour
 
     [SerializeField] private double currentTick = 0;
     public double crashTick = 40;
+    
+    private const float DEFAULT_ACTION_DURATION = 5f;
+    
+    private Game _currentGame;
 
     private GameObject spawnedBalloon;
     private ParticleSystem popParticle;
@@ -22,6 +27,7 @@ public class BalloonSimulator : MonoBehaviour
     private TMP_Text multiplierText;
     private TMP_Text playerCountText;
     private TMP_Text totalBetText;
+    private ProgressCircle progressCircle;
 
     private Coroutine smoothScaleCoroutineRef;
     private Coroutine multiplierCountCoroutineRef;
@@ -50,6 +56,14 @@ public class BalloonSimulator : MonoBehaviour
     void Start()
     {
         SpawnBalloon(defaultSpawnLocation); 
+    }
+    
+    void Update()
+    {
+        if (_currentGame != null)
+        {
+            UpdateProgressCircle(_currentGame);
+        }
     }
 
 
@@ -182,6 +196,13 @@ public class BalloonSimulator : MonoBehaviour
         multiplierText.enabled = false; // ensure visible on new spawn
         playerCountText.enabled = false;
         totalBetText.enabled = false;
+        
+        // Find progress circle component
+        Transform progressCircleTransform = spawnedBalloon.transform.Find("progressCircle");
+        if (progressCircleTransform != null)
+        {
+            progressCircle = progressCircleTransform.GetComponent<ProgressCircle>();
+        }
 
         // Register balloon as an interactable with glow effects (disabled, not clickable)
         if (interactableObjects != null)
@@ -192,6 +213,8 @@ public class BalloonSimulator : MonoBehaviour
 
     public void UpdateBalloon(Game game)
     {
+        _currentGame = game;
+        
         if (!balloonRenderer.enabled) {
 
             if (game.State == 0) {
@@ -237,6 +260,25 @@ public class BalloonSimulator : MonoBehaviour
 
 
             return;
+        }
+    }
+    
+    private void UpdateProgressCircle(Game game)
+    {
+        if (progressCircle == null || game == null) return;
+
+        if (game.State == 1)
+        {
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long startTime = game.NextActionTime - (long)DEFAULT_ACTION_DURATION;
+            long elapsed = currentTime - startTime;
+            float progress = Mathf.Clamp(elapsed / DEFAULT_ACTION_DURATION * 100f, 0f, 100f);
+            
+            progressCircle.SetProgress(progress);
+        }
+        else
+        {
+            progressCircle.SetProgress(0f);
         }
     }
 

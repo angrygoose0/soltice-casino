@@ -1263,7 +1263,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Wallet Balance: 0'
+  m_text: wallet balance
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -4805,12 +4805,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolanaManager
   interactableObjects: {fileID: 1102202717}
   feedbackManager: {fileID: 1225395553}
-  mintAddress: D2BYx2UoshNpAfgBEXEEyfUKxLSxkLMAb6zeZhZYgoos
-  tokenDecimals: 9
+  mintAddress: CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z
+  tokenDecimals: 6
   publicKeyTexts:
   - {fileID: 93460935}
-  balanceTexts:
-  - {fileID: 308598064}
+  balanceTexts: []
   tokenBalanceTexts:
   - {fileID: 147812473}
   loadingCircle: {fileID: 388311395}
@@ -4915,13 +4914,10 @@ MonoBehaviour:
   _balloonSimulator: {fileID: 1102202721}
   depositAmount: 1000
   withdrawAmount: 1000
-  betAmount: 0
   clientSeed: 11
-  maxBetAmount: 9000000
-  gameAccountTMP: {fileID: 0}
-  playerBetAccountTMP: {fileID: 0}
   userBalanceAccountTMP: {fileID: 817081704}
   playerTextTMP: {fileID: 0}
+  maxBetTextTMP: {fileID: 1096883666}
 --- !u!114 &444504102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7446,6 +7442,7 @@ RectTransform:
   m_Children:
   - {fileID: 1893686140}
   - {fileID: 523719393}
+  - {fileID: 1096883665}
   m_Father: {fileID: 672858019}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -8217,7 +8214,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 817081702}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -8226,7 +8223,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -330, y: -95}
+  m_AnchoredPosition: {x: -335, y: -95}
   m_SizeDelta: {x: 500, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &817081704
@@ -8684,7 +8681,6 @@ RectTransform:
   - {fileID: 225926710}
   - {fileID: 2050049185}
   - {fileID: 1353838201}
-  - {fileID: 1096883665}
   m_Father: {fileID: 672858019}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -10503,7 +10499,7 @@ GameObject:
   - component: {fileID: 1096883667}
   - component: {fileID: 1096883666}
   m_Layer: 0
-  m_Name: countdownText
+  m_Name: maxBetText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10516,16 +10512,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1096883664}
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalRotation: {x: -0, y: 1, z: -0.0000000018626454, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 905087681}
+  m_Father: {fileID: 747042692}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -50.75}
+  m_AnchoredPosition: {x: 0, y: -51.25}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1096883666
@@ -10548,7 +10544,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 123
+  m_text: 124312
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10576,8 +10572,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 0.5
-  m_fontSizeBase: 0.5
+  m_fontSize: 0.25
+  m_fontSizeBase: 0.25
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -12128,9 +12124,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1306015179}
+  - {fileID: 817081703}
   - {fileID: 1874172954}
   - {fileID: 93460934}
-  - {fileID: 817081703}
   - {fileID: 147812472}
   - {fileID: 308598063}
   - {fileID: 871214703}
@@ -16655,7 +16651,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1874172950}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
@@ -16665,7 +16661,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -40, y: -95}
+  m_AnchoredPosition: {x: -45, y: -95}
   m_SizeDelta: {x: 120, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1893686139
