@@ -4900,6 +4900,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UserUI
   treasuryBuilder: {fileID: 591210657}
   crashBuilder: {fileID: 431344624}
+  blackjackBuilder: {fileID: 0}
   solanaManager: {fileID: 444504097}
   coherenceBridge: {fileID: 622335328}
   feedbackManager: {fileID: 1225395553}
@@ -4912,8 +4913,6 @@ MonoBehaviour:
   startButton: {fileID: 2050049187}
   countdownText: {fileID: 1096883666}
   _balloonSimulator: {fileID: 1102202721}
-  depositAmount: 1000
-  withdrawAmount: 1000
   clientSeed: 11
   userBalanceAccountTMP: {fileID: 817081704}
   playerTextTMP: {fileID: 0}
@@ -6015,7 +6014,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 1329481886740451829, guid: 60786269438aa4c6c8c3c4f9b60e4b9b, type: 3}
   spawnPoint: {fileID: 529855801}
   materialManager: {fileID: 1102202716}
-  crashUI: {fileID: 1102202715}
+  playerProximityCanvas: {fileID: 1102202734}
   userUI: {fileID: 444504101}
 --- !u!1 &568184090
 GameObject:
@@ -6527,7 +6526,6 @@ GameObject:
   m_Component:
   - component: {fileID: 591210658}
   - component: {fileID: 591210657}
-  - component: {fileID: 591210656}
   m_Layer: 0
   m_Name: TreasuryManager
   m_TagString: Untagged
@@ -6535,18 +6533,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &591210656
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 591210655}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 96a72a9b6e0ad4dcfb76e94ab0531d62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TreasuryUI
 --- !u!114 &591210657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11095,23 +11081,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
   m_PrefabInstance: {fileID: 1917170209}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1102202715
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1102202711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e54e594cbcaf54a7ab2f7c9ee3085f36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CrashUI
-  currentPlayer: {fileID: 0}
-  minDistance: 5
-  maxDistance: 10
-  scaleDuration: 0.7
-  overshootStrength: 0.8
 --- !u!114 &1102202716
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11312,6 +11281,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5f0ff4bf992a488083ecbfdcd8aaf25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpringManager
+--- !u!114 &1102202734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1102202711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43f4d81942b7249edb3452d97c774718, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProximityCanvas
+  currentPlayer: {fileID: 0}
+  minDistance: 10
+  maxDistance: 30
+  scaleDuration: 0.7
+  overshootStrength: 0.8
 --- !u!1001 &1105412863
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16917,9 +16903,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1102202715}
-    - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 1102202716}
     - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
       insertIndex: -1
@@ -16936,6 +16919,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1102202730}
+    - targetCorrespondingSourceObject: {fileID: 1153614203568896833, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1102202734}
   m_SourcePrefab: {fileID: 100100000, guid: b07159a7ac30cd7408433f784ae97597, type: 3}
 --- !u!1 &1974960976
 GameObject:

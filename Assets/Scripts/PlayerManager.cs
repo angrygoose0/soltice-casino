@@ -10,7 +10,7 @@ public class PlayerManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private MaterialManager materialManager;
-    [SerializeField] private CrashUI crashUI;
+    [SerializeField] private PlayerProximityCanvas playerProximityCanvas;
     [SerializeField] private UserUI userUI;
 
     private CoherenceBridge _coherenceBridge;
@@ -53,10 +53,10 @@ public class PlayerManager : MonoBehaviour
             // Set scene references (can't be set in prefab)
             _localPlayer.materialManager = materialManager;
             
-            // Set currentPlayer on CrashUI
-            if (crashUI != null)
+            // Set currentPlayer on PlayerProximityCanvas
+            if (playerProximityCanvas != null)
             {
-                crashUI.currentPlayer = _localPlayer.transform;
+                playerProximityCanvas.currentPlayer = _localPlayer.transform;
             }
             
             // Set player bet text reference in UserUI

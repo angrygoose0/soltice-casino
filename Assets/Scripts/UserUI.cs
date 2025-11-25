@@ -7,17 +7,22 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using Crash.Accounts;
 using Treasury.Accounts;
+using Blackjack.Accounts;
+using BlackJackGame = Blackjack.Accounts.BlackJack;
 using TreasuryAccount = Treasury.Accounts.Treasury;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using TMPro;
+using System.Linq;
 using Coherence.Toolkit;
 
 public class UserUI : MonoBehaviour
 {
     [SerializeField] private TreasuryTransactionBuilder treasuryBuilder;
     [SerializeField] private CrashTransactionBuilder crashBuilder;
+    [SerializeField] private BlackjackTransactionBuilder blackjackBuilder;
     [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private CoherenceBridge coherenceBridge;
     [SerializeField] private FeedbackManager feedbackManager;
@@ -28,10 +33,19 @@ public class UserUI : MonoBehaviour
     private PlayerBet _playerBetCache;
     private UserBalance _userBalanceCache;
     private TreasuryAccount _treasuryCache;
+    private BlackJackGame _blackjackGameCache;
 
     // Subscription tracking
     private string _playerBetSubscriptionId;
     private string _userBalanceSubscriptionId;
+    
+    // Blackjack hands tracking
+    private Dictionary<PublicKey, BlackJackHand> _blackjackHandsCache = new Dictionary<PublicKey, BlackJackHand>();
+    private Dictionary<PublicKey, string> _blackjackHandSubscriptionIds = new Dictionary<PublicKey, string>();
+    private PublicKey _subscribedBlackjackPk;
+    
+    // Count of blackjack hands owned by user's pool (hand_ids are 0 to count-1)
+    private byte _userBlackjackHandCount = 0;
 
     [SerializeField] private GameObject beforeBettingGroup;
     [SerializeField] private GameObject afterBettingGroup;
@@ -44,10 +58,6 @@ public class UserUI : MonoBehaviour
 
     private Coroutine _countdownCoroutine;
 
-    // Public fields for input values (editable in Inspector)
-    [Header("Input Values")]
-    public ulong depositAmount = 1000;
-    public ulong withdrawAmount = 1000;
     private ulong _betAmount = 0;
     public ulong betAmount
     {
@@ -189,10 +199,11 @@ public class UserUI : MonoBehaviour
     private void Start()
     {
         SetupGameSubscription();
+        SetupBlackjackGameSubscription();
         
         if (withdrawButton != null)
         {
-            withdrawButton.onClick.AddListener(() => Withdraw(withdrawAmount));
+            withdrawButton.onClick.AddListener(() => Withdraw(0));
             UIFader.HideImmediate(withdrawButton.gameObject);
         }
         
@@ -282,6 +293,7 @@ public class UserUI : MonoBehaviour
         {
         await SetupTreasurySubscription();
         await SetupUserAccountSubscriptions();
+        await RefreshUserBlackjackHandCount();
         UpdateMaxBet();
         UpdateWithdrawButtonVisibility();
         }
@@ -561,6 +573,140 @@ public class UserUI : MonoBehaviour
         if (string.IsNullOrEmpty(id))
         {
             Debug.LogError("Failed to subscribe to delegated game account");
+        }
+    }
+
+    public async void SetupBlackjackGameSubscription()
+    {
+        var blackjackPk = BlackjackTransactionBuilder.DeriveBlackjackAccount(1);
+        _subscribedBlackjackPk = blackjackPk;
+        
+        var id = await SubscriptionManager.Instance.SubscribeAndLoad<BlackJackGame>(
+            blackjackPk,
+            OnBlackjackGameUpdate,
+            data => BlackJackGame.Deserialize(data),
+            forceDelegated: true
+        );
+
+        if (string.IsNullOrEmpty(id))
+        {
+            Debug.LogError("Failed to subscribe to delegated blackjack game account");
+        }
+        
+        // Also subscribe to all hands for this blackjack game
+        await SetupBlackjackHandsSubscription(blackjackPk);
+    }
+
+    private async Task<List<PublicKey>> GetBlackjackHandsByGame(PublicKey blackjackAccount)
+    {
+        var rpcClient = SolanaManager.EphemeralWallet?.ActiveRpcClient;
+        if (rpcClient == null) return new List<PublicKey>();
+        
+        try
+        {
+            // BlackJackHand structure:
+            // - 8 bytes: discriminator
+            // - 32 bytes: Blackjack pubkey (offset 8)
+            var memCmpList = new List<MemCmp>
+            {
+                new MemCmp
+                {
+                    Bytes = BlackJackHand.ACCOUNT_DISCRIMINATOR_B58,
+                    Offset = 0
+                },
+                new MemCmp
+                {
+                    Bytes = blackjackAccount.Key,
+                    Offset = 8
+                }
+            };
+            
+            var result = await rpcClient.GetProgramAccountsAsync(
+                Blackjack.Program.BlackjackProgram.ID,
+                Commitment.Confirmed,
+                memCmpList: memCmpList
+            );
+            
+            return result.Result?.Select(a => new PublicKey(a.PublicKey)).ToList() ?? new List<PublicKey>();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error getting blackjack hands: {ex.Message}");
+            return new List<PublicKey>();
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the count of blackjack hands owned by the current user's pool.
+    /// </summary>
+    public async Task RefreshUserBlackjackHandCount()
+    {
+        if (Web3.Account == null) return;
+        
+        var rpcClient = SolanaManager.EphemeralWallet?.ActiveRpcClient;
+        if (rpcClient == null) return;
+        
+        var player = Web3.Account.PublicKey;
+        
+        try
+        {
+            // BlackJackHand structure:
+            // - 8 bytes: discriminator
+            // - 32 bytes: Blackjack pubkey (offset 8)
+            // - 32 bytes: Player pubkey (offset 40)
+            var memCmpList = new List<MemCmp>
+            {
+                new MemCmp { Bytes = BlackJackHand.ACCOUNT_DISCRIMINATOR_B58, Offset = 0 },
+                new MemCmp { Bytes = player.Key, Offset = 40 }
+            };
+            
+            var result = await rpcClient.GetProgramAccountsAsync(
+                Blackjack.Program.BlackjackProgram.ID,
+                Commitment.Confirmed,
+                memCmpList: memCmpList
+            );
+            
+            _userBlackjackHandCount = (byte)(result.Result?.Count ?? 0);
+            Debug.Log($"User has {_userBlackjackHandCount} blackjack hands");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error refreshing user blackjack hand count: {ex.Message}");
+        }
+    }
+
+    public byte GetNextHandId() => _userBlackjackHandCount;
+
+    public PublicKey GetUserHandPubkey(byte handId)
+    {
+        if (Web3.Account == null) return null;
+        return BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, handId);
+    }
+
+    private async Task SetupBlackjackHandsSubscription(PublicKey blackjackAccount)
+    {
+        var handPubkeys = await GetBlackjackHandsByGame(blackjackAccount);
+        Debug.Log($"Found {handPubkeys.Count} blackjack hands for game {blackjackAccount}");
+        
+        foreach (var handPk in handPubkeys)
+        {
+            
+            // Skip if already subscribed
+            if (_blackjackHandSubscriptionIds.ContainsKey(handPk))
+                continue;
+            
+            var subId = await SubscriptionManager.Instance.SubscribeAndLoad<BlackJackHand>(
+                handPk,
+                data => OnBlackjackHandUpdate(handPk, data),
+                data => BlackJackHand.Deserialize(data),
+                forceDelegated: true
+            );
+            
+            if (!string.IsNullOrEmpty(subId))
+            {
+                _blackjackHandSubscriptionIds[handPk] = subId;
+                Debug.Log($"Subscribed to blackjack hand: {handPk}");
+            }
         }
     }
 
@@ -1019,5 +1165,50 @@ public class UserUI : MonoBehaviour
             _balloonSimulator.UpdateBalloon(newData);
         UpdateUserBetText(_playerBetCache, newData);
         Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
+    }
+
+    private async void OnBlackjackGameUpdate(BlackJackGame newData)
+    {
+        _blackjackGameCache = newData;
+        
+        // Check for new hands that belong to this blackjack game
+        if (_subscribedBlackjackPk != null)
+        {
+            await SetupBlackjackHandsSubscription(_subscribedBlackjackPk);
+        }
+        
+        Debug.Log($"BLACKJACK GAME UPDATE:\n" +
+                  $"  GameId: {newData.GameId}\n" +
+                  $"  DealerCardCount: {newData.DealerCardCount}\n" +
+                  $"  NextActionTime: {newData.NextActionTime}\n" +
+                  $"  GameNo: {newData.GameNo}\n" +
+                  $"  ActiveHands: {newData.ActiveHands}");
+    }
+
+    private async void OnBlackjackHandUpdate(PublicKey handPk, BlackJackHand newData)
+    {
+        // Check if this hand now belongs to a different blackjack game
+        if (_subscribedBlackjackPk != null && !newData.Blackjack.Equals(_subscribedBlackjackPk))
+        {
+            Debug.Log($"Hand {handPk} blackjack changed from {_subscribedBlackjackPk} to {newData.Blackjack} - unsubscribing");
+            
+            if (_blackjackHandSubscriptionIds.TryGetValue(handPk, out string subId))
+            {
+                await SubscriptionManager.Instance.Unsubscribe(subId);
+                _blackjackHandSubscriptionIds.Remove(handPk);
+            }
+            _blackjackHandsCache.Remove(handPk);
+            return;
+        }
+        
+        _blackjackHandsCache[handPk] = newData;
+        
+        Debug.Log($"BLACKJACK HAND UPDATE ({handPk}):\n" +
+                  $"  Player: {newData.Player}\n" +
+                  $"  HandId: {newData.HandId}\n" +
+                  $"  State: {newData.State}\n" +
+                  $"  CurrentBet: {newData.CurrentBet}\n" +
+                  $"  CardCount: {newData.CardCount}\n" +
+                  $"  GameNo: {newData.GameNo}");
     }
 }

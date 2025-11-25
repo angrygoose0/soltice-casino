@@ -6,9 +6,9 @@ using TMPro;
 using System.Collections.Generic;
 using Solana.Unity.SDK;
 using System.Collections;
- 
 
-public class CrashUI : MonoBehaviour
+
+public class PlayerProximityCanvas : MonoBehaviour
 {
     private GameObject canvas;
     public Transform currentPlayer;
@@ -89,3 +89,4 @@ public class CrashUI : MonoBehaviour
             canvas.transform.localScale = targetScale;
     }
 }
+

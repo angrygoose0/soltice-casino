@@ -18,6 +18,8 @@ using Crash.Program;
 using Crash;
 using Treasury.Program;
 using Treasury;
+using Blackjack.Program;
+using Blackjack;
 
 public class SolanaManager : MonoBehaviour
 {
@@ -40,14 +42,16 @@ public class SolanaManager : MonoBehaviour
     [SerializeField] private GameObject loadingText;
     private TextMeshProUGUI loadingTextComponent;
 
-    // Crash Client properties
+    // Client properties
     public CrashClient CrashClient { get; private set; }
     public CrashClient CrashClientEphemeral { get; private set; }
     public TreasuryClient TreasuryClient { get; private set; }
+    public BlackjackClient BlackjackClient { get; private set; }
     public int TokenDecimals => tokenDecimals;
     
     private static PublicKey _crashProgramId = new PublicKey(CrashProgram.ID);
     private static PublicKey _treasuryProgramId = new PublicKey(TreasuryProgram.ID);
+    private static PublicKey _blackjackProgramId = new PublicKey(BlackjackProgram.ID);
     public static readonly PublicKey DELEGATION_PROGRAM_ID = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
 
     private IRpcClient _rpcClient;
@@ -137,7 +141,11 @@ public class SolanaManager : MonoBehaviour
                 _treasuryProgramId
             );
 
-            
+            BlackjackClient = new BlackjackClient(
+                _rpcClient,
+                streamingClient,
+                _blackjackProgramId
+            );
         }
         catch (Exception ex)
         {

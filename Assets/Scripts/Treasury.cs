@@ -301,7 +301,7 @@ namespace Treasury
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("HuqyBcHcwwX72bHJxPSxQaHESvkn2AxDdBc7HaQNU4Qt");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -341,22 +341,6 @@ namespace Treasury
             public PublicKey Payer { get; set; }
 
             public PublicKey SystemProgram { get; set; }
-        }
-
-        public class SettleLossAccounts
-        {
-            public PublicKey Signer { get; set; }
-
-            public PublicKey UserBalance { get; set; }
-
-            public PublicKey Treasury { get; set; }
-
-            public PublicKey TreasuryTokenAccount { get; set; }
-
-            public PublicKey Authority { get; set; }
-
-            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
-            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
         }
 
         public class UndelegateUserBalanceAccounts
@@ -451,8 +435,8 @@ namespace Treasury
 
         public static class TreasuryProgram
         {
-            public const string ID = "HuqyBcHcwwX72bHJxPSxQaHESvkn2AxDdBc7HaQNU4Qt";
-            public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, ulong amount, PublicKey programId = null)
+            public const string ID = "Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g";
+            public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, PublicKey user, ulong amount, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -461,6 +445,8 @@ namespace Treasury
                 int offset = 0;
                 _data.WriteU64(8012807824712303984UL, offset);
                 offset += 8;
+                _data.WritePubKey(user, offset);
+                offset += 32;
                 _data.WriteU64(amount, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
@@ -548,20 +534,6 @@ namespace Treasury
                     offset += account_seedsElement.Length;
                 }
 
-                byte[] resultData = new byte[offset];
-                Array.Copy(_data, resultData, offset);
-                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
-            }
-
-            public static Solana.Unity.Rpc.Models.TransactionInstruction SettleLoss(SettleLossAccounts accounts, PublicKey programId = null)
-            {
-                programId ??= new(ID);
-                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Authority, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
-                byte[] _data = new byte[1200];
-                int offset = 0;
-                _data.WriteU64(2443967572725000004UL, offset);
-                offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
