@@ -71,6 +71,12 @@ namespace Blackjack
 
             public byte ActiveHands { get; set; }
 
+            public byte MaxPlayers { get; set; }
+
+            public PublicKey[] Players { get; set; }
+
+            public ulong[] AntedGameNo { get; set; }
+
             public byte Bump { get; set; }
 
             public static BlackJack Deserialize(ReadOnlySpan<byte> _data)
@@ -96,6 +102,22 @@ namespace Blackjack
                 offset += 8;
                 result.ActiveHands = _data.GetU8(offset);
                 offset += 1;
+                result.MaxPlayers = _data.GetU8(offset);
+                offset += 1;
+                result.Players = new PublicKey[3];
+                for (uint resultPlayersIdx = 0; resultPlayersIdx < 3; resultPlayersIdx++)
+                {
+                    result.Players[resultPlayersIdx] = _data.GetPubKey(offset);
+                    offset += 32;
+                }
+
+                result.AntedGameNo = new ulong[3];
+                for (uint resultAntedGameNoIdx = 0; resultAntedGameNoIdx < 3; resultAntedGameNoIdx++)
+                {
+                    result.AntedGameNo[resultAntedGameNoIdx] = _data.GetU64(offset);
+                    offset += 8;
+                }
+
                 result.Bump = _data.GetU8(offset);
                 offset += 1;
                 return result;
@@ -112,8 +134,6 @@ namespace Blackjack
             public PublicKey Player { get; set; }
 
             public byte HandId { get; set; }
-
-            public byte SeatIndex { get; set; }
 
             public byte State { get; set; }
 
@@ -147,8 +167,6 @@ namespace Blackjack
                 result.Player = _data.GetPubKey(offset);
                 offset += 32;
                 result.HandId = _data.GetU8(offset);
-                offset += 1;
-                result.SeatIndex = _data.GetU8(offset);
                 offset += 1;
                 result.State = _data.GetU8(offset);
                 offset += 1;
@@ -185,7 +203,10 @@ namespace Blackjack
             GameNotActive = 6007U,
             DealerNotFinished = 6008U,
             GameStillInProgress = 6009U,
-            HandsNotSettled = 6010U
+            HandsNotSettled = 6010U,
+            MaxPlayersReached = 6011U,
+            InvalidMaxPlayers = 6012U,
+            NoPlayersAnted = 6013U
         }
     }
 
@@ -339,12 +360,34 @@ namespace Blackjack
 
         protected override Dictionary<uint, ProgramError<BlackjackErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<BlackjackErrorKind>>{{6000U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.Unauthorized, "Unauthorized")}, {6001U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ActionTooSoon, "Too soon to perform dealer action")}, {6002U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandAlreadyInUse, "Hand is already in use")}, {6003U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandNotInThisGame, "Hand does not belong to this game")}, {6004U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ArithmeticOverflow, "Arithmetic overflow in calculation")}, {6005U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CannotSplitUnlikeCards, "Cannot split unlike cards")}, {6006U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CardsNotDealt, "Cards not dealt yet")}, {6007U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameNotActive, "Game is not active or dealer turn already completed")}, {6008U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.DealerNotFinished, "Dealer has not finished their turn yet")}, {6009U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameStillInProgress, "Previous game still in progress")}, {6010U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandsNotSettled, "All hands must be settled before starting new game")}, };
+            return new Dictionary<uint, ProgramError<BlackjackErrorKind>>{{6000U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.Unauthorized, "Unauthorized")}, {6001U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ActionTooSoon, "Too soon to perform dealer action")}, {6002U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandAlreadyInUse, "Hand is already in use")}, {6003U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandNotInThisGame, "Hand does not belong to this game")}, {6004U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ArithmeticOverflow, "Arithmetic overflow in calculation")}, {6005U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CannotSplitUnlikeCards, "Cannot split unlike cards")}, {6006U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CardsNotDealt, "Cards not dealt yet")}, {6007U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameNotActive, "Game is not active or dealer turn already completed")}, {6008U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.DealerNotFinished, "Dealer has not finished their turn yet")}, {6009U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameStillInProgress, "Previous game still in progress")}, {6010U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandsNotSettled, "All hands must be settled before starting new game")}, {6011U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.MaxPlayersReached, "Maximum number of players reached")}, {6012U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.InvalidMaxPlayers, "Invalid max players (must be 1-3)")}, {6013U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.NoPlayersAnted, "At least one player must ante before dealing")}, };
         }
     }
 
     namespace Program
     {
+        public class AcceptInsuranceAccounts
+        {
+            public PublicKey Signer { get; set; }
+
+            public PublicKey Blackjack { get; set; }
+
+            public PublicKey BlackjackHand { get; set; }
+
+            public PublicKey Authority { get; set; }
+
+            public PublicKey UserBalance { get; set; }
+
+            public PublicKey Treasury { get; set; }
+
+            public PublicKey TreasuryTokenAccount { get; set; }
+
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
+            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
+        }
+
         public class DealerDealCardAccounts
         {
             public PublicKey Signer { get; set; }
@@ -518,28 +561,6 @@ namespace Blackjack
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
         }
 
-        public class PlayerInsuranceAccounts
-        {
-            public PublicKey Signer { get; set; }
-
-            public PublicKey Blackjack { get; set; }
-
-            public PublicKey BlackjackHand { get; set; }
-
-            public PublicKey Authority { get; set; }
-
-            public PublicKey UserBalance { get; set; }
-
-            public PublicKey Treasury { get; set; }
-
-            public PublicKey TreasuryTokenAccount { get; set; }
-
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
-            public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
-            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
-            public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
-        }
-
         public class PlayerSplitAccounts
         {
             public PublicKey Signer { get; set; }
@@ -613,6 +634,20 @@ namespace Blackjack
         public static class BlackjackProgram
         {
             public const string ID = "9KHnFHs2JSA53yu8jSb1icZs8XpxkAEavp3CoSTUrA7B";
+            public static Solana.Unity.Rpc.Models.TransactionInstruction AcceptInsurance(AcceptInsuranceAccounts accounts, PublicKey programId = null)
+            {
+                programId ??= new(ID);
+                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                byte[] _data = new byte[1200];
+                int offset = 0;
+                _data.WriteU64(5070812016613705564UL, offset);
+                offset += 8;
+                byte[] resultData = new byte[offset];
+                Array.Copy(_data, resultData, offset);
+                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
+            }
+
             public static Solana.Unity.Rpc.Models.TransactionInstruction DealerDealCard(DealerDealCardAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
@@ -700,7 +735,7 @@ namespace Blackjack
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction InitializeBlackjack(InitializeBlackjackAccounts accounts, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction InitializeBlackjack(InitializeBlackjackAccounts accounts, byte max_players, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -709,6 +744,8 @@ namespace Blackjack
                 int offset = 0;
                 _data.WriteU64(15421721827742565211UL, offset);
                 offset += 8;
+                _data.WriteU8(max_players, offset);
+                offset += 1;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
@@ -752,7 +789,7 @@ namespace Blackjack
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(17862690385178829778UL, offset);
@@ -788,22 +825,6 @@ namespace Blackjack
                 _data.WriteU64(2507777151813813021UL, offset);
                 offset += 8;
                 _data.WriteU8(_hand_id, offset);
-                offset += 1;
-                byte[] resultData = new byte[offset];
-                Array.Copy(_data, resultData, offset);
-                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
-            }
-
-            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerInsurance(PlayerInsuranceAccounts accounts, bool insurance, PublicKey programId = null)
-            {
-                programId ??= new(ID);
-                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
-                byte[] _data = new byte[1200];
-                int offset = 0;
-                _data.WriteU64(10626861413838413272UL, offset);
-                offset += 8;
-                _data.WriteBool(insurance, offset);
                 offset += 1;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);

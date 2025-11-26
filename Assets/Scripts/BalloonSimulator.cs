@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using System;
 using System.Collections;
 using TMPro;
@@ -7,6 +6,8 @@ using Crash.Accounts;
 
 public class BalloonSimulator : MonoBehaviour
 {
+    [SerializeField] private OnChainAccountManager accountManager;
+    
     public GameObject balloonPrefab;
     public Vector3 defaultSpawnLocation = Vector3.zero;
     
@@ -14,7 +15,6 @@ public class BalloonSimulator : MonoBehaviour
     [SerializeField] private InteractableObjects interactableObjects;
 
     [SerializeField] private double currentTick = 0;
-    public double crashTick = 40;
     
     private const float DEFAULT_ACTION_DURATION = 5f;
     
@@ -33,7 +33,6 @@ public class BalloonSimulator : MonoBehaviour
     private Coroutine multiplierCountCoroutineRef;
     private Coroutine bobBalloonCoroutineRef;
 
-    // Base local position used for bobbing; bobbing offsets from it
     private Vector3 balloonBaseLocalPos;
 
     [Header("Balloon Bobbing Settings")]
@@ -47,31 +46,44 @@ public class BalloonSimulator : MonoBehaviour
     [SerializeField] private Vector3 scaleConstant = Vector3.one;
     [SerializeField] private Vector3 initialScale;
     [SerializeField] private float scaleDuration = 0.7f;
-	[SerializeField] private float overshootStrength = 0.8f; // controls how far past target it goes
+    [SerializeField] private float overshootStrength = 0.8f;
 
     [Header("Multiplier Text Settings")]
-    [SerializeField] private float multiplierCountDuration = 0.35f; // fast count animation duration
-
+    [SerializeField] private float multiplierCountDuration = 0.35f;
 
     void Start()
     {
         SpawnBalloon(defaultSpawnLocation); 
     }
-    
+
+    private void OnEnable()
+    {
+        if (accountManager != null)
+            accountManager.OnGameUpdated += HandleGameUpdate;
+    }
+
+    private void OnDisable()
+    {
+        if (accountManager != null)
+            accountManager.OnGameUpdated -= HandleGameUpdate;
+    }
+
     void Update()
     {
         if (_currentGame != null)
-        {
             UpdateProgressCircle(_currentGame);
-        }
     }
 
+    private void HandleGameUpdate(Game oldData, Game newData)
+    {
+        UpdateBalloon(newData);
+    }
 
     private void BalloonBasedOnTick(double tick)
     {
-        double fromMultiplier = currentTick == 0 ? 0 : System.Math.Pow(1.11, currentTick);
-        double toMultiplier = System.Math.Pow(1.11, tick);
-        // Start/refresh fast-count animation when tick increases; otherwise just set directly
+        double fromMultiplier = currentTick == 0 ? 0 : Math.Pow(1.11, currentTick);
+        double toMultiplier = Math.Pow(1.11, tick);
+        
         if (multiplierCountCoroutineRef != null)
         {
             StopCoroutine(multiplierCountCoroutineRef);
@@ -85,16 +97,14 @@ public class BalloonSimulator : MonoBehaviour
         {
             multiplierText.text = string.Format("{0:0.00}x", toMultiplier);
         }
-        // Color gradient independent of crashTick: white -> yellow -> red -> dark red as tick increases
-        // Clamp by 43 so 43+ is very dark red
+        
         float t01 = Mathf.Clamp01((float)tick / 43f);
         Color colorWhite = Color.white;
         Color colorYellow = Color.yellow;
         Color colorRed = Color.red;
-        Color colorDarkRed = new Color(0.2f, 0f, 0f, 1f); // very dark red
-        // Use two pivots to make the color change noticeable earlier
-        float pivot1 = 0.2f; // white -> yellow completes early
-        float pivot2 = 0.6f; // yellow -> red, then red -> dark red
+        Color colorDarkRed = new Color(0.2f, 0f, 0f, 1f);
+        float pivot1 = 0.2f;
+        float pivot2 = 0.6f;
         Color targetColor;
         if (t01 < pivot1)
         {
@@ -112,8 +122,7 @@ public class BalloonSimulator : MonoBehaviour
         
         currentTick = tick;
         
-        double sizeScale = System.Math.Pow(1.1, tick);
-        // Stop previous SmoothScaleCoroutine if running
+        double sizeScale = Math.Pow(1.1, tick);
         if (smoothScaleCoroutineRef != null)
         {
             StopCoroutine(smoothScaleCoroutineRef);
@@ -125,7 +134,6 @@ public class BalloonSimulator : MonoBehaviour
 
     private void PopBalloon()
     {   
-        // Stop all running coroutines for the balloon
         if (smoothScaleCoroutineRef != null)
         {
             StopCoroutine(smoothScaleCoroutineRef);
@@ -142,11 +150,8 @@ public class BalloonSimulator : MonoBehaviour
             bobBalloonCoroutineRef = null;
         }
         
-        // Hide balloon and text immediately, but let particles play
         balloonRenderer.enabled = false;
         multiplierText.enabled = false;
-        
-        // Play the particle systems (keep the current scale so particles are visible)
 
         popParticle.Play();
         burstParticle.Play();
@@ -158,32 +163,29 @@ public class BalloonSimulator : MonoBehaviour
 
     private void SpawnBalloon(Vector3 position)
     {
-		spawnedBalloon = Instantiate(balloonPrefab);
-		spawnedBalloon.transform.SetParent(transform, false);
-		spawnedBalloon.transform.localPosition = new Vector3(0f, 0.75f, 0f);
-		spawnedBalloon.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-		{
-			Vector3 p = transform.lossyScale;
-			spawnedBalloon.transform.localScale = new Vector3(
-				initialScale.x / p.x,
-				initialScale.y / p.y,
-				initialScale.z / p.z
-			);
-		}
+        spawnedBalloon = Instantiate(balloonPrefab);
+        spawnedBalloon.transform.SetParent(transform, false);
+        spawnedBalloon.transform.localPosition = new Vector3(0f, 0.75f, 0f);
+        spawnedBalloon.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+        {
+            Vector3 p = transform.lossyScale;
+            spawnedBalloon.transform.localScale = new Vector3(
+                initialScale.x / p.x,
+                initialScale.y / p.y,
+                initialScale.z / p.z
+            );
+        }
         balloonBaseLocalPos = spawnedBalloon.transform.localPosition;
         
-        // Find and store particle system references
         Transform popTransform = spawnedBalloon.transform.Find("pop");
         Transform burstTransform = spawnedBalloon.transform.Find("burst");
         
         popParticle = popTransform.GetComponent<ParticleSystem>();
         burstParticle = burstTransform.GetComponent<ParticleSystem>();
             
-        // Get the balloon renderer
         balloonRenderer = spawnedBalloon.GetComponent<Renderer>();
         balloonRenderer.enabled = false;
 
-        // Cache multiplier TMP text under canvas/multiplier if present
         Transform canvasTransform = spawnedBalloon.transform.Find("canvas");
         Transform canvasExtraTransform = spawnedBalloon.transform.Find("extraCanvas");
 
@@ -193,73 +195,70 @@ public class BalloonSimulator : MonoBehaviour
         playerCountText = canvasExtraTransform.Find("playerCount").GetComponent<TMP_Text>();
         totalBetText = canvasExtraTransform.Find("totalBet").GetComponent<TMP_Text>();
 
-        multiplierText.enabled = false; // ensure visible on new spawn
+        multiplierText.enabled = false;
         playerCountText.enabled = false;
         totalBetText.enabled = false;
         
-        // Find progress circle component
         Transform progressCircleTransform = spawnedBalloon.transform.Find("progressCircle");
         if (progressCircleTransform != null)
         {
             progressCircle = progressCircleTransform.GetComponent<ProgressCircle>();
         }
 
-        // Register balloon as an interactable with glow effects (disabled, not clickable)
         if (interactableObjects != null)
         {
             interactableObjects.RegisterInteractable(spawnedBalloon, "ui", InteractableObjects.ActionType.None, false);
         }
     }
 
-    public void UpdateBalloon(Game game)
+    private void UpdateBalloon(Game game)
     {
         _currentGame = game;
         
-        if (!balloonRenderer.enabled) {
-
-            if (game.State == 0) {
-                return;
-            }
+        if (!balloonRenderer.enabled)
+        {
+            if (game.State == 0) return;
+            
             balloonRenderer.enabled = true;
             multiplierText.enabled = true;
-			{
-				Vector3 p = transform.lossyScale;
-				spawnedBalloon.transform.localScale = new Vector3(
-					initialScale.x / p.x,
-					initialScale.y / p.y,
-					initialScale.z / p.z
-				);
-			}
+            {
+                Vector3 p = transform.lossyScale;
+                spawnedBalloon.transform.localScale = new Vector3(
+                    initialScale.x / p.x,
+                    initialScale.y / p.y,
+                    initialScale.z / p.z
+                );
+            }
             bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
             feedbackManager?.PlayBalloonInflate();
 
             BalloonBasedOnTick(game.Tick);
 
-            if (game.CurrentPlayers > 0) {
+            if (game.CurrentPlayers > 0)
+            {
                 playerCountText.enabled = true;
                 playerCountText.text = game.CurrentPlayers.ToString();
                 totalBetText.enabled = true;
                 totalBetText.text = game.CurrentTotalBet.ToString();
-            } else {
+            }
+            else
+            {
                 playerCountText.enabled = false;
                 totalBetText.enabled = false;
             }
-            //size based on tick
-            return;
-        } else { //balloon is enabled
-            if (game.State == 0) {
+        }
+        else
+        {
+            if (game.State == 0)
+            {
                 PopBalloon();
                 return;
             }
-            //size based on tick
-            if (bobBalloonCoroutineRef == null) {
+            if (bobBalloonCoroutineRef == null)
+            {
                 bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
             }
             BalloonBasedOnTick(game.Tick);
-            //update totalbet using the multiplier..
-
-
-            return;
         }
     }
     
@@ -282,12 +281,10 @@ public class BalloonSimulator : MonoBehaviour
         }
     }
 
-    // Coroutine to bob a balloon up and down in place
     private IEnumerator BobBalloonCoroutine(GameObject balloon)
     {
         while (balloon != null)
         {
-            // Bob as an offset from the current base position so other movement can update the base cleanly
             Vector3 basePos = balloon == spawnedBalloon ? balloonBaseLocalPos : balloon.transform.localPosition;
             float offsetY = Mathf.Sin(Time.time * frequencyY) * amplitudeY;
             float offsetX = Mathf.Sin(Time.time * frequencyX + phaseOffset) * amplitudeX;
@@ -296,55 +293,48 @@ public class BalloonSimulator : MonoBehaviour
         }
     }
 
-	// Smoothly scales the balloon to a new scale (uniform, can be up or down)
-	private IEnumerator SmoothScaleCoroutine(GameObject balloon, float scaleFactor)
+    private IEnumerator SmoothScaleCoroutine(GameObject balloon, float scaleFactor)
     {
         if (balloon == null) yield break;
         
-        // Set balloon to pressed state at start of growth
         SetBalloonGlowPressed(balloon);
         
-		Vector3 originalScale = balloon.transform.localScale;
-		Vector3 worldScaleTarget = scaleConstant * scaleFactor;
-		Vector3 parentScale = balloon.transform.parent.lossyScale;
-		Vector3 newLocalScale = new Vector3(
-			worldScaleTarget.x / parentScale.x,
-			worldScaleTarget.y / parentScale.y,
-			worldScaleTarget.z / parentScale.z
-		);
+        Vector3 originalScale = balloon.transform.localScale;
+        Vector3 worldScaleTarget = scaleConstant * scaleFactor;
+        Vector3 parentScale = balloon.transform.parent.lossyScale;
+        Vector3 newLocalScale = new Vector3(
+            worldScaleTarget.x / parentScale.x,
+            worldScaleTarget.y / parentScale.y,
+            worldScaleTarget.z / parentScale.z
+        );
         float elapsed = 0f;
         while (elapsed < scaleDuration && balloon != null)
         {
-			float t = elapsed / scaleDuration;
-			// Ease-out exponential time mapping for quick start, gentle finish
-			float expoEaseOutT = 1f - Mathf.Pow(1f - t, 2.2f);
-			// Apply a gentle overshoot (back) so it goes a bit past and corrects
-			float s = overshootStrength;
-			float p = expoEaseOutT - 1f;
-			float overshootT = p * p * ((s + 1f) * p + s) + 1f; // easeOutBack
-			balloon.transform.localScale = Vector3.LerpUnclamped(originalScale, newLocalScale, overshootT);
+            float t = elapsed / scaleDuration;
+            float expoEaseOutT = 1f - Mathf.Pow(1f - t, 2.2f);
+            float s = overshootStrength;
+            float p = expoEaseOutT - 1f;
+            float overshootT = p * p * ((s + 1f) * p + s) + 1f;
+            balloon.transform.localScale = Vector3.LerpUnclamped(originalScale, newLocalScale, overshootT);
             elapsed += Time.deltaTime;
             yield return null;
         }
         if (balloon != null)
         {
-			balloon.transform.localScale = newLocalScale;
-            // Return balloon to idle state when growth stops
+            balloon.transform.localScale = newLocalScale;
             SetBalloonGlowIdle(balloon);
         }
     }
 
-    // Animate multiplier text from a start value to an end value quickly
     private IEnumerator AnimateMultiplierText(float startValue, float endValue)
     {
-        if (multiplierText == null)
-            yield break;
+        if (multiplierText == null) yield break;
+        
         float duration = Mathf.Max(0.01f, multiplierCountDuration);
         float elapsed = 0f;
         while (elapsed < duration && multiplierText != null)
         {
             float t = elapsed / duration;
-            // Ease-out cubic for snappy start and gentle finish
             float easedT = 1f - Mathf.Pow(1f - t, 3f);
             float current = Mathf.Lerp(startValue, endValue, easedT);
             multiplierText.text = string.Format("{0:0.00}x", current);
@@ -357,43 +347,35 @@ public class BalloonSimulator : MonoBehaviour
 
     private void SetBalloonGlowPressed(GameObject balloon)
     {
-        if (interactableObjects != null && feedbackManager != null && balloon != null)
+        if (interactableObjects == null || feedbackManager == null || balloon == null) return;
+        
+        InteractableObjects.GlowProfile profile = interactableObjects.GetGlowProfile(balloon);
+        if (profile != null)
         {
-            InteractableObjects.GlowProfile profile = GetBalloonGlowProfile(balloon);
-            if (profile != null)
+            FeedbackManager.MaterialGlowState pressedState = new FeedbackManager.MaterialGlowState
             {
-                FeedbackManager.MaterialGlowState pressedState = new FeedbackManager.MaterialGlowState
-                {
-                    scale = profile.pressed.scale,
-                    intensity = profile.pressed.intensity,
-                    color = profile.pressed.color
-                };
-                feedbackManager.AnimateGlowMaterial(balloon, pressedState);
-            }
+                scale = profile.pressed.scale,
+                intensity = profile.pressed.intensity,
+                color = profile.pressed.color
+            };
+            feedbackManager.AnimateGlowMaterial(balloon, pressedState);
         }
     }
 
     private void SetBalloonGlowIdle(GameObject balloon)
     {
-        if (interactableObjects != null && feedbackManager != null && balloon != null)
+        if (interactableObjects == null || feedbackManager == null || balloon == null) return;
+        
+        InteractableObjects.GlowProfile profile = interactableObjects.GetGlowProfile(balloon);
+        if (profile != null)
         {
-            InteractableObjects.GlowProfile profile = GetBalloonGlowProfile(balloon);
-            if (profile != null)
+            FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
             {
-                FeedbackManager.MaterialGlowState idleState = new FeedbackManager.MaterialGlowState
-                {
-                    scale = profile.idle.scale,
-                    intensity = profile.idle.intensity,
-                    color = profile.idle.color
-                };
-                feedbackManager.AnimateGlowMaterial(balloon, idleState);
-            }
+                scale = profile.idle.scale,
+                intensity = profile.idle.intensity,
+                color = profile.idle.color
+            };
+            feedbackManager.AnimateGlowMaterial(balloon, idleState);
         }
     }
-
-    private InteractableObjects.GlowProfile GetBalloonGlowProfile(GameObject balloon)
-    {
-        return interactableObjects?.GetGlowProfile(balloon);
-    }
 }
-

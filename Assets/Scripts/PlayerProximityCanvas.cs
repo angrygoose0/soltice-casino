@@ -1,92 +1,100 @@
 using UnityEngine;
-using UnityEngine.UI;
-using System.Threading.Tasks;
-using Solana.Unity.Wallet;
-using TMPro;
 using System.Collections.Generic;
-using Solana.Unity.SDK;
 using System.Collections;
 
+[System.Serializable]
+public class ProximityTarget
+{
+    public Transform target;
+    public float maxDistance = 30f;
+    
+    [HideInInspector] public Vector3 originalScale;
+    [HideInInspector] public bool isInRange;
+    [HideInInspector] public Coroutine scaleCoroutine;
+}
 
 public class PlayerProximityCanvas : MonoBehaviour
 {
-    private GameObject canvas;
     public Transform currentPlayer;
-
-    [Header("Distance Scale Settings")]
-    public float minDistance = 10f;
-    public float maxDistance = 30f; // Distance at which UI is completely shrunk
+    
+    [Header("Proximity Targets")]
+    public List<ProximityTarget> targets = new List<ProximityTarget>();
     
     [Header("Scale Animation Settings")]
     [SerializeField] private float scaleDuration = 0.7f;
-    [SerializeField] private float overshootStrength = 0.8f; // controls how far past target it goes
-    
-    
-    private Vector3 originalCanvasScale;
-    private Coroutine scaleCoroutine;
-    private bool isInRange = false;
+    [SerializeField] private float overshootStrength = 0.8f;
     
     private void Start()
     {
-        canvas = transform.Find("canvas").gameObject;
-        originalCanvasScale = canvas.transform.localScale;
-        
-        // Start with canvas scaled to zero (assuming player starts out of range)
-        canvas.transform.localScale = Vector3.zero;
+        foreach (var t in targets)
+            InitializeTarget(t);
+    }
+    
+    public void AddTarget(Transform target, float maxDistance = 30f)
+    {
+        var t = new ProximityTarget { target = target, maxDistance = maxDistance };
+        InitializeTarget(t);
+        targets.Add(t);
+    }
+    
+    public void RemoveTarget(Transform target)
+    {
+        targets.RemoveAll(t => t.target == target);
+    }
+    
+    private void InitializeTarget(ProximityTarget t)
+    {
+        if (t.target == null) return;
+        t.originalScale = t.target.localScale;
+        t.target.localScale = Vector3.zero;
+        t.isInRange = false;
     }
     
     private void Update()
     {
-        if (currentPlayer == null || canvas == null) return;
+        if (currentPlayer == null) return;
         
-        // Calculate distance between canvas and currentPlayer
-        float distance = Vector3.Distance(canvas.transform.position, currentPlayer.position);
-        
-        // Check if player is in range
-        bool shouldBeInRange = distance <= maxDistance;
-        
-        // If range state changed, animate the transition
-        if (shouldBeInRange != isInRange)
+        foreach (var t in targets)
         {
-            isInRange = shouldBeInRange;
+            if (t.target == null) continue;
             
-            // Stop previous coroutine if running
-            if (scaleCoroutine != null)
+            float distance = Vector3.Distance(t.target.position, currentPlayer.position);
+            bool shouldBeInRange = distance <= t.maxDistance;
+            
+            if (shouldBeInRange != t.isInRange)
             {
-                StopCoroutine(scaleCoroutine);
+                t.isInRange = shouldBeInRange;
+                
+                if (t.scaleCoroutine != null)
+                    StopCoroutine(t.scaleCoroutine);
+                
+                float targetScale = t.isInRange ? 1f : 0f;
+                t.scaleCoroutine = StartCoroutine(SmoothScaleCoroutine(t, targetScale));
             }
-            
-            // Start new scale animation
-            float targetScale = isInRange ? 1f : 0f;
-            scaleCoroutine = StartCoroutine(SmoothScaleCoroutine(targetScale));
         }
     }
     
-    // Smoothly scales the canvas with overshoot effect (same as BalloonSimulator)
-    private IEnumerator SmoothScaleCoroutine(float scaleFactor)
+    private IEnumerator SmoothScaleCoroutine(ProximityTarget t, float scaleFactor)
     {
-        if (canvas == null) yield break;
+        if (t.target == null) yield break;
         
-        Vector3 currentScale = canvas.transform.localScale;
-        Vector3 targetScale = originalCanvasScale * scaleFactor;
+        Vector3 currentScale = t.target.localScale;
+        Vector3 targetScale = t.originalScale * scaleFactor;
         float elapsed = 0f;
         
-        while (elapsed < scaleDuration && canvas != null)
+        while (elapsed < scaleDuration && t.target != null)
         {
-            float t = elapsed / scaleDuration;
-            // Ease-out exponential time mapping for quick start, gentle finish
-            float expoEaseOutT = 1f - Mathf.Pow(1f - t, 2.2f);
-            // Apply a gentle overshoot (back) so it goes a bit past and corrects
+            float time = elapsed / scaleDuration;
+            float expoEaseOutT = 1f - Mathf.Pow(1f - time, 2.2f);
             float s = overshootStrength;
             float p = expoEaseOutT - 1f;
-            float overshootT = p * p * ((s + 1f) * p + s) + 1f; // easeOutBack
-            canvas.transform.localScale = Vector3.LerpUnclamped(currentScale, targetScale, overshootT);
+            float overshootT = p * p * ((s + 1f) * p + s) + 1f;
+            t.target.localScale = Vector3.LerpUnclamped(currentScale, targetScale, overshootT);
             elapsed += Time.deltaTime;
             yield return null;
         }
         
-        if (canvas != null)
-            canvas.transform.localScale = targetScale;
+        if (t.target != null)
+            t.target.localScale = targetScale;
     }
 }
-

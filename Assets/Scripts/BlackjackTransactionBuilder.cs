@@ -113,7 +113,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         return BlackjackProgram.InitializeAuthority(accounts);
     }
 
-    public TransactionInstruction InitializeBlackjack(ulong gameId)
+    public TransactionInstruction InitializeBlackjack(ulong gameId, byte maxPlayers = 3)
     {
         if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
@@ -125,7 +125,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Blackjack = blackjack,
             Authority = authority,
         };
-        return BlackjackProgram.InitializeBlackjack(accounts);
+        return BlackjackProgram.InitializeBlackjack(accounts, maxPlayers);
     }
 
     public TransactionInstruction InitializePlayerHand(byte handId)
@@ -310,7 +310,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         return BlackjackProgram.PlayerDouble(accounts);
     }
 
-    public TransactionInstruction PlayerInsurance(ulong gameId, byte handId, bool insurance)
+    public TransactionInstruction AcceptInsurance(ulong gameId, byte handId)
     {
         if (CurrentUser() == null) return null;
         var signer = CurrentUserPk();
@@ -321,7 +321,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 
-        var accounts = new PlayerInsuranceAccounts
+        var accounts = new AcceptInsuranceAccounts
         {
             Signer = signer,
             Blackjack = blackjack,
@@ -331,7 +331,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Treasury = treasury,
             TreasuryTokenAccount = treasuryTokenAccount,
         };
-        return BlackjackProgram.PlayerInsurance(accounts, insurance);
+        return BlackjackProgram.AcceptInsurance(accounts);
     }
 
     public TransactionInstruction PlayerSplit(ulong gameId, byte existingHandId, byte newHandId)

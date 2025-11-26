@@ -18,7 +18,22 @@ public class InteractableObjects : MonoBehaviour
         ClaimBet,
         ConnectWallet,
         DisconnectWallet,
-        JoinWorld
+        JoinWorld,
+        // Blackjack ante buffer actions
+        IncrementAnte,
+        AddHand,
+        RemoveHand,
+        RemoveAllHands,
+        SelectHand,
+        SubmitAnte,
+        // Blackjack gameplay actions
+        BlackjackHit,
+        BlackjackStand,
+        BlackjackDouble,
+        BlackjackSplit,
+        BlackjackAcceptInsurance,
+        BlackjackDeclineInsurance,
+        BlackjackSettleHand
     }
 
     [System.Serializable]
@@ -68,6 +83,7 @@ public class InteractableObjects : MonoBehaviour
     [SerializeField] private UserUI userUI;
     [SerializeField] private SimpleWorldJoin simpleWorldJoin;
     [SerializeField] private SolanaManager solanaManager;
+    [SerializeField] private BlackjackTableSimulator blackjackTableSimulator;
     [SerializeField] private Camera mainCamera; // Assign in inspector or auto-find
     [SerializeField] private FeedbackManager feedbackManager;
     [SerializeField] private GameObject darkOverlay;
@@ -426,6 +442,45 @@ public class InteractableObjects : MonoBehaviour
             case ActionType.JoinWorld:
                 if (simpleWorldJoin != null) simpleWorldJoin.OnStartClicked();
                 break;
+            case ActionType.IncrementAnte:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.IncrementSelectedAnte(entry.amount);
+                break;
+            case ActionType.AddHand:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.AddHand();
+                break;
+            case ActionType.RemoveHand:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveHand();
+                break;
+            case ActionType.RemoveAllHands:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveAllHands();
+                break;
+            case ActionType.SelectHand:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.SelectHand((int)entry.amount);
+                break;
+            case ActionType.SubmitAnte:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.SubmitAnte();
+                break;
+            case ActionType.BlackjackHit:
+                if (userUI != null) userUI.BlackjackHit((byte)entry.amount);
+                break;
+            case ActionType.BlackjackStand:
+                if (userUI != null) userUI.BlackjackStand((byte)entry.amount);
+                break;
+            case ActionType.BlackjackDouble:
+                if (userUI != null) userUI.BlackjackDouble((byte)entry.amount);
+                break;
+            case ActionType.BlackjackSplit:
+                if (userUI != null) userUI.BlackjackSplit((byte)entry.amount);
+                break;
+            case ActionType.BlackjackAcceptInsurance:
+                if (userUI != null) userUI.BlackjackAcceptInsurance((byte)entry.amount);
+                break;
+            case ActionType.BlackjackDeclineInsurance:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.DeclineInsurance((byte)entry.amount);
+                break;
+            case ActionType.BlackjackSettleHand:
+                if (userUI != null) userUI.BlackjackSettleHand((byte)entry.amount);
+                break;
         }
     }
 
@@ -597,7 +652,7 @@ public class InteractableObjects : MonoBehaviour
         return null;
     }
 
-    public void RegisterInteractable(GameObject obj, string glowProfileName, ActionType actionType, bool startEnabled = true)
+    public void RegisterInteractable(GameObject obj, string glowProfileName, ActionType actionType, bool startEnabled = true, ulong amount = 0)
     {
         // Check if already registered
         for (int i = 0; i < interactables.Count; i++)
@@ -614,7 +669,7 @@ public class InteractableObjects : MonoBehaviour
             gameObject = obj,
             glowProfileName = glowProfileName,
             actionType = actionType,
-            amount = 0,
+            amount = amount,
             disabledAlpha = 0.5f
         };
 
@@ -651,6 +706,17 @@ public class InteractableObjects : MonoBehaviour
         }
     }
 
+    public void UnregisterInteractable(GameObject obj)
+    {
+        for (int i = interactables.Count - 1; i >= 0; i--)
+        {
+            if (interactables[i] != null && interactables[i].gameObject == obj)
+            {
+                interactables.RemoveAt(i);
+                return;
+            }
+        }
+    }
 }
 
 
