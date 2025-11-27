@@ -4,6 +4,7 @@ using Solana.Unity.Wallet;
 using Solana.Unity.SDK;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using BlackJackGame = Blackjack.Accounts.BlackJack;
 
 [System.Serializable]
@@ -20,11 +21,9 @@ public class BlackjackTableSimulator : MonoBehaviour
     [SerializeField] private InteractableObjects interactableObjects;
     [SerializeField] private string handButtonGlowProfile = "default";
     
-    [SerializeField] private GameObject seatPrefab;
+    [SerializeField] private List<GameObject> seats = new List<GameObject>();
     [SerializeField] private GameObject handPrefab;
     [SerializeField] private GameObject cardPrefab;
-    [SerializeField] private Transform tablePosition;
-    [SerializeField] private float radius = 1.5f;
 
     [Header("Card Meshes (Ace through King, Joker)")]
     [SerializeField] private Mesh[] rankMeshes = new Mesh[14];
@@ -35,11 +34,9 @@ public class BlackjackTableSimulator : MonoBehaviour
     [Header("Chip Configuration")]
     [SerializeField] private ChipValue[] chipValues;
     [SerializeField] private GameObject chipPrefab;
-    [SerializeField] private float chipStackHeight = 0.02f;
+    [SerializeField] private float chipStackHeight = 0.025f;
 
-    [Header("Dealer")]
-    [SerializeField] private Transform dealerCardGroup;
-
+    private Transform _dealerCardGroup;
     private SeatData[] _seats = new SeatData[0];
     private Dictionary<PublicKey, (BlackJackHand hand, GameObject prefab)> _hands = new();
     private PublicKey[] _seatPlayers;
@@ -50,6 +47,7 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     // Ante buffer for multiple hands
     private List<ulong> _anteBuffer = new List<ulong> { 0 };
+    private List<GameObject> _bufferHands = new List<GameObject>();
     private int _selectedHandIndex = 0;
     
     // Track hands that have declined insurance (by handId)
@@ -58,6 +56,37 @@ public class BlackjackTableSimulator : MonoBehaviour
     public IReadOnlyList<ulong> AnteBuffer => _anteBuffer;
     public int SelectedHandIndex => _selectedHandIndex;
     public ulong SelectedAnte => _anteBuffer[_selectedHandIndex];
+
+    private void Awake()
+    {
+        _dealerCardGroup = transform.Find("dealerCardGroup");
+        InitializeSeats();
+    }
+
+    private void InitializeSeats()
+    {
+        _seats = new SeatData[seats.Count];
+        
+        for (int i = 0; i < seats.Count; i++)
+        {
+            var root = seats[i];
+            if (root == null) continue;
+            
+            var beforeBetting = root.transform.Find("BeforeBettingGroup");
+            var afterBetting = root.transform.Find("AfterBettingGroup");
+            var activeHands = root.transform.Find("ActiveHandsGroup");
+            var buffer = beforeBetting?.Find("bufferGroup");
+            
+            _seats[i] = new SeatData
+            {
+                root = root,
+                beforeBettingGroup = beforeBetting?.gameObject,
+                afterBettingGroup = afterBetting?.gameObject,
+                activeHandsGroup = activeHands,
+                bufferGroup = buffer
+            };
+        }
+    }
 
     private struct SeatData
     {
@@ -90,6 +119,9 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void OnGameUpdated(BlackJackGame game)
     {
+        if (_seats.Length > game.MaxPlayers)
+            Debug.LogWarning($"Seat count ({_seats.Length}) exceeds game maxPlayers ({game.MaxPlayers}), ignoring excess seats");
+
         _seatPlayers = game.Players;
         _antedGameNo = game.AntedGameNo;
         
@@ -98,9 +130,6 @@ public class BlackjackTableSimulator : MonoBehaviour
             _declinedInsurance.Clear();
         
         _gameNo = game.GameNo;
-
-        if (_seats.Length != game.MaxPlayers)
-            InitializeSeats(game.MaxPlayers);
 
         UpdateSeatPlayerStates();
         ReparentAllHands();
@@ -155,45 +184,6 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void OnHandRemoved(PublicKey handPk) => RemoveHand(handPk);
 
-    private void InitializeSeats(int maxPlayers)
-    {
-        foreach (var seat in _seats)
-            Destroy(seat.root);
-        _hands.Clear();
-
-        _seats = new SeatData[maxPlayers];
-        
-        for (int i = 0; i < maxPlayers; i++)
-        {
-            var root = Instantiate(seatPrefab, transform);
-            var beforeBetting = root.transform.Find("BeforeBettingGroup");
-            var afterBetting = root.transform.Find("AfterBettingGroup");
-            var activeHands = root.transform.Find("ActiveHandsGroup");
-            var buffer = beforeBetting?.Find("bufferGroup");
-            
-            _seats[i] = new SeatData
-            {
-                root = root,
-                beforeBettingGroup = beforeBetting?.gameObject,
-                afterBettingGroup = afterBetting?.gameObject,
-                activeHandsGroup = activeHands,
-                bufferGroup = buffer
-            };
-
-            float t = maxPlayers > 1 ? (float)i / (maxPlayers - 1) : 0.5f;
-            float angleDeg = Mathf.Lerp(-90f, 90f, t);
-
-            var rotationOffset = Quaternion.AngleAxis(angleDeg, tablePosition.up);
-            var direction = rotationOffset * tablePosition.forward;
-            var position = tablePosition.position + direction.normalized * radius;
-
-            root.transform.position = position;
-            root.transform.rotation = Quaternion.LookRotation(tablePosition.position - position, tablePosition.up);
-        }
-
-        Debug.Log($"Initialized {maxPlayers} blackjack seats");
-    }
-
     private void UpdateSeatPlayerStates()
     {
         if (_seatPlayers == null) return;
@@ -246,6 +236,10 @@ public class BlackjackTableSimulator : MonoBehaviour
     {
         var handCanvas = handObject.transform.Find("handCanvas");
         if (handCanvas == null) return;
+
+        var infoText = handCanvas.Find("infoText");
+        if (infoText != null)
+            infoText.gameObject.SetActive(false);
 
         var buttonGroup = handCanvas.Find("buttonGroup");
         if (buttonGroup == null) return;
@@ -315,6 +309,8 @@ public class BlackjackTableSimulator : MonoBehaviour
             ReparentHand(kvp.Value.prefab, kvp.Value.hand);
     }
 
+    private Vector3 GetCardOffset(int index) => new Vector3(-0.1f * index, 0.025f * index, -0.15f * index);
+
     private void SyncCardsForHand(GameObject handObject, BlackJackHand hand)
     {
         var cardsGroup = handObject.transform.Find("cardsGroup");
@@ -323,44 +319,57 @@ public class BlackjackTableSimulator : MonoBehaviour
         for (int i = cardsGroup.childCount - 1; i >= 0; i--)
             Destroy(cardsGroup.GetChild(i).gameObject);
 
-        if (hand.GameNo != _gameNo) return;
+        if (hand.GameNo != _gameNo)
+        {
+            cardsGroup.localPosition = new Vector3(0, cardsGroup.localPosition.y, cardsGroup.localPosition.z);
+            return;
+        }
 
         bool hideCards = accountManager.BlackjackGameCache?.DealerCardCount == 1;
+        int cardCount;
 
         if (hideCards)
         {
-            for (int i = 0; i < 2; i++)
+            cardCount = 2;
+            for (int i = 0; i < cardCount; i++)
             {
                 var card = Instantiate(cardPrefab, cardsGroup);
+                card.transform.localPosition = GetCardOffset(i);
                 ConfigureCard(card, 0);
             }
         }
         else
         {
-            for (int i = 0; i < hand.CardCount; i++)
+            cardCount = hand.CardCount;
+            for (int i = 0; i < cardCount; i++)
             {
                 var card = Instantiate(cardPrefab, cardsGroup);
+                card.transform.localPosition = GetCardOffset(i);
                 ConfigureCard(card, hand.PlayerCards[i]);
             }
         }
+
+        cardsGroup.localPosition = new Vector3(cardCount * 0.075f, cardsGroup.localPosition.y, cardsGroup.localPosition.z);
     }
 
     private void SyncDealerCards(BlackJackGame game)
     {
-        if (dealerCardGroup == null) return;
+        if (_dealerCardGroup == null) return;
 
-        for (int i = dealerCardGroup.childCount - 1; i >= 0; i--)
-            Destroy(dealerCardGroup.GetChild(i).gameObject);
+        for (int i = _dealerCardGroup.childCount - 1; i >= 0; i--)
+            Destroy(_dealerCardGroup.GetChild(i).gameObject);
 
         for (int i = 0; i < game.DealerCardCount; i++)
         {
-            var card = Instantiate(cardPrefab, dealerCardGroup);
+            var card = Instantiate(cardPrefab, _dealerCardGroup);
+            card.transform.localPosition = GetCardOffset(i);
             ConfigureCard(card, game.DealerCards[i]);
         }
 
         if (game.DealerCardCount == 1)
         {
-            var hiddenCard = Instantiate(cardPrefab, dealerCardGroup);
+            var hiddenCard = Instantiate(cardPrefab, _dealerCardGroup);
+            hiddenCard.transform.localPosition = GetCardOffset(1);
             ConfigureCard(hiddenCard, 0);
         }
     }
@@ -432,6 +441,14 @@ public class BlackjackTableSimulator : MonoBehaviour
         if (split != null) split.gameObject.SetActive(showSplit);
         if (insurance != null) insurance.gameObject.SetActive(showInsuranceOptions);
         if (declineInsurance != null) declineInsurance.gameObject.SetActive(showInsuranceOptions);
+
+        var infoText = handCanvas.Find("infoText");
+        if (infoText != null)
+        {
+            infoText.gameObject.SetActive(showInsuranceOptions);
+            if (showInsuranceOptions)
+                infoText.GetComponent<TMP_Text>().text = "insurance?";
+        }
     }
 
     private void ConfigureCard(GameObject card, byte cardNumber)
@@ -516,36 +533,61 @@ public class BlackjackTableSimulator : MonoBehaviour
     public void IncrementSelectedAnte(ulong amount)
     {
         _anteBuffer[_selectedHandIndex] += amount;
-        SpawnChipsForAmount(amount);
+        SyncBufferChips();
     }
 
-    private void SpawnChipsForAmount(ulong amount)
+    private void SyncBufferChips()
     {
-        if (chipPrefab == null || amount == 0) return;
+        if (chipPrefab == null) return;
 
-        // Find local player's seat
         int seatIndex = Web3.Account != null ? FindSeatIndexForPlayer(Web3.Account.PublicKey) : -1;
         if (seatIndex < 0 || seatIndex >= _seats.Length) return;
 
         Transform bufferGroup = _seats[seatIndex].bufferGroup;
         if (bufferGroup == null) return;
 
-        var breakdown = GetChipBreakdown(amount);
-        int totalChipsSpawned = bufferGroup.childCount;
-
-        foreach (var (material, count) in breakdown)
+        // Ensure we have the right number of buffer hands
+        while (_bufferHands.Count < _anteBuffer.Count)
         {
-            for (int i = 0; i < count; i++)
+            var hand = Instantiate(handPrefab, bufferGroup);
+            hand.transform.localPosition = Vector3.zero;
+            hand.transform.localRotation = Quaternion.identity;
+            _bufferHands.Add(hand);
+        }
+        while (_bufferHands.Count > _anteBuffer.Count)
+        {
+            Destroy(_bufferHands[_bufferHands.Count - 1]);
+            _bufferHands.RemoveAt(_bufferHands.Count - 1);
+        }
+
+        // Sync chips for each buffer hand
+        for (int h = 0; h < _bufferHands.Count; h++)
+        {
+            var chipGroup = _bufferHands[h].transform.Find("chipGroup");
+            if (chipGroup == null) continue;
+
+            // Clear existing chips
+            for (int i = chipGroup.childCount - 1; i >= 0; i--)
+                Destroy(chipGroup.GetChild(i).gameObject);
+
+            // Spawn chips for this hand's ante
+            var breakdown = GetChipBreakdown(_anteBuffer[h]);
+            int totalChips = 0;
+
+            foreach (var (material, count) in breakdown)
             {
-                var chip = Instantiate(chipPrefab, bufferGroup);
-                chip.transform.localPosition = new Vector3(0, totalChipsSpawned * chipStackHeight, 0);
-                chip.transform.localRotation = Quaternion.identity;
+                for (int i = 0; i < count; i++)
+                {
+                    var chip = Instantiate(chipPrefab, chipGroup);
+                    chip.transform.localPosition = new Vector3(0, totalChips * chipStackHeight, 0);
+                    chip.transform.localRotation = Quaternion.identity;
 
-                var renderer = chip.GetComponentInChildren<MeshRenderer>();
-                if (renderer != null && material != null)
-                    renderer.material = material;
+                    var renderer = chip.GetComponentInChildren<MeshRenderer>();
+                    if (renderer != null && material != null)
+                        renderer.material = material;
 
-                totalChipsSpawned++;
+                    totalChips++;
+                }
             }
         }
     }
@@ -554,6 +596,7 @@ public class BlackjackTableSimulator : MonoBehaviour
     {
         _anteBuffer.Add(_anteBuffer[_selectedHandIndex]);
         _selectedHandIndex = _anteBuffer.Count - 1;
+        SyncBufferChips();
     }
 
     public void RemoveHand()
@@ -563,11 +606,12 @@ public class BlackjackTableSimulator : MonoBehaviour
             _anteBuffer.RemoveAt(_selectedHandIndex);
             if (_selectedHandIndex >= _anteBuffer.Count)
                 _selectedHandIndex = _anteBuffer.Count - 1;
+            SyncBufferChips();
         }
         else
         {
             _anteBuffer[0] = 0;
-            ClearBufferChips();
+            ClearBufferHands();
         }
     }
 
@@ -576,19 +620,14 @@ public class BlackjackTableSimulator : MonoBehaviour
         _anteBuffer.Clear();
         _anteBuffer.Add(0);
         _selectedHandIndex = 0;
-        ClearBufferChips();
+        ClearBufferHands();
     }
 
-    private void ClearBufferChips()
+    private void ClearBufferHands()
     {
-        int seatIndex = Web3.Account != null ? FindSeatIndexForPlayer(Web3.Account.PublicKey) : -1;
-        if (seatIndex < 0 || seatIndex >= _seats.Length) return;
-
-        Transform bufferGroup = _seats[seatIndex].bufferGroup;
-        if (bufferGroup == null) return;
-
-        for (int i = bufferGroup.childCount - 1; i >= 0; i--)
-            Destroy(bufferGroup.GetChild(i).gameObject);
+        foreach (var hand in _bufferHands)
+            Destroy(hand);
+        _bufferHands.Clear();
     }
 
     public void SelectHand(int index)
