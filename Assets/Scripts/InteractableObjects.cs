@@ -21,12 +21,13 @@ public class InteractableObjects : MonoBehaviour
         JoinWorld,
         // Blackjack ante buffer actions
         IncrementAnte,
-        AddHand,
-        RemoveHand,
-        RemoveAllHands,
+        AddBufferHand,
+        RemoveBufferHand,
+        RemoveAllBufferHands,
         SelectHand,
         SubmitAnte,
         // Blackjack gameplay actions
+        BlackjackSelectActiveHand,
         BlackjackHit,
         BlackjackStand,
         BlackjackDouble,
@@ -445,41 +446,51 @@ public class InteractableObjects : MonoBehaviour
             case ActionType.IncrementAnte:
                 if (blackjackTableSimulator != null) blackjackTableSimulator.IncrementSelectedAnte(entry.amount);
                 break;
-            case ActionType.AddHand:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.AddHand();
+            case ActionType.AddBufferHand:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.AddBufferHand();
                 break;
-            case ActionType.RemoveHand:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveHand();
+            case ActionType.RemoveBufferHand:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveBufferHand();
                 break;
-            case ActionType.RemoveAllHands:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveAllHands();
+            case ActionType.RemoveAllBufferHands:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveAllBufferHands();
                 break;
             case ActionType.SelectHand:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.SelectHand((int)entry.amount);
+                if (blackjackTableSimulator != null) blackjackTableSimulator.SelectBufferHand((int)entry.amount);
                 break;
             case ActionType.SubmitAnte:
                 if (blackjackTableSimulator != null) blackjackTableSimulator.SubmitAnte();
                 break;
+            case ActionType.BlackjackSelectActiveHand:
+                if (blackjackTableSimulator != null) blackjackTableSimulator.SelectActiveHand((byte)entry.amount);
+                break;
             case ActionType.BlackjackHit:
-                if (userUI != null) userUI.BlackjackHit((byte)entry.amount);
+                if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
+                    userUI.BlackjackHit(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
             case ActionType.BlackjackStand:
-                if (userUI != null) userUI.BlackjackStand((byte)entry.amount);
+                if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
+                    userUI.BlackjackStand(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
             case ActionType.BlackjackDouble:
-                if (userUI != null) userUI.BlackjackDouble((byte)entry.amount);
+                if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
+                    userUI.BlackjackDouble(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
             case ActionType.BlackjackSplit:
-                if (userUI != null) userUI.BlackjackSplit((byte)entry.amount);
+                if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
+                    userUI.BlackjackSplit(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
             case ActionType.BlackjackAcceptInsurance:
-                if (userUI != null) userUI.BlackjackAcceptInsurance((byte)entry.amount);
+                if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
+                    userUI.BlackjackAcceptInsurance(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
             case ActionType.BlackjackDeclineInsurance:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.DeclineInsurance((byte)entry.amount);
+                if (blackjackTableSimulator?.SelectedActiveHandId != null)
+                    blackjackTableSimulator.DeclineInsurance(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
             case ActionType.BlackjackSettleHand:
-                if (userUI != null) userUI.BlackjackSettleHand((byte)entry.amount);
+                if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
+                    userUI.BlackjackSettleHand(blackjackTableSimulator.SelectedActiveHandId.Value);
                 break;
         }
     }
@@ -542,6 +553,25 @@ public class InteractableObjects : MonoBehaviour
             else if (entry.actionType == ActionType.ClaimBet)
             {
                 entry.label.text = "Claim";
+            }
+            else if (entry.actionType == ActionType.SubmitAnte && blackjackTableSimulator != null)
+            {
+                ulong totalAnte = blackjackTableSimulator.TotalAnte;
+                ulong lastAmount = TextAnimationManager.Instance.GetLastRenderedAmount(entry.label);
+
+                if (totalAnte != lastAmount)
+                {
+                    TextAnimationManager.Instance.AnimateFormattedNumber(
+                        entry.label,
+                        lastAmount,
+                        totalAnte,
+                        prefix: "Bet: "
+                    );
+                }
+                else
+                {
+                    entry.label.text = $"Bet: {FormatShortAmount(totalAnte)}";
+                }
             }
         }
     }
