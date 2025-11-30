@@ -251,7 +251,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Blackjack = blackjack,
             BlackjackHand = blackjackHand,
         };
-        return BlackjackProgram.PlayerDealCards(accounts, handId);
+        return BlackjackProgram.PlayerDealCards(accounts, handId, signer);
     }
 
     public TransactionInstruction PlayerHit(ulong gameId, byte handId)

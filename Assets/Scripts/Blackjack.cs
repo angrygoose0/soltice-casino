@@ -65,11 +65,15 @@ namespace Blackjack
 
             public byte DealerCardCount { get; set; }
 
-            public long NextActionTime { get; set; }
+            public long LastAnteTime { get; set; }
+
+            public long LastPlayerActionTime { get; set; }
 
             public ulong GameNo { get; set; }
 
             public byte ActiveHands { get; set; }
+
+            public byte HandsFinished { get; set; }
 
             public byte MaxPlayers { get; set; }
 
@@ -96,11 +100,15 @@ namespace Blackjack
                 offset += 21;
                 result.DealerCardCount = _data.GetU8(offset);
                 offset += 1;
-                result.NextActionTime = _data.GetS64(offset);
+                result.LastAnteTime = _data.GetS64(offset);
+                offset += 8;
+                result.LastPlayerActionTime = _data.GetS64(offset);
                 offset += 8;
                 result.GameNo = _data.GetU64(offset);
                 offset += 8;
                 result.ActiveHands = _data.GetU8(offset);
+                offset += 1;
+                result.HandsFinished = _data.GetU8(offset);
                 offset += 1;
                 result.MaxPlayers = _data.GetU8(offset);
                 offset += 1;
@@ -382,7 +390,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8UMkGYdEDoQL8dcQvPjLhM6tcUM3zFD6reGzJerugWif");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -422,7 +430,7 @@ namespace Blackjack
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("9KHnFHs2JSA53yu8jSb1icZs8XpxkAEavp3CoSTUrA7B");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("ER2g3hnznLMag4pYu4Nv5UAjw7EwcAr8WSibjXfpuB3m");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -439,7 +447,7 @@ namespace Blackjack
 
             public PublicKey Blackjack { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("9KHnFHs2JSA53yu8jSb1icZs8XpxkAEavp3CoSTUrA7B");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("ER2g3hnznLMag4pYu4Nv5UAjw7EwcAr8WSibjXfpuB3m");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -458,7 +466,7 @@ namespace Blackjack
 
             public PublicKey BlackjackHand { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("9KHnFHs2JSA53yu8jSb1icZs8XpxkAEavp3CoSTUrA7B");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("ER2g3hnznLMag4pYu4Nv5UAjw7EwcAr8WSibjXfpuB3m");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -508,7 +516,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8UMkGYdEDoQL8dcQvPjLhM6tcUM3zFD6reGzJerugWif");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -542,7 +550,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8UMkGYdEDoQL8dcQvPjLhM6tcUM3zFD6reGzJerugWif");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -579,7 +587,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8UMkGYdEDoQL8dcQvPjLhM6tcUM3zFD6reGzJerugWif");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -625,7 +633,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("Et6vWfGsvwJ1Fmk6N8ugsih37yXEXUhgTozoAqPgct1g");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("8UMkGYdEDoQL8dcQvPjLhM6tcUM3zFD6reGzJerugWif");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
             public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey MagicContext { get; set; } = new PublicKey("MagicContext1111111111111111111111111111111");
@@ -633,12 +641,12 @@ namespace Blackjack
 
         public static class BlackjackProgram
         {
-            public const string ID = "9KHnFHs2JSA53yu8jSb1icZs8XpxkAEavp3CoSTUrA7B";
+            public const string ID = "ER2g3hnznLMag4pYu4Nv5UAjw7EwcAr8WSibjXfpuB3m";
             public static Solana.Unity.Rpc.Models.TransactionInstruction AcceptInsurance(AcceptInsuranceAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(5070812016613705564UL, offset);
@@ -785,7 +793,7 @@ namespace Blackjack
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerDealCards(PlayerDealCardsAccounts accounts, byte _hand_id, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerDealCards(PlayerDealCardsAccounts accounts, byte _hand_id, PublicKey _player, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -796,6 +804,8 @@ namespace Blackjack
                 offset += 8;
                 _data.WriteU8(_hand_id, offset);
                 offset += 1;
+                _data.WritePubKey(_player, offset);
+                offset += 32;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
@@ -805,7 +815,7 @@ namespace Blackjack
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Authority, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.UserBalance, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Treasury, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.TreasuryTokenAccount, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.TreasuryProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(16233891453206625025UL, offset);
@@ -819,7 +829,7 @@ namespace Blackjack
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(2507777151813813021UL, offset);
@@ -853,7 +863,7 @@ namespace Blackjack
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.MagicContext, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(18399413966457782912UL, offset);

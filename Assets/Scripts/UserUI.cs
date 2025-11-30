@@ -129,6 +129,7 @@ public class UserUI : MonoBehaviour
         
         UpdateMaxBet();
         UpdateWithdrawButtonVisibility();
+        UpdateUserBetText(accountManager.PlayerBetCache, accountManager.GameCache);
     }
 
     private void OnWalletDisconnected()

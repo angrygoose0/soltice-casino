@@ -24,10 +24,8 @@ public class InteractableObjects : MonoBehaviour
         AddBufferHand,
         RemoveBufferHand,
         RemoveAllBufferHands,
-        SelectHand,
         SubmitAnte,
         // Blackjack gameplay actions
-        BlackjackSelectActiveHand,
         BlackjackHit,
         BlackjackStand,
         BlackjackDouble,
@@ -455,14 +453,8 @@ public class InteractableObjects : MonoBehaviour
             case ActionType.RemoveAllBufferHands:
                 if (blackjackTableSimulator != null) blackjackTableSimulator.RemoveAllBufferHands();
                 break;
-            case ActionType.SelectHand:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.SelectBufferHand((int)entry.amount);
-                break;
             case ActionType.SubmitAnte:
                 if (blackjackTableSimulator != null) blackjackTableSimulator.SubmitAnte();
-                break;
-            case ActionType.BlackjackSelectActiveHand:
-                if (blackjackTableSimulator != null) blackjackTableSimulator.SelectActiveHand((byte)entry.amount);
                 break;
             case ActionType.BlackjackHit:
                 if (userUI != null && blackjackTableSimulator?.SelectedActiveHandId != null)
@@ -665,6 +657,26 @@ public class InteractableObjects : MonoBehaviour
             if (entry != null && entry.actionType == actionType)
             {
                 entry.gameObject.SetActive(enabled);
+            }
+        }
+    }
+
+    public void SetInteractableGlowActive(GameObject obj, bool active)
+    {
+        for (int i = 0; i < interactables.Count; i++)
+        {
+            InteractableEntry entry = interactables[i];
+            if (entry != null && entry.gameObject == obj && entry.cachedGlowProfile != null && feedbackManager != null)
+            {
+                GlowSettings settings = active ? entry.cachedGlowProfile.hover : entry.cachedGlowProfile.idle;
+                FeedbackManager.MaterialGlowState state = new FeedbackManager.MaterialGlowState
+                {
+                    scale = settings.scale,
+                    intensity = settings.intensity,
+                    color = settings.color
+                };
+                feedbackManager.AnimateGlowMaterial(obj, state);
+                return;
             }
         }
     }
