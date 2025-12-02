@@ -686,7 +686,7 @@ public class UserUI : MonoBehaviour
         }
     }
 
-    public async void Ante(ulong[] betAmounts)
+    public async void Ante(byte seatId, ulong[] betAmounts)
     {
         if (betAmounts == null || betAmounts.Length == 0) return;
         
@@ -748,22 +748,23 @@ public class UserUI : MonoBehaviour
                 setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
             
             foreach (var handId in handsToInit)
+            {
                 setupInstructions.Add(blackjackBuilder.InitializePlayerHand(handId));
+                setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(handId));
+            }
+            
+            var existingHandsToDelegate = handsToDelegate.Except(handsToInit).ToList();
+            foreach (var handId in existingHandsToDelegate)
+                setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(handId));
             
             if (setupInstructions.Count > 0)
                 await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
-            
-            if (handsToDelegate.Count > 0)
-            {
-                var delegateIxs = handsToDelegate.Select(h => blackjackBuilder.DelegateBlackjackHand(1, h)).ToArray();
-                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "delegating hands...", delegateIxs);
-            }
             
             var anteIxs = new List<TransactionInstruction>();
             for (int i = 0; i < betAmounts.Length; i++)
             {
                 if (betAmounts[i] > 0)
-                    anteIxs.Add(blackjackBuilder.PlayerAnte(1, handsToUse[i], betAmounts[i]));
+                    anteIxs.Add(blackjackBuilder.PlayerAnte(1, handsToUse[i], seatId, betAmounts[i]));
             }
             
             if (anteIxs.Count > 0)
@@ -897,12 +898,10 @@ public class UserUI : MonoBehaviour
             
             byte newHandId = accountManager.GetNextUnusedHandId();
             setupInstructions.Add(blackjackBuilder.InitializePlayerHand(newHandId));
+            setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(newHandId));
             
             if (setupInstructions.Count > 0)
                 await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
-            
-            var delegateIx = blackjackBuilder.DelegateBlackjackHand(1, newHandId);
-            await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "delegating hand...", delegateIx);
             
             var splitIx = blackjackBuilder.PlayerSplit(1, handId, newHandId);
             await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "splitting...", splitIx);

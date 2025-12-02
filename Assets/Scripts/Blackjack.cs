@@ -214,7 +214,9 @@ namespace Blackjack
             HandsNotSettled = 6010U,
             MaxPlayersReached = 6011U,
             InvalidMaxPlayers = 6012U,
-            NoPlayersAnted = 6013U
+            NoPlayersAnted = 6013U,
+            InvalidSeatId = 6014U,
+            SeatOccupied = 6015U
         }
     }
 
@@ -368,7 +370,7 @@ namespace Blackjack
 
         protected override Dictionary<uint, ProgramError<BlackjackErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<BlackjackErrorKind>>{{6000U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.Unauthorized, "Unauthorized")}, {6001U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ActionTooSoon, "Too soon to perform dealer action")}, {6002U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandAlreadyInUse, "Hand is already in use")}, {6003U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandNotInThisGame, "Hand does not belong to this game")}, {6004U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ArithmeticOverflow, "Arithmetic overflow in calculation")}, {6005U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CannotSplitUnlikeCards, "Cannot split unlike cards")}, {6006U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CardsNotDealt, "Cards not dealt yet")}, {6007U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameNotActive, "Game is not active or dealer turn already completed")}, {6008U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.DealerNotFinished, "Dealer has not finished their turn yet")}, {6009U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameStillInProgress, "Previous game still in progress")}, {6010U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandsNotSettled, "All hands must be settled before starting new game")}, {6011U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.MaxPlayersReached, "Maximum number of players reached")}, {6012U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.InvalidMaxPlayers, "Invalid max players (must be 1-3)")}, {6013U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.NoPlayersAnted, "At least one player must ante before dealing")}, };
+            return new Dictionary<uint, ProgramError<BlackjackErrorKind>>{{6000U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.Unauthorized, "Unauthorized")}, {6001U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ActionTooSoon, "Too soon to perform dealer action")}, {6002U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandAlreadyInUse, "Hand is already in use")}, {6003U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandNotInThisGame, "Hand does not belong to this game")}, {6004U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.ArithmeticOverflow, "Arithmetic overflow in calculation")}, {6005U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CannotSplitUnlikeCards, "Cannot split unlike cards")}, {6006U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.CardsNotDealt, "Cards not dealt yet")}, {6007U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameNotActive, "Game is not active or dealer turn already completed")}, {6008U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.DealerNotFinished, "Dealer has not finished their turn yet")}, {6009U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.GameStillInProgress, "Previous game still in progress")}, {6010U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.HandsNotSettled, "All hands must be settled before starting new game")}, {6011U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.MaxPlayersReached, "Maximum number of players reached")}, {6012U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.InvalidMaxPlayers, "Invalid max players (must be 1-3)")}, {6013U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.NoPlayersAnted, "At least one player must ante before dealing")}, {6014U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.InvalidSeatId, "Invalid seat ID")}, {6015U, new ProgramError<BlackjackErrorKind>(BlackjackErrorKind.SeatOccupied, "Seat is occupied by an active player")}, };
         }
     }
 
@@ -455,8 +457,6 @@ namespace Blackjack
         public class DelegateBlackjackHandAccounts
         {
             public PublicKey Signer { get; set; }
-
-            public PublicKey Blackjack { get; set; }
 
             public PublicKey BufferBlackjackHand { get; set; }
 
@@ -718,7 +718,7 @@ namespace Blackjack
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.Blackjack, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferBlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordBlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataBlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BufferBlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationRecordBlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.DelegationMetadataBlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.BlackjackHand, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OwnerProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.DelegationProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(8577237152105393028UL, offset);
@@ -775,7 +775,7 @@ namespace Blackjack
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerAnte(PlayerAnteAccounts accounts, byte hand_id, ulong player_bet, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerAnte(PlayerAnteAccounts accounts, byte hand_id, byte seat_id, ulong player_bet, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -785,6 +785,8 @@ namespace Blackjack
                 _data.WriteU64(13066935305136486753UL, offset);
                 offset += 8;
                 _data.WriteU8(hand_id, offset);
+                offset += 1;
+                _data.WriteU8(seat_id, offset);
                 offset += 1;
                 _data.WriteU64(player_bet, offset);
                 offset += 8;

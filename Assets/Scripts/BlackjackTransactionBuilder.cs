@@ -187,11 +187,10 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         return BlackjackProgram.DelegateBlackjack(accounts, @params);
     }
 
-    public TransactionInstruction DelegateBlackjackHand(ulong gameId, byte handId, uint commitFrequencyMs = 1000, PublicKey validator = null)
+    public TransactionInstruction DelegateBlackjackHand(byte handId, uint commitFrequencyMs = 1000, PublicKey validator = null)
     {
         if (CurrentUser() == null) return null;
         var user = CurrentUserPk();
-        var blackjack = DeriveBlackjackAccount(gameId);
         var blackjackHand = DeriveBlackjackHandAccount(user, handId);
         var delegationMetadata = DeriveDelegationMetadataAccount(blackjackHand);
         var delegationRecord = DeriveDelegationRecordAccount(blackjackHand);
@@ -202,7 +201,6 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var accounts = new DelegateBlackjackHandAccounts
         {
             Signer = user,
-            Blackjack = blackjack,
             BlackjackHand = blackjackHand,
             DelegationMetadataBlackjackHand = delegationMetadata,
             DelegationRecordBlackjackHand = delegationRecord,
@@ -212,7 +210,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         return BlackjackProgram.DelegateBlackjackHand(accounts, @params);
     }
 
-    public TransactionInstruction PlayerAnte(ulong gameId, byte handId, ulong betAmount)
+    public TransactionInstruction PlayerAnte(ulong gameId, byte handId, byte seatId, ulong betAmount)
     {
         if (CurrentUser() == null) return null;
         var signer = CurrentUserPk();
@@ -235,7 +233,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         };
 
         ulong amountWithDecimals = (ulong)(betAmount * Math.Pow(10, solanaManager.TokenDecimals));
-        return BlackjackProgram.PlayerAnte(accounts, handId, amountWithDecimals);
+        return BlackjackProgram.PlayerAnte(accounts, handId, seatId, amountWithDecimals);
     }
 
     public TransactionInstruction PlayerDealCards(ulong gameId, byte handId)

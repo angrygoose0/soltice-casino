@@ -799,7 +799,10 @@ public class BlackjackTableSimulator : MonoBehaviour
         var betAmounts = _anteBuffer.Where(a => a > 0).ToArray();
         if (betAmounts.Length == 0) return;
         
-        userUI.Ante(betAmounts);
+        int targetSeatIndex = GetTargetSeatIndex();
+        if (targetSeatIndex < 0) return;
+        
+        userUI.Ante((byte)targetSeatIndex, betAmounts);
         RemoveAllBufferHands();
     }
 
