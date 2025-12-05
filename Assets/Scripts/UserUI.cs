@@ -295,8 +295,9 @@ public class UserUI : MonoBehaviour
                 else
                     availableHouseFunds = 0;
                 
-                if (availableHouseFunds >= accountManager.TreasuryCache.UserOwnedAmount)
-                    availableHouseFunds -= accountManager.TreasuryCache.UserOwnedAmount;
+                ulong userOwned = accountManager.TreasuryCache.UserOwnedAmount > 0 ? (ulong)accountManager.TreasuryCache.UserOwnedAmount : 0;
+                if (availableHouseFunds >= userOwned)
+                    availableHouseFunds -= userOwned;
                 else
                     availableHouseFunds = 0;
                 
@@ -446,12 +447,12 @@ public class UserUI : MonoBehaviour
             }
             else
             {
-                StopCountdownAndShowStart();
+                StopCountdown(true);
             }
         }
         else
         {
-            StopCountdownAndHideStart();
+            StopCountdown(false);
         }
     }
 
@@ -468,10 +469,10 @@ public class UserUI : MonoBehaviour
         
         afterBettingText.text = $"Your bet: {currentValue}";
         UIFader.FadeIn(claimButton.gameObject);
-        StopCountdownAndHideStart();
+        StopCountdown(false);
     }
 
-    private void StopCountdownAndShowStart()
+    private void StopCountdown(bool showStart)
     {
         if (_countdownCoroutine != null)
         {
@@ -479,18 +480,8 @@ public class UserUI : MonoBehaviour
             _countdownCoroutine = null;
         }
         if (countdownText != null) countdownText.gameObject.SetActive(false);
-        UIFader.FadeIn(startButton.gameObject);
-    }
-
-    private void StopCountdownAndHideStart()
-    {
-        if (_countdownCoroutine != null)
-        {
-            StopCoroutine(_countdownCoroutine);
-            _countdownCoroutine = null;
-        }
-        if (countdownText != null) countdownText.gameObject.SetActive(false);
-        UIFader.FadeOut(startButton.gameObject);
+        if (showStart) UIFader.FadeIn(startButton.gameObject);
+        else UIFader.FadeOut(startButton.gameObject);
     }
 
     private IEnumerator CountdownToStartAvailable(long nextActionTime)
@@ -517,22 +508,75 @@ public class UserUI : MonoBehaviour
     #endregion
 
     #region Transactions
+    private async Task EnsureDepositAndDelegation(ulong requiredAmount, List<TransactionInstruction> additionalSetup = null)
+    {
+        var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
+        ulong existingBalance = accountManager.UserBalanceCache?.Balance ?? 0;
+        ulong depositAmount = requiredAmount > existingBalance ? requiredAmount - existingBalance : 0;
+        
+        var setupInstructions = additionalSetup ?? new List<TransactionInstruction>();
+        
+        if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+        {
+            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+            
+            if (depositAmount > 0 && userBalanceIsDelegated)
+            {
+                await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", treasuryBuilder.UndelegateUserBalance());
+                userBalanceIsDelegated = false;
+            }
+            
+            if (depositAmount > 0)
+                setupInstructions.Insert(0, treasuryBuilder.DepositTokens(depositAmount));
+            
+            if (!userBalanceIsDelegated)
+                setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
+            
+            if (setupInstructions.Count > 0)
+                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+            
+            if (depositAmount > 0)
+                await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "applying deposit...", treasuryBuilder.ApplyDeposit());
+        }
+        else
+        {
+            if (depositAmount > 0)
+            {
+                setupInstructions.Insert(0, treasuryBuilder.DepositTokens(depositAmount));
+                setupInstructions.Insert(1, treasuryBuilder.ApplyDeposit());
+            }
+            
+            if (setupInstructions.Count > 0)
+                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+        }
+    }
+
     public async void DepositAsync(ulong amount)
     {
         try
         {
-            var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+            var depositTokensIx = treasuryBuilder.DepositTokens(amount);
+            var applyDepositIx = treasuryBuilder.ApplyDeposit();
             
-            if (userBalanceIsDelegated)
+            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
             {
-                var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-                await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
+                var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
+                bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+                
+                if (userBalanceIsDelegated)
+                {
+                    var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
+                }
+                
+                var delegateIx = treasuryBuilder.DelegateUserBalance();
+                await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"depositing {amount}...", depositTokensIx, delegateIx);
+                await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "applying deposit...", applyDepositIx);
             }
-            
-            var userDepositIx = treasuryBuilder.UserDeposit(amount);
-            var delegateIx = treasuryBuilder.DelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"depositing {amount}...", userDepositIx, delegateIx);
+            else
+            {
+                await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"depositing {amount}...", depositTokensIx, applyDepositIx);
+            }
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -547,12 +591,21 @@ public class UserUI : MonoBehaviour
     {
         try
         {
-            var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
+            var requestWithdrawIx = treasuryBuilder.RequestWithdraw(amount);
+            var withdrawTokensIx = treasuryBuilder.WithdrawTokens();
             
-            var userWithdrawIx = treasuryBuilder.UserWithdraw(amount);
-            var delegateIx = treasuryBuilder.DelegateUserBalance();
-            await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"withdrawing {amount}...", userWithdrawIx, delegateIx);
+            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+            {
+                var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+                await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, $"requesting withdraw {amount}...", requestWithdrawIx, undelegateIx);
+                
+                var delegateIx = treasuryBuilder.DelegateUserBalance();
+                await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, "withdrawing...", withdrawTokensIx, delegateIx);
+            }
+            else
+            {
+                await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, $"withdrawing {amount}...", requestWithdrawIx, withdrawTokensIx);
+            }
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -568,7 +621,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
-            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "requesting randomness...", requestRandomnessIx);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 300000u, 20000ul, "requesting randomness...", requestRandomnessIx);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -583,7 +636,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var startGameIx = crashBuilder.StartGame();
-            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "starting game...", startGameIx);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 300000u, 20000ul, "starting game...", startGameIx);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -627,38 +680,68 @@ public class UserUI : MonoBehaviour
                     depositAmount = betAmount - accountManager.UserBalanceCache.Balance;
             }
             
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-
-            if (depositAmount > 0)
+            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
             {
-                if (userBalanceIsDelegated)
+                bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+
+                if (depositAmount > 0)
                 {
-                    var undelegateIx = treasuryBuilder.UndelegateUserBalance();
-                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
-                    userBalanceIsDelegated = false;
+                    if (userBalanceIsDelegated)
+                    {
+                        var undelegateIx = treasuryBuilder.UndelegateUserBalance();
+                        await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", undelegateIx);
+                        userBalanceIsDelegated = false;
+                    }
+                    instructions.Add(treasuryBuilder.DepositTokens(depositAmount));
                 }
-                instructions.Add(treasuryBuilder.UserDeposit(depositAmount));
+
+                if (!userBalanceIsDelegated)
+                    instructions.Add(treasuryBuilder.DelegateUserBalance());
+
+                bool playerBetIsDelegated = await solanaManager.CheckIfDelegated(playerBetPk);
+                if (!playerBetIsDelegated)
+                    instructions.Add(crashBuilder.DelegatePlayerBet());
+
+                bool needsSubscriptionSetup = isInitializingPlayerBet || isInitializingUserBalance;
+
+                if (instructions.Count > 0)
+                {
+                    await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "initializing and depositing...", instructions.ToArray());
+                    
+                    if (needsSubscriptionSetup)
+                        await accountManager.SetupUserAccountSubscriptions();
+                }
+
+                if (depositAmount > 0)
+                {
+                    var applyDepositIx = treasuryBuilder.ApplyDeposit();
+                    await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "applying deposit...", applyDepositIx);
+                }
+
+                var placeBetIx = crashBuilder.PlaceBet(betAmount);
+                await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, $"placing bet {betAmount}...", placeBetIx);
             }
-
-            if (!userBalanceIsDelegated)
-                instructions.Add(treasuryBuilder.DelegateUserBalance());
-
-            bool playerBetIsDelegated = await solanaManager.CheckIfDelegated(playerBetPk);
-            if (!playerBetIsDelegated)
-                instructions.Add(crashBuilder.DelegatePlayerBet());
-
-            bool needsSubscriptionSetup = isInitializingPlayerBet || isInitializingUserBalance;
-
-            if (instructions.Count > 0)
+            else
             {
-                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "initializing and depositing...", instructions.ToArray());
-                
-                if (needsSubscriptionSetup)
-                    await accountManager.SetupUserAccountSubscriptions();
-            }
+                if (depositAmount > 0)
+                {
+                    instructions.Add(treasuryBuilder.DepositTokens(depositAmount));
+                    instructions.Add(treasuryBuilder.ApplyDeposit());
+                }
 
-            var placeBetIx = crashBuilder.PlaceBet(betAmount);
-            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, $"placing bet {betAmount}...", placeBetIx);
+                bool needsSubscriptionSetup = isInitializingPlayerBet || isInitializingUserBalance;
+
+                if (instructions.Count > 0)
+                {
+                    await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "initializing and depositing...", instructions.ToArray());
+                    
+                    if (needsSubscriptionSetup)
+                        await accountManager.SetupUserAccountSubscriptions();
+                }
+
+                var placeBetIx = crashBuilder.PlaceBet(betAmount);
+                await solanaManager.SendAndConfirmTransaction(false, 300000u, 20000ul, $"placing bet {betAmount}...", placeBetIx);
+            }
             
             feedbackManager?.PlaySuccessSound();
         }
@@ -674,7 +757,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var claimBetIx = crashBuilder.ClaimBet();
-            await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "claiming bet...", claimBetIx);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 300000u, 20000ul, "claiming bet...", claimBetIx);
             
             feedbackManager?.PlaySuccessSound();
             feedbackManager?.PlayCashFountainSound();
@@ -699,7 +782,6 @@ public class UserUI : MonoBehaviour
             
             var handsToUse = new List<byte>();
             var handsToInit = new List<byte>();
-            var handsToDelegate = new List<byte>();
             
             for (int i = 0; i < betAmounts.Length; i++)
             {
@@ -712,15 +794,7 @@ public class UserUI : MonoBehaviour
                     byte newHandId = accountManager.GetNextUnusedHandId();
                     handsToUse.Add(newHandId);
                     handsToInit.Add(newHandId);
-                    handsToDelegate.Add(newHandId);
                 }
-            }
-            
-            foreach (var handId in handsToUse.Except(handsToInit))
-            {
-                var handPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, handId);
-                if (!await solanaManager.CheckIfDelegated(handPk))
-                    handsToDelegate.Add(handId);
             }
             
             var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
@@ -732,43 +806,86 @@ public class UserUI : MonoBehaviour
             
             ulong existingBalance = accountManager.UserBalanceCache?.Balance ?? 0;
             ulong depositAmount = totalBet > existingBalance ? totalBet - existingBalance : 0;
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
             
-            if (depositAmount > 0)
+            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
             {
-                if (userBalanceIsDelegated)
+                var handsToDelegate = new List<byte>(handsToInit);
+                
+                foreach (var handId in handsToUse.Except(handsToInit))
                 {
-                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", treasuryBuilder.UndelegateUserBalance());
-                    userBalanceIsDelegated = false;
+                    var handPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, handId);
+                    if (!await solanaManager.CheckIfDelegated(handPk))
+                        handsToDelegate.Add(handId);
                 }
-                setupInstructions.Add(treasuryBuilder.UserDeposit(depositAmount));
+                
+                bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
+                
+                if (depositAmount > 0)
+                {
+                    if (userBalanceIsDelegated)
+                    {
+                        await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", treasuryBuilder.UndelegateUserBalance());
+                        userBalanceIsDelegated = false;
+                    }
+                    setupInstructions.Add(treasuryBuilder.DepositTokens(depositAmount));
+                }
+                
+                if (!userBalanceIsDelegated)
+                    setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
+                
+                foreach (var handId in handsToInit)
+                {
+                    setupInstructions.Add(blackjackBuilder.InitializePlayerHand(handId));
+                    setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(handId));
+                }
+                
+                var existingHandsToDelegate = handsToDelegate.Except(handsToInit).ToList();
+                foreach (var handId in existingHandsToDelegate)
+                    setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(handId));
+                
+                if (setupInstructions.Count > 0)
+                    await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+                
+                if (depositAmount > 0)
+                {
+                    var applyDepositIx = treasuryBuilder.ApplyDeposit();
+                    await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, "applying deposit...", applyDepositIx);
+                }
+                
+                var anteIxs = new List<TransactionInstruction>();
+                for (int i = 0; i < betAmounts.Length; i++)
+                {
+                    if (betAmounts[i] > 0)
+                        anteIxs.Add(blackjackBuilder.PlayerAnte(1, handsToUse[i], seatId, betAmounts[i]));
+                }
+                
+                if (anteIxs.Count > 0)
+                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "placing ante...", anteIxs.ToArray());
             }
-            
-            if (!userBalanceIsDelegated)
-                setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
-            
-            foreach (var handId in handsToInit)
+            else
             {
-                setupInstructions.Add(blackjackBuilder.InitializePlayerHand(handId));
-                setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(handId));
+                if (depositAmount > 0)
+                {
+                    setupInstructions.Add(treasuryBuilder.DepositTokens(depositAmount));
+                    setupInstructions.Add(treasuryBuilder.ApplyDeposit());
+                }
+                
+                foreach (var handId in handsToInit)
+                    setupInstructions.Add(blackjackBuilder.InitializePlayerHand(handId));
+                
+                if (setupInstructions.Count > 0)
+                    await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+                
+                var anteIxs = new List<TransactionInstruction>();
+                for (int i = 0; i < betAmounts.Length; i++)
+                {
+                    if (betAmounts[i] > 0)
+                        anteIxs.Add(blackjackBuilder.PlayerAnte(1, handsToUse[i], seatId, betAmounts[i]));
+                }
+                
+                if (anteIxs.Count > 0)
+                    await solanaManager.SendAndConfirmTransaction(false, 400000u, 20000ul, "placing ante...", anteIxs.ToArray());
             }
-            
-            var existingHandsToDelegate = handsToDelegate.Except(handsToInit).ToList();
-            foreach (var handId in existingHandsToDelegate)
-                setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(handId));
-            
-            if (setupInstructions.Count > 0)
-                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
-            
-            var anteIxs = new List<TransactionInstruction>();
-            for (int i = 0; i < betAmounts.Length; i++)
-            {
-                if (betAmounts[i] > 0)
-                    anteIxs.Add(blackjackBuilder.PlayerAnte(1, handsToUse[i], seatId, betAmounts[i]));
-            }
-            
-            if (anteIxs.Count > 0)
-                await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "placing ante...", anteIxs.ToArray());
             
             foreach (var handId in handsToInit)
             {
@@ -793,7 +910,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var ix = blackjackBuilder.PlayerHit(1, handId);
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "hitting...", ix);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "hitting...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -808,7 +925,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var ix = blackjackBuilder.PlayerStand(1, handId);
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "standing...", ix);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "standing...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -829,32 +946,10 @@ public class UserUI : MonoBehaviour
                 return;
             }
             
-            ulong additionalBet = hand.OriginalBet;
-            var setupInstructions = new List<TransactionInstruction>();
-            
-            var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
-            ulong existingBalance = accountManager.UserBalanceCache?.Balance ?? 0;
-            ulong depositAmount = additionalBet > existingBalance ? additionalBet - existingBalance : 0;
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-            
-            if (depositAmount > 0)
-            {
-                if (userBalanceIsDelegated)
-                {
-                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", treasuryBuilder.UndelegateUserBalance());
-                    userBalanceIsDelegated = false;
-                }
-                setupInstructions.Add(treasuryBuilder.UserDeposit(depositAmount));
-            }
-            
-            if (!userBalanceIsDelegated)
-                setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
-            
-            if (setupInstructions.Count > 0)
-                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+            await EnsureDepositAndDelegation(hand.OriginalBet);
             
             var ix = blackjackBuilder.PlayerDouble(1, handId);
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "doubling...", ix);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "doubling...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -875,41 +970,19 @@ public class UserUI : MonoBehaviour
                 return;
             }
             
-            ulong additionalBet = hand.OriginalBet;
-            var setupInstructions = new List<TransactionInstruction>();
-            
-            var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
-            ulong existingBalance = accountManager.UserBalanceCache?.Balance ?? 0;
-            ulong depositAmount = additionalBet > existingBalance ? additionalBet - existingBalance : 0;
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-            
-            if (depositAmount > 0)
-            {
-                if (userBalanceIsDelegated)
-                {
-                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", treasuryBuilder.UndelegateUserBalance());
-                    userBalanceIsDelegated = false;
-                }
-                setupInstructions.Add(treasuryBuilder.UserDeposit(depositAmount));
-            }
-            
-            if (!userBalanceIsDelegated)
-                setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
-            
             byte newHandId = accountManager.GetNextUnusedHandId();
-            setupInstructions.Add(blackjackBuilder.InitializePlayerHand(newHandId));
-            setupInstructions.Add(blackjackBuilder.DelegateBlackjackHand(newHandId));
+            var handSetup = new List<TransactionInstruction> { blackjackBuilder.InitializePlayerHand(newHandId) };
+            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+                handSetup.Add(blackjackBuilder.DelegateBlackjackHand(newHandId));
             
-            if (setupInstructions.Count > 0)
-                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+            await EnsureDepositAndDelegation(hand.OriginalBet, handSetup);
             
             var splitIx = blackjackBuilder.PlayerSplit(1, handId, newHandId);
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "splitting...", splitIx);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "splitting...", splitIx);
             
             var newHandPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, newHandId);
             accountManager.TrackUserHand(newHandPk);
             await accountManager.SubscribeToBlackjackHands(new List<Solana.Unity.Wallet.PublicKey> { newHandPk });
-            
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -930,32 +1003,10 @@ public class UserUI : MonoBehaviour
                 return;
             }
             
-            ulong insuranceAmount = hand.CurrentBet / 2;
-            var setupInstructions = new List<TransactionInstruction>();
-            
-            var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
-            ulong existingBalance = accountManager.UserBalanceCache?.Balance ?? 0;
-            ulong depositAmount = insuranceAmount > existingBalance ? insuranceAmount - existingBalance : 0;
-            bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
-            
-            if (depositAmount > 0)
-            {
-                if (userBalanceIsDelegated)
-                {
-                    await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "undelegating balance...", treasuryBuilder.UndelegateUserBalance());
-                    userBalanceIsDelegated = false;
-                }
-                setupInstructions.Add(treasuryBuilder.UserDeposit(depositAmount));
-            }
-            
-            if (!userBalanceIsDelegated)
-                setupInstructions.Add(treasuryBuilder.DelegateUserBalance());
-            
-            if (setupInstructions.Count > 0)
-                await solanaManager.SendAndConfirmTransaction(false, 500000u, 20000ul, "setting up...", setupInstructions.ToArray());
+            await EnsureDepositAndDelegation(hand.CurrentBet / 2);
             
             var ix = blackjackBuilder.AcceptInsurance(1, handId);
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "accepting insurance...", ix);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "accepting insurance...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -970,7 +1021,7 @@ public class UserUI : MonoBehaviour
         try
         {
             var ix = blackjackBuilder.SettleHand(1, handId, Web3.Account.PublicKey);
-            await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, "settling...", ix);
+            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "settling...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)

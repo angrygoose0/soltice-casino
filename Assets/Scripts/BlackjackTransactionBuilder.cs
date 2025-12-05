@@ -219,6 +219,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryConfig = TreasuryTransactionBuilder.DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 
         var accounts = new PlayerAnteAccounts
@@ -229,6 +230,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Authority = authority,
             UserBalance = userBalance,
             Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
         };
 
@@ -293,6 +295,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryConfig = TreasuryTransactionBuilder.DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 
         var accounts = new PlayerDoubleAccounts
@@ -303,6 +306,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Authority = authority,
             UserBalance = userBalance,
             Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
         };
         return BlackjackProgram.PlayerDouble(accounts);
@@ -317,6 +321,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryConfig = TreasuryTransactionBuilder.DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 
         var accounts = new AcceptInsuranceAccounts
@@ -327,6 +332,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Authority = authority,
             UserBalance = userBalance,
             Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
         };
         return BlackjackProgram.AcceptInsurance(accounts);
@@ -342,6 +348,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryConfig = TreasuryTransactionBuilder.DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 
         var accounts = new PlayerSplitAccounts
@@ -353,6 +360,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Authority = authority,
             UserBalance = userBalance,
             Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
         };
         return BlackjackProgram.PlayerSplit(accounts, existingHandId, newHandId);
@@ -395,7 +403,6 @@ public class BlackjackTransactionBuilder : MonoBehaviour
         var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(player);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
-        var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 
         var accounts = new SettleHandAccounts
         {
@@ -405,7 +412,6 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Authority = authority,
             UserBalance = userBalance,
             Treasury = treasury,
-            TreasuryTokenAccount = treasuryTokenAccount,
         };
         return BlackjackProgram.SettleHand(accounts, handId, player);
     }

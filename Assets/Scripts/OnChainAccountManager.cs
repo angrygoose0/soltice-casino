@@ -116,11 +116,11 @@ public class OnChainAccountManager : MonoBehaviour
             gamePk,
             HandleGameUpdate,
             data => Game.Deserialize(data),
-            forceDelegated: true
+            forceDelegated: SolanaManager.USE_EPHEMERAL_ROLLUPS
         );
 
         if (string.IsNullOrEmpty(id))
-            Debug.LogError("Failed to subscribe to delegated game account");
+            Debug.LogError("Failed to subscribe to game account");
     }
 
     public async void SetupBlackjackGameSubscription()
@@ -132,11 +132,11 @@ public class OnChainAccountManager : MonoBehaviour
             blackjackPk,
             HandleBlackjackGameUpdate,
             data => BlackJackGame.Deserialize(data),
-            forceDelegated: true
+            forceDelegated: SolanaManager.USE_EPHEMERAL_ROLLUPS
         );
 
         if (string.IsNullOrEmpty(id))
-            Debug.LogError("Failed to subscribe to delegated blackjack game account");
+            Debug.LogError("Failed to subscribe to blackjack game account");
         
         var gameHands = await GetBlackjackHands(blackjackPk, 8);
         Debug.Log($"Found {gameHands.Count} blackjack hands for game {blackjackPk}");
@@ -195,6 +195,14 @@ public class OnChainAccountManager : MonoBehaviour
         Action<T> callback,
         Func<byte[], T> deserializer)
     {
+        if (!SolanaManager.USE_EPHEMERAL_ROLLUPS)
+        {
+            // Non-ephemeral mode: just load and subscribe via mainnet
+            return await SubscriptionManager.Instance.SubscribeAndLoad<T>(
+                accountPk, callback, deserializer, forceDelegated: false
+            );
+        }
+        
         var initialData = await SubscriptionManager.Instance.LoadAccountData<T>(
             accountPk, deserializer, forceDelegated: true
         );
@@ -238,7 +246,9 @@ public class OnChainAccountManager : MonoBehaviour
     // BlackJackHand offsets: discriminator=0, blackjack=8, player=40
     public async Task<List<PublicKey>> GetBlackjackHands(PublicKey filterKey, ulong offset)
     {
-        var rpcClient = SolanaManager.EphemeralWallet?.ActiveRpcClient;
+        var rpcClient = SolanaManager.USE_EPHEMERAL_ROLLUPS 
+            ? SolanaManager.EphemeralWallet?.ActiveRpcClient 
+            : Web3.Instance?.WalletBase?.ActiveRpcClient;
         if (rpcClient == null) return new List<PublicKey>();
         
         try
@@ -275,7 +285,7 @@ public class OnChainAccountManager : MonoBehaviour
                 handPk,
                 data => HandleBlackjackHandUpdate(handPk, data),
                 data => BlackJackHand.Deserialize(data),
-                forceDelegated: true
+                forceDelegated: SolanaManager.USE_EPHEMERAL_ROLLUPS
             );
             
             if (!string.IsNullOrEmpty(subId))

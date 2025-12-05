@@ -54,6 +54,28 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return pda;
     }
 
+    public static PublicKey DeriveTreasuryConfigAccount()
+    {
+        PublicKey.TryFindProgramAddress(new[] { Encoding.UTF8.GetBytes("TREASURY_CONFIG") }, _programId, out PublicKey pda, out _);
+        return pda;
+    }
+
+    public static PublicKey DeriveStakingTokenMint()
+    {
+        byte[] seed1 = Encoding.UTF8.GetBytes("STAKE_MINT");
+        byte[] seed2 = Encoding.UTF8.GetBytes("stake_mint_v1");
+        PublicKey.TryFindProgramAddress(new[] { seed1, seed2 }, _programId, out PublicKey pda, out _);
+        return pda;
+    }
+
+    public static PublicKey DeriveTreasuryStakeTokenAccount()
+    {
+        byte[] seed1 = Encoding.UTF8.GetBytes("STAKE_TOKEN");
+        byte[] seed2 = Encoding.UTF8.GetBytes("stake_token_v1");
+        PublicKey.TryFindProgramAddress(new[] { seed1, seed2 }, _programId, out PublicKey pda, out _);
+        return pda;
+    }
+
     public static PublicKey DeriveUserTokenAccount(PublicKey user, PublicKey mint)
     {
         return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(user, mint);
@@ -110,13 +132,19 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
         var signer = CurrentUserPk();
         var treasury = DeriveTreasuryAccount();
+        var treasuryConfig = DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
+        var stakingTokenMint = DeriveStakingTokenMint();
+        var treasuryStakeTokenAccount = DeriveTreasuryStakeTokenAccount();
 
         var accounts = new InitializeTreasuryAccounts
         {
             Signer = signer,
             Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
+            StakingTokenMint = stakingTokenMint,
             TreasuryTokenAccount = treasuryTokenAccount,
+            TreasuryStakeTokenAccount = treasuryStakeTokenAccount,
             TokenProgram = TOKEN_PROGRAM_ID,
         };
 
@@ -185,32 +213,32 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return ix;
     }
 
-    public TransactionInstruction UserDeposit(ulong amount)
+    public TransactionInstruction DepositTokens(ulong amount)
     {
         if (CurrentUser() == null) return null;
 
         var signer = CurrentUserPk();
         var userBalance = DeriveUserBalanceAccount(signer);
         var userAta = DeriveUserTokenAccount(signer, solanaManager.MintPublicKey);
-        var treasury = DeriveTreasuryAccount();
+        var treasuryConfig = DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
 
-        var accounts = new UserDepositAccounts
+        var accounts = new DepositTokensAccounts
         {
             Signer = signer,
             UserBalance = userBalance,
             UserTokenAccount = userAta,
-            Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
             TokenProgram = TOKEN_PROGRAM_ID,
         };
 
         ulong amountWithDecimals = (ulong)(amount * Math.Pow(10, solanaManager.TokenDecimals));
-        var ix = TreasuryProgram.UserDeposit(accounts, amountWithDecimals);
+        var ix = TreasuryProgram.DepositTokens(accounts, amountWithDecimals);
         return ix;
     }
 
-    public TransactionInstruction UserWithdraw(ulong amount)
+    public TransactionInstruction WithdrawTokens()
     {
         if (CurrentUser() == null) return null;
 
@@ -218,20 +246,60 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var userBalance = DeriveUserBalanceAccount(signer);
         var userAta = DeriveUserTokenAccount(signer, solanaManager.MintPublicKey);
         var treasury = DeriveTreasuryAccount();
+        var treasuryConfig = DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
 
-        var accounts = new UserWithdrawAccounts
+        var accounts = new WithdrawTokensAccounts
         {
             Signer = signer,
             UserBalance = userBalance,
             UserTokenAccount = userAta,
             Treasury = treasury,
+            TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
             TokenProgram = TOKEN_PROGRAM_ID,
         };
 
+        var ix = TreasuryProgram.WithdrawTokens(accounts);
+        return ix;
+    }
+
+    public TransactionInstruction RequestWithdraw(ulong amount)
+    {
+        if (CurrentUser() == null) return null;
+
+        var signer = CurrentUserPk();
+        var userBalance = DeriveUserBalanceAccount(signer);
+        var treasury = DeriveTreasuryAccount();
+
+        var accounts = new RequestWithdrawAccounts
+        {
+            Signer = signer,
+            UserBalance = userBalance,
+            Treasury = treasury,
+        };
+
         ulong amountWithDecimals = (ulong)(amount * Math.Pow(10, solanaManager.TokenDecimals));
-        var ix = TreasuryProgram.UserWithdraw(accounts, amountWithDecimals);
+        var ix = TreasuryProgram.RequestWithdraw(accounts, amountWithDecimals);
+        return ix;
+    }
+
+    public TransactionInstruction ApplyDeposit()
+    {
+        if (CurrentUser() == null) return null;
+
+        var signer = CurrentUserPk();
+        var userBalance = DeriveUserBalanceAccount(signer);
+        var treasury = DeriveTreasuryAccount();
+
+        var accounts = new ApplyDepositAccounts
+        {
+            Signer = signer,
+            UserBalance = userBalance,
+            Treasury = treasury,
+        };
+
+        var ix = TreasuryProgram.ApplyDeposit(accounts);
         return ix;
     }
 }

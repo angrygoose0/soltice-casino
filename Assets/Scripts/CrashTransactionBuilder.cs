@@ -279,6 +279,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryConfig = TreasuryTransactionBuilder.DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 		PublicKey sessionToken = null;
 		if (SessionManager.SessionToken != null)
@@ -296,8 +297,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Authority = authority,
 			UserBalance = userBalance,
 			Treasury = treasury,
+			TreasuryConfig = treasuryConfig,
 			TreasuryTokenAccount = treasuryTokenAccount,
-			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
 
         ulong amountWithDecimals = (ulong)(amountTokens * Math.Pow(10, solanaManager.TokenDecimals));
@@ -314,6 +315,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var authority = DeriveAuthorityAccount();
         var userBalance = TreasuryTransactionBuilder.DeriveUserBalanceAccount(signer);
         var treasury = TreasuryTransactionBuilder.DeriveTreasuryAccount();
+        var treasuryConfig = TreasuryTransactionBuilder.DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = TreasuryTransactionBuilder.DeriveTreasuryTokenAccount();
 		PublicKey sessionToken = null;
 		if (SessionManager.SessionToken != null)
@@ -330,8 +332,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			Authority = authority,
 			UserBalance = userBalance,
 			Treasury = treasury,
+			TreasuryConfig = treasuryConfig,
 			TreasuryTokenAccount = treasuryTokenAccount,
-			// TreasuryProgram, MagicProgram, MagicContext use defaults from generated client
 		};
         var ix = CrashProgram.ClaimBet(accounts);
         return ix;
