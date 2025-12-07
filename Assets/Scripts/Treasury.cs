@@ -395,7 +395,7 @@ namespace Treasury
 
             public PublicKey Treasury { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("4vPABcv4v2KTm5L3iur8tFVg5CLjymPJfwb8zWHeXXCh");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("B8XgzKDuVj3nXaKv6vftN9UJ927BSNFM2kTJED8mYxKq");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -412,7 +412,7 @@ namespace Treasury
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("4vPABcv4v2KTm5L3iur8tFVg5CLjymPJfwb8zWHeXXCh");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("B8XgzKDuVj3nXaKv6vftN9UJ927BSNFM2kTJED8mYxKq");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -549,7 +549,7 @@ namespace Treasury
 
         public static class TreasuryProgram
         {
-            public const string ID = "4vPABcv4v2KTm5L3iur8tFVg5CLjymPJfwb8zWHeXXCh";
+            public const string ID = "B8XgzKDuVj3nXaKv6vftN9UJ927BSNFM2kTJED8mYxKq";
             public static Solana.Unity.Rpc.Models.TransactionInstruction ApplyDeposit(ApplyDepositAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
