@@ -32,7 +32,8 @@ public class SubscriptionManager : MonoBehaviour
     }
 
     private readonly Dictionary<string, AccountSubscription> _subscriptions = new Dictionary<string, AccountSubscription>();
-    private SolanaManager _solanaManager;
+    private SolanaManager _solanaManagerCache;
+    private SolanaManager SolanaManagerInstance => _solanaManagerCache ??= FindObjectOfType<SolanaManager>();
 
     private void Awake()
     {
@@ -43,11 +44,6 @@ public class SubscriptionManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-
-    private void Start()
-    {
-        _solanaManager = FindObjectOfType<SolanaManager>();
     }
 
     /// <summary>
@@ -90,7 +86,7 @@ public class SubscriptionManager : MonoBehaviour
         }
 
         // Determine if account is delegated
-        bool isDelegated = forceDelegated ?? await _solanaManager.CheckIfDelegated(accountAddress);
+        bool isDelegated = forceDelegated ?? await SolanaManagerInstance.CheckIfDelegated(accountAddress);
         
         // If forceDelegated is true but account isn't actually delegated, fail
         if (forceDelegated == true && !isDelegated)
@@ -110,10 +106,7 @@ public class SubscriptionManager : MonoBehaviour
         // Get appropriate streaming client
         var streamingClient = await GetStreamingClient(isDelegated);
         if (streamingClient == null || streamingClient.State != WebSocketState.Open)
-        {
-            Debug.LogError($"WebSocket connection not available for {(isDelegated ? "delegated" : "mainnet")} endpoint");
-            return null;
-        }
+            return null; // Already logged in GetStreamingClient
 
         // Subscribe to account changes
         try
@@ -166,7 +159,7 @@ public class SubscriptionManager : MonoBehaviour
         Func<byte[], T> deserializer = null,
         bool? forceDelegated = null)
     {
-        bool isDelegated = forceDelegated ?? await _solanaManager.CheckIfDelegated(accountAddress);
+        bool isDelegated = forceDelegated ?? await SolanaManagerInstance.CheckIfDelegated(accountAddress);
         
         // If forceDelegated is true but account isn't actually delegated, fail
         if (forceDelegated == true && !isDelegated)
@@ -176,6 +169,11 @@ public class SubscriptionManager : MonoBehaviour
         }
         
         var rpcClient = GetRpcClient(isDelegated);
+        if (rpcClient == null)
+        {
+            Debug.LogError($"RPC client not available for {(isDelegated ? "delegated" : "mainnet")} endpoint");
+            return default;
+        }
 
         var result = await rpcClient.GetAccountInfoAsync(accountAddress, Commitment.Confirmed);
         if (!result.WasSuccessful || result.Result.Value == null)
@@ -271,7 +269,8 @@ public class SubscriptionManager : MonoBehaviour
         
         if (wallet == null)
         {
-            Debug.LogError($"{(isDelegated ? "Ephemeral" : "Main")} wallet not initialized");
+            // This is expected before wallet connection - subscriptions will be set up later
+            Debug.Log($"Skipping subscription: {(isDelegated ? "ephemeral" : "main")} wallet not connected yet");
             return null;
         }
 
@@ -286,9 +285,11 @@ public class SubscriptionManager : MonoBehaviour
 
     private IRpcClient GetRpcClient(bool isDelegated)
     {
-        return isDelegated 
-            ? SolanaManager.EphemeralWallet?.ActiveRpcClient 
-            : Web3.Wallet?.ActiveRpcClient;
+        if (isDelegated)
+            return SolanaManager.EphemeralWallet?.ActiveRpcClient;
+        
+        // Web3.Rpc is available before wallet connection, Web3.Wallet requires login
+        return Web3.Wallet?.ActiveRpcClient ?? Web3.Rpc;
     }
 
     private async void HandleAccountUpdate<T>(

@@ -74,6 +74,10 @@ public class OnChainAccountManager : MonoBehaviour
     {
         try
         {
+            // Retry game subscriptions now that wallet is connected (for WebSocket)
+            SetupGameSubscription();
+            SetupBlackjackGameSubscription();
+            
             await SetupTreasurySubscription();
             await SetupUserAccountSubscriptions();
             
