@@ -152,9 +152,8 @@ namespace Treasury
             UnauthorizedCaller = 6001U,
             InvalidAmount = 6002U,
             InvalidStakeAmount = 6003U,
-            ActiveBetInProgress = 6004U,
-            InsufficientTreasuryFunds = 6005U,
-            UnauthorizedGame = 6006U
+            InsufficientTreasuryFunds = 6004U,
+            UnauthorizedGame = 6005U
         }
     }
 
@@ -312,7 +311,7 @@ namespace Treasury
 
         protected override Dictionary<uint, ProgramError<TreasuryErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<TreasuryErrorKind>>{{6000U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientBalance, "Insufficient balance")}, {6001U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedCaller, "Unauthorized caller")}, {6002U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidAmount, "Invalid amount")}, {6003U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidStakeAmount, "Invalid stake amount")}, {6004U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.ActiveBetInProgress, "Active bet in progress")}, {6005U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientTreasuryFunds, "Insufficient treasury funds")}, {6006U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedGame, "Unauthorized game program")}, };
+            return new Dictionary<uint, ProgramError<TreasuryErrorKind>>{{6000U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientBalance, "Insufficient balance")}, {6001U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedCaller, "Unauthorized caller")}, {6002U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidAmount, "Invalid amount")}, {6003U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InvalidStakeAmount, "Invalid stake amount")}, {6004U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.InsufficientTreasuryFunds, "Insufficient treasury funds")}, {6005U, new ProgramError<TreasuryErrorKind>(TreasuryErrorKind.UnauthorizedGame, "Unauthorized game program")}, };
         }
     }
 
@@ -395,7 +394,7 @@ namespace Treasury
 
             public PublicKey Treasury { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B8XgzKDuVj3nXaKv6vftN9UJ927BSNFM2kTJED8mYxKq");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -412,7 +411,7 @@ namespace Treasury
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("B8XgzKDuVj3nXaKv6vftN9UJ927BSNFM2kTJED8mYxKq");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -549,7 +548,7 @@ namespace Treasury
 
         public static class TreasuryProgram
         {
-            public const string ID = "B8XgzKDuVj3nXaKv6vftN9UJ927BSNFM2kTJED8mYxKq";
+            public const string ID = "397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm";
             public static Solana.Unity.Rpc.Models.TransactionInstruction ApplyDeposit(ApplyDepositAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
@@ -594,7 +593,7 @@ namespace Treasury
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, ulong amount, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction CreditPlayer(CreditPlayerAccounts accounts, ulong amount, ulong buffer_to_release, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -604,6 +603,8 @@ namespace Treasury
                 _data.WriteU64(8012807824712303984UL, offset);
                 offset += 8;
                 _data.WriteU64(amount, offset);
+                offset += 8;
+                _data.WriteU64(buffer_to_release, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);

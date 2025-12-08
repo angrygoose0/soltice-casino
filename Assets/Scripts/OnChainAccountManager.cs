@@ -252,7 +252,7 @@ public class OnChainAccountManager : MonoBehaviour
     {
         var rpcClient = SolanaManager.USE_EPHEMERAL_ROLLUPS 
             ? SolanaManager.EphemeralWallet?.ActiveRpcClient 
-            : Web3.Instance?.WalletBase?.ActiveRpcClient;
+            : Web3.Rpc;
         if (rpcClient == null) return new List<PublicKey>();
         
         try
@@ -284,6 +284,8 @@ public class OnChainAccountManager : MonoBehaviour
         {
             if (_blackjackHandSubscriptionIds.ContainsKey(handPk))
                 continue;
+            
+            Debug.Log($"[OnChainAcctMgr] Setting up hand subscription - PK: {handPk}, SubscribedGame: {SubscribedBlackjackPk}");
             
             var subId = await SubscriptionManager.Instance.SubscribeAndLoad<BlackJackHand>(
                 handPk,

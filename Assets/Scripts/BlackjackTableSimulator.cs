@@ -22,6 +22,7 @@ public class BlackjackTableSimulator : MonoBehaviour
     [SerializeField] private InteractableObjects interactableObjects;
     [SerializeField] private PlayerProximityCanvas playerProximityCanvas;
     [SerializeField] private SpringManager springManager;
+    [SerializeField] private SolanaManager solanaManager;
     [SerializeField] private string handButtonGlowProfile = "default";
     
     [SerializeField] private List<GameObject> seats = new List<GameObject>();
@@ -68,11 +69,10 @@ public class BlackjackTableSimulator : MonoBehaviour
     private int _lastTargetSeatIndex = -1;
     
     // Spring keys for smooth position/rotation transitions
-    private string _actionCanvasSpringX, _actionCanvasSpringY, _actionCanvasSpringZ, _actionCanvasSpringRotY;
-    private string _bufferHandSpringX, _bufferHandSpringY, _bufferHandSpringZ, _bufferHandSpringRotY;
+    private string[] _actionCanvasSprings = new string[4]; // x, y, z, rotY
+    private string[] _bufferHandSprings = new string[4];   // x, y, z, rotY
     private Vector3 _actionCanvasTargetLocal = new Vector3(0, 0.5f, -0.5f);
     private Vector3 _bufferHandTargetLocal = Vector3.zero;
-    private int _springCounter = 0;
     
     // Track chip group amounts for proper drop-then-merge behavior
     private Dictionary<Transform, ulong> _chipGroupAmounts = new();
@@ -106,7 +106,7 @@ public class BlackjackTableSimulator : MonoBehaviour
             _seats[i] = new SeatData
             {
                 root = seats[i],
-                activeHandsGroup = seats[i].transform.Find("ActiveHandsGroup")
+                activeHandsGroup = seats[i].transform.Find("activeHandsGroup")
             };
         }
         
@@ -122,56 +122,21 @@ public class BlackjackTableSimulator : MonoBehaviour
         if (springManager == null) return;
         
         int id = GetInstanceID();
-        _actionCanvasSpringX = $"actionCanvas_x_{_springCounter++}_{id}";
-        _actionCanvasSpringY = $"actionCanvas_y_{_springCounter++}_{id}";
-        _actionCanvasSpringZ = $"actionCanvas_z_{_springCounter++}_{id}";
-        _actionCanvasSpringRotY = $"actionCanvas_rotY_{_springCounter++}_{id}";
-        _bufferHandSpringX = $"bufferHand_x_{_springCounter++}_{id}";
-        _bufferHandSpringY = $"bufferHand_y_{_springCounter++}_{id}";
-        _bufferHandSpringZ = $"bufferHand_z_{_springCounter++}_{id}";
-        _bufferHandSpringRotY = $"bufferHand_rotY_{_springCounter++}_{id}";
+        string[] axes = { "x", "y", "z", "rotY" };
         
-        // Initialize springs with default damping/frequency for smooth movement
-        springManager.GetSpring(_actionCanvasSpringX, damping: 0.5f, frequency: 6f, initialValue: _actionCanvasTargetLocal.x);
-        springManager.GetSpring(_actionCanvasSpringY, damping: 0.5f, frequency: 6f, initialValue: _actionCanvasTargetLocal.y);
-        springManager.GetSpring(_actionCanvasSpringZ, damping: 0.5f, frequency: 6f, initialValue: _actionCanvasTargetLocal.z);
-        springManager.GetSpring(_actionCanvasSpringRotY, damping: 0.5f, frequency: 6f, initialValue: 0f);
-        springManager.GetSpring(_bufferHandSpringX, damping: 0.5f, frequency: 6f, initialValue: _bufferHandTargetLocal.x);
-        springManager.GetSpring(_bufferHandSpringY, damping: 0.5f, frequency: 6f, initialValue: _bufferHandTargetLocal.y);
-        springManager.GetSpring(_bufferHandSpringZ, damping: 0.5f, frequency: 6f, initialValue: _bufferHandTargetLocal.z);
-        springManager.GetSpring(_bufferHandSpringRotY, damping: 0.5f, frequency: 6f, initialValue: 0f);
-    }
-    
-    private void SetActionCanvasSpringTransform(Vector3 fromPos, Vector3 toPos, float fromRotY, float toRotY)
-    {
-        if (springManager == null) return;
+        Vector3 actionPos = _actionCanvas != null ? _actionCanvas.position : Vector3.zero;
+        float[] actionVals = { actionPos.x, actionPos.y, actionPos.z, _actionCanvas != null ? _actionCanvas.eulerAngles.y : 0f };
         
-        // Set current position/rotation instantly, then animate to target
-        springManager.GetSpring(_actionCanvasSpringX).MoveToInstant(fromPos.x);
-        springManager.GetSpring(_actionCanvasSpringY).MoveToInstant(fromPos.y);
-        springManager.GetSpring(_actionCanvasSpringZ).MoveToInstant(fromPos.z);
-        springManager.GetSpring(_actionCanvasSpringRotY).MoveToInstant(fromRotY);
+        Vector3 bufferPos = _bufferHandGroup != null ? _bufferHandGroup.position : Vector3.zero;
+        float[] bufferVals = { bufferPos.x, bufferPos.y, bufferPos.z, _bufferHandGroup != null ? _bufferHandGroup.eulerAngles.y : 0f };
         
-        springManager.MoveTo(_actionCanvasSpringX, toPos.x);
-        springManager.MoveTo(_actionCanvasSpringY, toPos.y);
-        springManager.MoveTo(_actionCanvasSpringZ, toPos.z);
-        springManager.MoveTo(_actionCanvasSpringRotY, toRotY);
-    }
-    
-    private void SetBufferHandSpringTransform(Vector3 fromPos, Vector3 toPos, float fromRotY, float toRotY)
-    {
-        if (springManager == null) return;
-        
-        // Set current position/rotation instantly, then animate to target
-        springManager.GetSpring(_bufferHandSpringX).MoveToInstant(fromPos.x);
-        springManager.GetSpring(_bufferHandSpringY).MoveToInstant(fromPos.y);
-        springManager.GetSpring(_bufferHandSpringZ).MoveToInstant(fromPos.z);
-        springManager.GetSpring(_bufferHandSpringRotY).MoveToInstant(fromRotY);
-        
-        springManager.MoveTo(_bufferHandSpringX, toPos.x);
-        springManager.MoveTo(_bufferHandSpringY, toPos.y);
-        springManager.MoveTo(_bufferHandSpringZ, toPos.z);
-        springManager.MoveTo(_bufferHandSpringRotY, toRotY);
+        for (int i = 0; i < 4; i++)
+        {
+            _actionCanvasSprings[i] = $"actionCanvas_{axes[i]}_{id}";
+            _bufferHandSprings[i] = $"bufferHand_{axes[i]}_{id}";
+            springManager.GetSpring(_actionCanvasSprings[i], damping: 0.5f, frequency: 6f, initialValue: actionVals[i]);
+            springManager.GetSpring(_bufferHandSprings[i], damping: 0.5f, frequency: 6f, initialValue: bufferVals[i]);
+        }
     }
 
     private void OnEnable()
@@ -207,35 +172,40 @@ public class BlackjackTableSimulator : MonoBehaviour
     {
         if (springManager == null) return;
         
-        if (_actionCanvas != null && _actionCanvasSpringX != null)
+        if (_actionCanvas != null && _actionCanvasSprings[0] != null)
         {
-            _actionCanvas.localPosition = new Vector3(
-                springManager.GetValue(_actionCanvasSpringX),
-                springManager.GetValue(_actionCanvasSpringY),
-                springManager.GetValue(_actionCanvasSpringZ)
+            _actionCanvas.position = new Vector3(
+                springManager.GetValue(_actionCanvasSprings[0]),
+                springManager.GetValue(_actionCanvasSprings[1]),
+                springManager.GetValue(_actionCanvasSprings[2])
             );
-            _actionCanvas.localRotation = Quaternion.Euler(0, springManager.GetValue(_actionCanvasSpringRotY), 0);
+            _actionCanvas.rotation = Quaternion.Euler(0, springManager.GetValue(_actionCanvasSprings[3]), 0);
         }
         
-        if (_bufferHandGroup != null && _bufferHandSpringX != null)
+        if (_bufferHandGroup != null && _bufferHandSprings[0] != null)
         {
-            _bufferHandGroup.localPosition = new Vector3(
-                springManager.GetValue(_bufferHandSpringX),
-                springManager.GetValue(_bufferHandSpringY),
-                springManager.GetValue(_bufferHandSpringZ)
+            _bufferHandGroup.position = new Vector3(
+                springManager.GetValue(_bufferHandSprings[0]),
+                springManager.GetValue(_bufferHandSprings[1]),
+                springManager.GetValue(_bufferHandSprings[2])
             );
-            _bufferHandGroup.localRotation = Quaternion.Euler(0, springManager.GetValue(_bufferHandSpringRotY), 0);
+            _bufferHandGroup.rotation = Quaternion.Euler(0, springManager.GetValue(_bufferHandSprings[3]), 0);
         }
         
-        // Apply buffer hand position springs
         foreach (var hand in _bufferHands)
         {
             if (_bufferHandSpringKeys.TryGetValue(hand, out string springKey))
-            {
-                float x = springManager.GetValue(springKey);
-                hand.transform.localPosition = new Vector3(x, 0, 0);
-            }
+                hand.transform.localPosition = new Vector3(springManager.GetValue(springKey), 0, 0);
         }
+    }
+    
+    private void MoveSpringGroup(string[] springs, Vector3 pos, float rotY)
+    {
+        if (springManager == null || springs[0] == null) return;
+        springManager.MoveTo(springs[0], pos.x);
+        springManager.MoveTo(springs[1], pos.y);
+        springManager.MoveTo(springs[2], pos.z);
+        springManager.MoveTo(springs[3], rotY);
     }
 
     private int GetTargetSeatIndex()
@@ -292,6 +262,8 @@ public class BlackjackTableSimulator : MonoBehaviour
 
         bool isLocalPlayer = Web3.Account != null && hand.Player.Equals(Web3.Account.PublicKey);
 
+        Debug.Log($"[BJTable] Hand update - PK: {handPk}, GameNo: {hand.GameNo}, CurrentBet: {hand.CurrentBet}, State: {hand.State}, CardCount: {hand.CardCount}, isNew: {!_hands.ContainsKey(handPk)}");
+        
         if (_hands.TryGetValue(handPk, out var entry))
         {
             _hands[handPk] = (hand, entry.prefab);
@@ -302,6 +274,7 @@ public class BlackjackTableSimulator : MonoBehaviour
         else
         {
             var parent = GetParentForHand(hand);
+            Debug.Log($"[BJTable] Reparenting hand {handPk} to parent {parent}");
             var prefab = Instantiate(handPrefab, parent);
             prefab.transform.localRotation = Quaternion.identity;
 
@@ -354,14 +327,8 @@ public class BlackjackTableSimulator : MonoBehaviour
     {
         if (Web3.Account == null || interactableObjects == null) return;
         
-        foreach (var kvp in _hands)
-        {
-            var h = kvp.Value.hand;
-            if (!h.Player.Equals(Web3.Account.PublicKey)) continue;
-            
-            bool isSelected = _selectedActiveHandId.HasValue && h.HandId == _selectedActiveHandId.Value;
-            interactableObjects.SetInteractableGlowActive(kvp.Value.prefab, isSelected);
-        }
+        foreach (var (hand, prefab) in _hands.Values.Where(v => v.hand.Player.Equals(Web3.Account.PublicKey)))
+            interactableObjects.SetInteractableGlowActive(prefab, _selectedActiveHandId == hand.HandId);
     }
     
     private bool IsHandEligibleForActions(BlackJackHand hand, BlackJackGame game)
@@ -378,25 +345,15 @@ public class BlackjackTableSimulator : MonoBehaviour
     private int FindSeatIndexForPlayer(PublicKey player)
     {
         if (_seatPlayers == null || player == null) return -1;
-
-        for (int i = 0; i < _seatPlayers.Length; i++)
-        {
-            if (_seatPlayers[i] != null && _seatPlayers[i].Equals(player))
-                return i;
-        }
-        return -1;
+        return System.Array.FindIndex(_seatPlayers, p => p != null && p.Equals(player));
     }
     
     private int GetLocalPlayerActiveSeatIndex()
     {
         if (Web3.Account == null) return -1;
-        
         int seatIndex = FindSeatIndexForPlayer(Web3.Account.PublicKey);
-        if (seatIndex < 0) return -1;
-        
-        if (_antedGameNo == null || seatIndex >= _antedGameNo.Length || _antedGameNo[seatIndex] < _gameNo)
+        if (seatIndex < 0 || _antedGameNo == null || seatIndex >= _antedGameNo.Length || _antedGameNo[seatIndex] < _gameNo)
             return -1;
-        
         return seatIndex;
     }
     
@@ -501,20 +458,16 @@ public class BlackjackTableSimulator : MonoBehaviour
     {
         if (!_hands.TryGetValue(handPk, out var entry)) return;
         
-        byte removedHandId = entry.hand.HandId;
         bool wasLocalPlayer = Web3.Account != null && entry.hand.Player.Equals(Web3.Account.PublicKey);
+        bool wasSelected = wasLocalPlayer && _selectedActiveHandId == entry.hand.HandId;
         var parent = entry.prefab.transform.parent;
         
-        if (wasLocalPlayer)
-            interactableObjects?.UnregisterInteractable(entry.prefab);
-        
+        if (wasLocalPlayer) interactableObjects?.UnregisterInteractable(entry.prefab);
         Destroy(entry.prefab);
         _hands.Remove(handPk);
+        if (parent != null) RepositionHandsInGroup(parent);
         
-        if (parent != null)
-            RepositionHandsInGroup(parent);
-        
-        if (wasLocalPlayer && _selectedActiveHandId == removedHandId)
+        if (wasSelected)
         {
             _selectedActiveHandId = null;
             EnsureLowestEligibleHandSelected();
@@ -525,16 +478,10 @@ public class BlackjackTableSimulator : MonoBehaviour
     private BlackJackHand? GetSelectedHand()
     {
         if (_selectedActiveHandId == null || Web3.Account == null) return null;
-        
-        foreach (var kvp in _hands)
-        {
-            if (kvp.Value.hand.HandId == _selectedActiveHandId.Value &&
-                kvp.Value.hand.Player.Equals(Web3.Account.PublicKey))
-            {
-                return kvp.Value.hand;
-            }
-        }
-        return null;
+        return _hands.Values
+            .Where(v => v.hand.HandId == _selectedActiveHandId.Value && v.hand.Player.Equals(Web3.Account.PublicKey))
+            .Select(v => (BlackJackHand?)v.hand)
+            .FirstOrDefault();
     }
 
     private void ReparentHand(GameObject prefab, BlackJackHand hand)
@@ -549,25 +496,23 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void ReparentAllHands()
     {
-        foreach (var kvp in _hands)
+        foreach (var (hand, prefab) in _hands.Values)
         {
-            var targetParent = GetParentForHand(kvp.Value.hand);
-            if (kvp.Value.prefab.transform.parent != targetParent)
-            {
-                kvp.Value.prefab.transform.SetParent(targetParent);
-                kvp.Value.prefab.transform.localRotation = Quaternion.identity;
-            }
+            var targetParent = GetParentForHand(hand);
+            if (prefab.transform.parent == targetParent) continue;
+            prefab.transform.SetParent(targetParent);
+            prefab.transform.localRotation = Quaternion.identity;
         }
         
-        foreach (var seat in _seats)
-        {
-            if (seat.activeHandsGroup != null)
-                RepositionHandsInGroup(seat.activeHandsGroup);
-        }
+        foreach (var seat in _seats.Where(s => s.activeHandsGroup != null))
+            RepositionHandsInGroup(seat.activeHandsGroup);
     }
     
     private void RepositionHandsInGroup(Transform group)
     {
+        // Don't reposition if group is the table root (would move seats)
+        if (group == null || group == transform) return;
+        
         int childCount = group.childCount;
         if (childCount == 0) return;
         
@@ -627,8 +572,11 @@ public class BlackjackTableSimulator : MonoBehaviour
             Destroy(parent.GetChild(i).gameObject);
     }
 
+    private ulong ConvertToDisplayAmount(ulong rawAmount) =>
+        solanaManager != null ? (ulong)(rawAmount / System.Math.Pow(10, solanaManager.TokenDecimals)) : rawAmount;
+
     private void SyncChipsForHand(GameObject handObject, BlackJackHand hand) =>
-        SpawnChipsInGroup(handObject.transform.Find("chipGroup"), hand.CurrentBet);
+        SpawnChipsInGroup(handObject.transform.Find("chipGroup"), ConvertToDisplayAmount(hand.CurrentBet));
 
     private void SpawnChipsInGroup(Transform chipGroup, ulong amount)
     {
@@ -683,35 +631,28 @@ public class BlackjackTableSimulator : MonoBehaviour
     private void ApplyChipBreakdown(Transform chipGroup, ulong amount)
     {
         var breakdown = GetChipBreakdown(amount);
-        int targetCount = breakdown.Sum(b => b.count);
+        
+        // Build flat list of materials
+        var materials = breakdown.SelectMany(b => Enumerable.Repeat(b.material, b.count)).ToList();
+        int targetCount = materials.Count;
 
-        // Remove excess chips from the top
+        // Adjust chip count
         while (chipGroup.childCount > targetCount)
             DestroyImmediate(chipGroup.GetChild(chipGroup.childCount - 1).gameObject);
-
-        // Build flat list of materials for each chip position
-        var materials = new List<Material>();
-        foreach (var (material, count) in breakdown)
-            for (int i = 0; i < count; i++)
-                materials.Add(material);
-
-        // Add missing chips (no animation for merge)
         while (chipGroup.childCount < targetCount)
         {
             var chip = Instantiate(chipPrefab, chipGroup);
-            int idx = chipGroup.childCount - 1;
-            chip.transform.localPosition = new Vector3(0, idx * chipStackHeight, 0);
             chip.transform.localRotation = Quaternion.identity;
             chip.transform.localScale = new Vector3(3f, 3f, 3f);
         }
 
-        // Update materials and positions on all chips
+        // Update materials and positions
         for (int i = 0; i < chipGroup.childCount; i++)
         {
             var child = chipGroup.GetChild(i);
             child.localPosition = new Vector3(0, i * chipStackHeight, 0);
             var renderer = child.GetComponentInChildren<MeshRenderer>();
-            if (renderer != null && i < materials.Count && materials[i] != null)
+            if (renderer != null && materials[i] != null)
                 renderer.material = materials[i];
         }
     }
@@ -762,20 +703,10 @@ public class BlackjackTableSimulator : MonoBehaviour
         
         if (targetSeatIndex < 0) return;
         
+        // Position relative to target seat without reparenting
         var targetSeat = _seats[targetSeatIndex].root.transform;
-        if (_actionCanvas.parent != targetSeat)
-        {
-            // Store world position/rotation before reparenting
-            Vector3 worldPos = _actionCanvas.position;
-            float worldRotY = _actionCanvas.eulerAngles.y;
-            
-            _actionCanvas.SetParent(targetSeat);
-            
-            // Calculate local position/rotation that maintains world transform, then animate to target
-            Vector3 startLocalPos = targetSeat.InverseTransformPoint(worldPos);
-            float startLocalRotY = Mathf.DeltaAngle(targetSeat.eulerAngles.y, worldRotY);
-            SetActionCanvasSpringTransform(startLocalPos, _actionCanvasTargetLocal, startLocalRotY, 0f);
-        }
+        Vector3 targetWorldPos = targetSeat.TransformPoint(_actionCanvasTargetLocal);
+        MoveSpringGroup(_actionCanvasSprings, targetWorldPos, targetSeat.eulerAngles.y);
         
         var buttonGroup = _actionCanvas.Find("buttonGroup");
         if (buttonGroup == null) return;
@@ -798,18 +729,21 @@ public class BlackjackTableSimulator : MonoBehaviour
             showInsurance = hand.State == 1 && !insuranceDeclined && hand.CardCount == 2;
         }
 
-        buttonGroup.Find("hit")?.gameObject.SetActive(showHitStand);
-        buttonGroup.Find("stand")?.gameObject.SetActive(showHitStand);
-        buttonGroup.Find("double")?.gameObject.SetActive(showDouble);
-        buttonGroup.Find("split")?.gameObject.SetActive(showSplit);
-        buttonGroup.Find("accept_insurance")?.gameObject.SetActive(showInsurance);
-        buttonGroup.Find("decline_insurance")?.gameObject.SetActive(showInsurance);
-        _actionCanvas.Find("infoText")?.gameObject.SetActive(showInsurance);
-        buttonGroup.Find("submit_ante")?.gameObject.SetActive(inBettingMode);
-        buttonGroup.Find("remove_hand")?.gameObject.SetActive(inBettingMode);
-        buttonGroup.Find("add_hand")?.gameObject.SetActive(inBettingMode);
-        _actionCanvas.Find("bettingButtonGroup")?.gameObject.SetActive(inBettingMode);
+        SetButtonActive(buttonGroup, "hit", showHitStand);
+        SetButtonActive(buttonGroup, "stand", showHitStand);
+        SetButtonActive(buttonGroup, "double", showDouble);
+        SetButtonActive(buttonGroup, "split", showSplit);
+        SetButtonActive(buttonGroup, "accept_insurance", showInsurance);
+        SetButtonActive(buttonGroup, "decline_insurance", showInsurance);
+        SetButtonActive(_actionCanvas, "infoText", showInsurance);
+        SetButtonActive(buttonGroup, "submit_ante", inBettingMode);
+        SetButtonActive(buttonGroup, "remove_hand", inBettingMode);
+        SetButtonActive(buttonGroup, "add_hand", inBettingMode);
+        SetButtonActive(_actionCanvas, "bettingButtonGroup", inBettingMode);
     }
+    
+    private void SetButtonActive(Transform parent, string name, bool active) =>
+        parent.Find(name)?.gameObject.SetActive(active);
 
     private void ConfigureCard(GameObject card, byte cardNumber)
     {
@@ -866,14 +800,8 @@ public class BlackjackTableSimulator : MonoBehaviour
     public Material GetChipMaterial(ulong value)
     {
         if (chipValues == null || chipValues.Length == 0) return null;
-        
-        foreach (var chip in chipValues)
-        {
-            if (chip.value == value)
-                return chip.material;
-        }
-        
-        return chipValues.OrderBy(c => c.value).First().material;
+        return chipValues.FirstOrDefault(c => c.value == value).material 
+            ?? chipValues.OrderBy(c => c.value).First().material;
     }
 
     public void IncrementSelectedAnte(ulong amount)
@@ -894,37 +822,17 @@ public class BlackjackTableSimulator : MonoBehaviour
             return;
         }
 
-        // Always reparent to correct seat
-        var targetParent = _seats[targetSeatIndex].root.transform;
-        if (_bufferHandGroup.parent != targetParent)
-        {
-            // Store world position/rotation before reparenting
-            Vector3 worldPos = _bufferHandGroup.position;
-            float worldRotY = _bufferHandGroup.eulerAngles.y;
-            
-            _bufferHandGroup.SetParent(targetParent);
-            
-            // Calculate local position/rotation that maintains world transform, then animate to target
-            Vector3 startLocalPos = targetParent.InverseTransformPoint(worldPos);
-            float startLocalRotY = Mathf.DeltaAngle(targetParent.eulerAngles.y, worldRotY);
-            SetBufferHandSpringTransform(startLocalPos, _bufferHandTargetLocal, startLocalRotY, 0f);
-        }
+        // Position relative to target seat without reparenting
+        var targetSeat = _seats[targetSeatIndex].root.transform;
+        MoveSpringGroup(_bufferHandSprings, targetSeat.TransformPoint(_bufferHandTargetLocal), targetSeat.eulerAngles.y);
         
         // Hide when user has active hands for current game (not in betting mode)
         bool inBettingMode = GetSelectedHand() == null;
-        
-        if (inBettingMode)
-        {
-            _bufferHandGroup.gameObject.SetActive(true);
-        }
-        else
-        {
-            _bufferHandGroup.gameObject.SetActive(false);
-            return;
-        }
+        _bufferHandGroup.gameObject.SetActive(inBettingMode);
+        if (!inBettingMode) return;
 
         // Ensure correct buffer hand count
-        int prevCount = _bufferHands.Count;
+        float edgeX = _bufferHands.Count > 0 ? handSpacing : 0;
         while (_bufferHands.Count < _anteBuffer.Count)
         {
             var hand = Instantiate(handPrefab, _bufferHandGroup);
@@ -932,45 +840,26 @@ public class BlackjackTableSimulator : MonoBehaviour
             _bufferHands.Add(hand);
             interactableObjects?.RegisterInteractable(hand, handButtonGlowProfile, InteractableObjects.ActionType.None, true, 0);
             
-            // Create spring for this hand's X position
             if (springManager != null)
             {
                 string springKey = $"bufferHand_{hand.GetInstanceID()}_x";
                 _bufferHandSpringKeys[hand] = springKey;
-                // Start at edge, will animate to proper position
-                float edgeX = (prevCount > 0 ? 1 : 0) * handSpacing;
                 springManager.GetSpring(springKey, damping: 0.5f, frequency: 5f, initialValue: edgeX);
             }
         }
         while (_bufferHands.Count > _anteBuffer.Count)
-        {
-            var hand = _bufferHands[_bufferHands.Count - 1];
-            interactableObjects?.UnregisterInteractable(hand);
-            
-            // Remove spring for this hand
-            if (springManager != null && _bufferHandSpringKeys.TryGetValue(hand, out string springKey))
-            {
-                springManager.RemoveSpring(springKey);
-                _bufferHandSpringKeys.Remove(hand);
-            }
-            
-            Destroy(hand);
-            _bufferHands.RemoveAt(_bufferHands.Count - 1);
-        }
+            RemoveLastBufferHand();
         
-        // Always update target positions using springs (smooth repositioning)
+        // Update target positions using springs for smooth repositioning
+        float totalWidth = (_bufferHands.Count - 1) * handSpacing;
+        float startX = -totalWidth / 2f;
+        for (int i = 0; i < _bufferHands.Count; i++)
         {
-            int count = _bufferHands.Count;
-            float totalWidth = (count - 1) * handSpacing;
-            float startX = -totalWidth / 2f;
-            for (int i = 0; i < count; i++)
-            {
-                float targetX = startX + i * handSpacing;
-                if (springManager != null && _bufferHandSpringKeys.TryGetValue(_bufferHands[i], out string springKey))
-                    springManager.MoveTo(springKey, targetX);
-                else
-                    _bufferHands[i].transform.localPosition = new Vector3(targetX, 0, 0);
-            }
+            float targetX = startX + i * handSpacing;
+            if (_bufferHandSpringKeys.TryGetValue(_bufferHands[i], out string springKey))
+                springManager?.MoveTo(springKey, targetX);
+            else
+                _bufferHands[i].transform.localPosition = new Vector3(targetX, 0, 0);
         }
 
         for (int h = 0; h < _bufferHands.Count; h++)
@@ -1008,20 +897,23 @@ public class BlackjackTableSimulator : MonoBehaviour
         ClearBufferHands();
     }
 
+    private void RemoveLastBufferHand()
+    {
+        var hand = _bufferHands[_bufferHands.Count - 1];
+        interactableObjects?.UnregisterInteractable(hand);
+        if (_bufferHandSpringKeys.TryGetValue(hand, out string springKey))
+        {
+            springManager?.RemoveSpring(springKey);
+            _bufferHandSpringKeys.Remove(hand);
+        }
+        Destroy(hand);
+        _bufferHands.RemoveAt(_bufferHands.Count - 1);
+    }
+
     private void ClearBufferHands()
     {
-        foreach (var hand in _bufferHands)
-        {
-            interactableObjects?.UnregisterInteractable(hand);
-            
-            // Clean up spring
-            if (springManager != null && _bufferHandSpringKeys.TryGetValue(hand, out string springKey))
-                springManager.RemoveSpring(springKey);
-            
-            Destroy(hand);
-        }
-        _bufferHands.Clear();
-        _bufferHandSpringKeys.Clear();
+        while (_bufferHands.Count > 0)
+            RemoveLastBufferHand();
     }
 
     public void SubmitAnte()

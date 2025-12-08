@@ -13,6 +13,7 @@ using UnityEngine;
 
 /// <summary>
 /// Manages WebSocket subscriptions for Solana accounts with support for both mainnet and delegated (rollup) accounts.
+/// Supports subscriptions before wallet connection using a standalone streaming client.
 /// </summary>
 public class SubscriptionManager : MonoBehaviour
 {
@@ -34,6 +35,10 @@ public class SubscriptionManager : MonoBehaviour
     private readonly Dictionary<string, AccountSubscription> _subscriptions = new Dictionary<string, AccountSubscription>();
     private SolanaManager _solanaManagerCache;
     private SolanaManager SolanaManagerInstance => _solanaManagerCache ??= FindObjectOfType<SolanaManager>();
+    
+    // Standalone streaming client for pre-wallet subscriptions
+    private IStreamingRpcClient _standaloneStreamingClient;
+    private bool _standaloneClientConnecting;
 
     private void Awake()
     {
@@ -265,22 +270,92 @@ public class SubscriptionManager : MonoBehaviour
 
     private async Task<IStreamingRpcClient> GetStreamingClient(bool isDelegated)
     {
-        var wallet = isDelegated ? SolanaManager.EphemeralWallet : Web3.Wallet;
-        
-        if (wallet == null)
+        // For delegated accounts, use ephemeral wallet's streaming client
+        if (isDelegated)
         {
-            // This is expected before wallet connection - subscriptions will be set up later
-            Debug.Log($"Skipping subscription: {(isDelegated ? "ephemeral" : "main")} wallet not connected yet");
+            var ephemeralWallet = SolanaManager.EphemeralWallet;
+            if (ephemeralWallet == null)
+            {
+                Debug.Log("Skipping subscription: ephemeral wallet not available");
+                return null;
+            }
+            if (ephemeralWallet.ActiveStreamingRpcClient.State != WebSocketState.Open)
+            {
+                Debug.Log("Waiting for ephemeral WebSocket connection...");
+                await ephemeralWallet.AwaitWsRpcConnection();
+            }
+            return ephemeralWallet.ActiveStreamingRpcClient;
+        }
+
+        // For mainnet - always use standalone streaming client (never user's wallet)
+        return await GetOrCreateStandaloneStreamingClient();
+    }
+
+    private async Task<IStreamingRpcClient> GetOrCreateStandaloneStreamingClient()
+    {
+        // Already connected
+        if (_standaloneStreamingClient?.State == WebSocketState.Open)
+            return _standaloneStreamingClient;
+
+        // Already connecting - wait for it
+        if (_standaloneClientConnecting)
+        {
+            while (_standaloneClientConnecting)
+                await Task.Delay(50);
+            return _standaloneStreamingClient?.State == WebSocketState.Open ? _standaloneStreamingClient : null;
+        }
+
+        // Get WebSocket URL from Web3 configuration
+        if (Web3.Instance == null)
+        {
+            Debug.LogError("Web3.Instance not initialized - cannot create standalone streaming client");
             return null;
         }
 
-        if (wallet.ActiveStreamingRpcClient.State != WebSocketState.Open)
+        // Derive WebSocket URL from RPC URL
+        string wsUrl = GetWebSocketUrl();
+        if (string.IsNullOrEmpty(wsUrl))
         {
-            Debug.Log($"Waiting for {(isDelegated ? "ephemeral" : "main")} WebSocket connection...");
-            await wallet.AwaitWsRpcConnection();
+            Debug.LogError("Could not determine WebSocket URL for standalone streaming client");
+            return null;
         }
 
-        return wallet.ActiveStreamingRpcClient;
+        _standaloneClientConnecting = true;
+        try
+        {
+            Debug.Log($"Creating standalone streaming client: {wsUrl}");
+            _standaloneStreamingClient = ClientFactory.GetStreamingClient(wsUrl);
+            await _standaloneStreamingClient.ConnectAsync();
+            Debug.Log("✓ Standalone streaming client connected");
+            return _standaloneStreamingClient;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Failed to connect standalone streaming client: {ex.Message}");
+            _standaloneStreamingClient = null;
+            return null;
+        }
+        finally
+        {
+            _standaloneClientConnecting = false;
+        }
+    }
+
+    private string GetWebSocketUrl()
+    {
+        // Try to get the WebSocket URL from Web3's RPC configuration
+        // The RPC URL is typically https://... and WS is wss://...
+        string rpcUrl = Web3.Rpc?.NodeAddress?.AbsoluteUri;
+        if (string.IsNullOrEmpty(rpcUrl))
+            return null;
+
+        // Convert HTTP(S) to WS(S)
+        if (rpcUrl.StartsWith("https://"))
+            return "wss://" + rpcUrl.Substring(8).TrimEnd('/');
+        if (rpcUrl.StartsWith("http://"))
+            return "ws://" + rpcUrl.Substring(7).TrimEnd('/');
+
+        return null;
     }
 
     private IRpcClient GetRpcClient(bool isDelegated)
@@ -334,9 +409,20 @@ public class SubscriptionManager : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    private async void OnDestroy()
     {
-        _ = UnsubscribeAll();
+        await UnsubscribeAll();
+        
+        // Cleanup standalone streaming client
+        if (_standaloneStreamingClient != null)
+        {
+            try
+            {
+                await _standaloneStreamingClient.DisconnectAsync();
+            }
+            catch { /* ignore cleanup errors */ }
+            _standaloneStreamingClient = null;
+        }
     }
 
     // Public data structures

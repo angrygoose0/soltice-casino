@@ -18234,6 +18234,7 @@ MonoBehaviour:
   interactableObjects: {fileID: 1102202717}
   playerProximityCanvas: {fileID: 1102202734}
   springManager: {fileID: 1102202730}
+  solanaManager: {fileID: 444504097}
   handButtonGlowProfile: default
   seats:
   - {fileID: 1851440738}
