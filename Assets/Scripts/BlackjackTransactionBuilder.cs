@@ -251,7 +251,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             Blackjack = blackjack,
             BlackjackHand = blackjackHand,
         };
-        return BlackjackProgram.PlayerDealCards(accounts, handId, signer);
+        return BlackjackProgram.PlayerDealCards(accounts);
     }
 
     public TransactionInstruction PlayerHit(ulong gameId, byte handId)
@@ -413,7 +413,7 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             UserBalance = userBalance,
             Treasury = treasury,
         };
-        return BlackjackProgram.SettleHand(accounts, handId, player);
+        return BlackjackProgram.SettleHand(accounts);
     }
 }
 

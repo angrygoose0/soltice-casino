@@ -810,7 +810,7 @@ namespace Blackjack
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerDealCards(PlayerDealCardsAccounts accounts, byte _hand_id, PublicKey _player, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction PlayerDealCards(PlayerDealCardsAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -819,10 +819,6 @@ namespace Blackjack
                 int offset = 0;
                 _data.WriteU64(17862690385178829778UL, offset);
                 offset += 8;
-                _data.WriteU8(_hand_id, offset);
-                offset += 1;
-                _data.WritePubKey(_player, offset);
-                offset += 32;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
@@ -916,7 +912,7 @@ namespace Blackjack
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction SettleHand(SettleHandAccounts accounts, byte _hand_id, PublicKey _player, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction SettleHand(SettleHandAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
@@ -925,10 +921,6 @@ namespace Blackjack
                 int offset = 0;
                 _data.WriteU64(3144721542130864098UL, offset);
                 offset += 8;
-                _data.WriteU8(_hand_id, offset);
-                offset += 1;
-                _data.WritePubKey(_player, offset);
-                offset += 32;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};

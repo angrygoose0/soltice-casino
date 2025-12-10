@@ -536,13 +536,20 @@ public class BlackjackTableSimulator : MonoBehaviour
             return;
         }
 
-        bool hideCards = accountManager.BlackjackGameCache?.DealerCardCount == 1;
-        int cardCount = hideCards ? 2 : hand.CardCount;
-
-        for (int i = 0; i < cardCount; i++)
-            SpawnCard(cardsGroup, i, hideCards ? (byte)0 : hand.PlayerCards[i]);
-
-        cardsGroup.localPosition = new Vector3(cardCount * 0.075f, cardsGroup.localPosition.y, cardsGroup.localPosition.z);
+        bool showFaceDown = accountManager.BlackjackGameCache?.DealerCardCount == 1 && hand.CardCount == 0;
+        
+        if (showFaceDown)
+        {
+            for (int i = 0; i < 2; i++)
+                SpawnCard(cardsGroup, i, 0);
+            cardsGroup.localPosition = new Vector3(2 * 0.075f, cardsGroup.localPosition.y, cardsGroup.localPosition.z);
+        }
+        else if (hand.CardCount > 0)
+        {
+            for (int i = 0; i < hand.CardCount; i++)
+                SpawnCard(cardsGroup, i, hand.PlayerCards[i]);
+            cardsGroup.localPosition = new Vector3(hand.CardCount * 0.075f, cardsGroup.localPosition.y, cardsGroup.localPosition.z);
+        }
     }
 
     private void SyncDealerCards(BlackJackGame game)
@@ -747,18 +754,15 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void ConfigureCard(GameObject card, byte cardNumber)
     {
-        var cardMesh = card.transform.GetChild(0);
-        if (cardMesh == null) return;
-
-        var meshFilter = cardMesh.GetComponent<MeshFilter>();
-        var meshRenderer = cardMesh.GetComponent<MeshRenderer>();
+        var meshFilter = card.GetComponent<MeshFilter>();
+        var meshRenderer = card.GetComponent<MeshRenderer>();
         if (meshFilter == null || meshRenderer == null) return;
 
         if (cardNumber == 0)
         {
             if (rankMeshes[13] != null)
                 meshFilter.mesh = rankMeshes[13];
-            cardMesh.localRotation = Quaternion.Euler(0, 180, 0);
+            card.transform.localRotation = Quaternion.Euler(180, 0, 0);
             return;
         }
 
