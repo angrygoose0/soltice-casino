@@ -568,18 +568,23 @@ public class InteractableObjects : MonoBehaviour
         }
     }
 
-    private string FormatShortAmount(ulong value)
+    private string FormatShortAmount(ulong lamports)
     {
+        // Convert lamports to display units
+        ulong display = solanaManager != null 
+            ? (ulong)(lamports / System.Math.Pow(10, solanaManager.TokenDecimals)) 
+            : lamports;
+        
         const double Thousand = 1_000d;
         const double Million = 1_000_000d;
         const double Billion = 1_000_000_000d;
         const double Trillion = 1_000_000_000_000d;
 
-        if (value >= (ulong)Trillion) return (value / Trillion).ToString("0.#", CultureInfo.InvariantCulture) + "t";
-        if (value >= (ulong)Billion) return (value / Billion).ToString("0.#", CultureInfo.InvariantCulture) + "b";
-        if (value >= (ulong)Million) return (value / Million).ToString("0.#", CultureInfo.InvariantCulture) + "m";
-        if (value >= (ulong)Thousand) return (value / Thousand).ToString("0.#", CultureInfo.InvariantCulture) + "k";
-        return value.ToString(CultureInfo.InvariantCulture);
+        if (display >= (ulong)Trillion) return (display / Trillion).ToString("0.#", CultureInfo.InvariantCulture) + "t";
+        if (display >= (ulong)Billion) return (display / Billion).ToString("0.#", CultureInfo.InvariantCulture) + "b";
+        if (display >= (ulong)Million) return (display / Million).ToString("0.#", CultureInfo.InvariantCulture) + "m";
+        if (display >= (ulong)Thousand) return (display / Thousand).ToString("0.#", CultureInfo.InvariantCulture) + "k";
+        return display.ToString(CultureInfo.InvariantCulture);
     }
 
     public void SetInteractableEnabled(GameObject obj, bool enabled)

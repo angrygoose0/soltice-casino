@@ -233,8 +233,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             TokenProgram = TOKEN_PROGRAM_ID,
         };
 
-        ulong amountWithDecimals = (ulong)(amount * Math.Pow(10, solanaManager.TokenDecimals));
-        var ix = TreasuryProgram.DepositTokens(accounts, amountWithDecimals);
+        // amount is already in lamports
+        var ix = TreasuryProgram.DepositTokens(accounts, amount);
         return ix;
     }
 
@@ -279,8 +279,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             Treasury = treasury,
         };
 
-        ulong amountWithDecimals = (ulong)(amount * Math.Pow(10, solanaManager.TokenDecimals));
-        var ix = TreasuryProgram.RequestWithdraw(accounts, amountWithDecimals);
+        // amount is already in lamports
+        var ix = TreasuryProgram.RequestWithdraw(accounts, amount);
         return ix;
     }
 

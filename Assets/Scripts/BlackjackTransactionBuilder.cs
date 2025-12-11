@@ -234,8 +234,8 @@ public class BlackjackTransactionBuilder : MonoBehaviour
             TreasuryTokenAccount = treasuryTokenAccount,
         };
 
-        ulong amountWithDecimals = (ulong)(betAmount * Math.Pow(10, solanaManager.TokenDecimals));
-        return BlackjackProgram.PlayerAnte(accounts, handId, seatId, amountWithDecimals);
+        // betAmount is already in lamports
+        return BlackjackProgram.PlayerAnte(accounts, handId, seatId, betAmount);
     }
 
     public TransactionInstruction PlayerDealCards(ulong gameId, byte handId)

@@ -301,8 +301,8 @@ public class CrashTransactionBuilder : MonoBehaviour
 			TreasuryTokenAccount = treasuryTokenAccount,
 		};
 
-        ulong amountWithDecimals = (ulong)(amountTokens * Math.Pow(10, solanaManager.TokenDecimals));
-        var ix = CrashProgram.PlaceBet(accounts, amountWithDecimals);
+        // amountTokens is already in lamports
+        var ix = CrashProgram.PlaceBet(accounts, amountTokens);
         return ix;
     }
 

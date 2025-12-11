@@ -47,8 +47,8 @@ public class BlackjackTableSimulator : MonoBehaviour
     [Header("Hand Spacing")]
     [SerializeField] private float handSpacing = 0.5f;
     
-    [Header("Betting Button Amounts")]
-    [SerializeField] private ulong[] bettingAmounts = new ulong[5] { 100, 500, 1000, 5000, 10000 };
+    [Header("Betting Button Amounts (in lamports)")]
+    [SerializeField] private ulong[] bettingAmounts = new ulong[5] { 100_000_000, 500_000_000, 1_000_000_000, 5_000_000_000, 10_000_000_000 };
 
     private Transform _dealerCardGroup;
     private Transform _actionCanvas;
@@ -446,12 +446,13 @@ public class BlackjackTableSimulator : MonoBehaviour
         _actionCanvas.Find("infoText")?.gameObject.SetActive(false);
     }
     
-    private string FormatShortAmount(ulong value)
+    private string FormatShortAmount(ulong lamports)
     {
-        if (value >= 1_000_000_000) return (value / 1_000_000_000d).ToString("0.#") + "b";
-        if (value >= 1_000_000) return (value / 1_000_000d).ToString("0.#") + "m";
-        if (value >= 1_000) return (value / 1_000d).ToString("0.#") + "k";
-        return value.ToString();
+        ulong display = ConvertToDisplayAmount(lamports);
+        if (display >= 1_000_000_000) return (display / 1_000_000_000d).ToString("0.#") + "b";
+        if (display >= 1_000_000) return (display / 1_000_000d).ToString("0.#") + "m";
+        if (display >= 1_000) return (display / 1_000d).ToString("0.#") + "k";
+        return display.ToString();
     }
 
     private void RemoveHand(PublicKey handPk)
@@ -583,11 +584,14 @@ public class BlackjackTableSimulator : MonoBehaviour
         solanaManager != null ? (ulong)(rawAmount / System.Math.Pow(10, solanaManager.TokenDecimals)) : rawAmount;
 
     private void SyncChipsForHand(GameObject handObject, BlackJackHand hand) =>
-        SpawnChipsInGroup(handObject.transform.Find("chipGroup"), ConvertToDisplayAmount(hand.CurrentBet));
+        SpawnChipsInGroup(handObject.transform.Find("chipGroup"), hand.CurrentBet);
 
-    private void SpawnChipsInGroup(Transform chipGroup, ulong amount)
+    private void SpawnChipsInGroup(Transform chipGroup, ulong lamports)
     {
         if (chipGroup == null || chipPrefab == null) return;
+
+        // Convert lamports to display units for chip breakdown (chipValues are in display units)
+        ulong amount = ConvertToDisplayAmount(lamports);
 
         _chipGroupAmounts.TryGetValue(chipGroup, out ulong previousAmount);
         ulong addedAmount = amount > previousAmount ? amount - previousAmount : 0;
