@@ -129,7 +129,9 @@ public class UserUI : MonoBehaviour
         
         UpdateMaxBet();
         UpdateWithdrawButtonVisibility();
-        UpdateUserBetText(accountManager.PlayerBetCache, accountManager.GameCache);
+        
+        if (accountManager.enableCrash)
+            UpdateUserBetText(accountManager.PlayerBetCache, accountManager.GameCache);
     }
 
     private void OnWalletDisconnected()
@@ -156,12 +158,14 @@ public class UserUI : MonoBehaviour
     #region Account Event Handlers
     private void HandleGameUpdate(Game oldData, Game newData)
     {
+        if (!accountManager.enableCrash) return;
         DetectAndAnnounceCrashEvents(oldData, newData);
         UpdateUserBetText(accountManager.PlayerBetCache, newData);
     }
 
     private void HandlePlayerBetUpdate(PlayerBet oldData, PlayerBet newData)
     {
+        if (!accountManager.enableCrash) return;
         DetectAndAnnounceBetEvents(oldData, newData);
         UpdateUserBetText(newData, accountManager.GameCache);
     }
@@ -516,7 +520,7 @@ public class UserUI : MonoBehaviour
         
         var setupInstructions = additionalSetup ?? new List<TransactionInstruction>();
         
-        if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+        if (solanaManager.useEphemeralRollups)
         {
             bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
             
@@ -558,7 +562,7 @@ public class UserUI : MonoBehaviour
             var depositTokensIx = treasuryBuilder.DepositTokens(amount);
             var applyDepositIx = treasuryBuilder.ApplyDeposit();
             
-            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+            if (solanaManager.useEphemeralRollups)
             {
                 var userBalancePk = TreasuryTransactionBuilder.DeriveUserBalanceAccount(Web3.Account.PublicKey);
                 bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
@@ -594,7 +598,7 @@ public class UserUI : MonoBehaviour
             var requestWithdrawIx = treasuryBuilder.RequestWithdraw(amount);
             var withdrawTokensIx = treasuryBuilder.WithdrawTokens();
             
-            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+            if (solanaManager.useEphemeralRollups)
             {
                 var undelegateIx = treasuryBuilder.UndelegateUserBalance();
                 await solanaManager.SendAndConfirmTransaction(true, 400000u, 20000ul, $"requesting withdraw {amount}...", requestWithdrawIx, undelegateIx);
@@ -616,27 +620,31 @@ public class UserUI : MonoBehaviour
         }
     }
 
-    public async void SetupRandomness(byte clientSeed)
+    public async void RequestTick(byte clientSeed)
     {
+        if (!accountManager.enableCrash) return;
+        
         try
         {
-            var requestRandomnessIx = crashBuilder.RequestRandomness(clientSeed);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 300000u, 20000ul, "requesting randomness...", requestRandomnessIx);
+            var requestTickIx = crashBuilder.RequestTick(clientSeed);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 300000u, 20000ul, "requesting tick...", requestTickIx);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Setup randomness failed: {ex.Message}");
+            Debug.LogError($"Request tick failed: {ex.Message}");
             feedbackManager?.PlayErrorSound();
         }
     }
 
     public async void StartGame()
     {
+        if (!accountManager.enableCrash) return;
+        
         try
         {
             var startGameIx = crashBuilder.StartGame();
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 300000u, 20000ul, "starting game...", startGameIx);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 300000u, 20000ul, "starting game...", startGameIx);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -648,6 +656,8 @@ public class UserUI : MonoBehaviour
 
     public async void PlaceBet()
     {
+        if (!accountManager.enableCrash) return;
+        
         try
         {
             var instructions = new List<TransactionInstruction>();
@@ -680,7 +690,7 @@ public class UserUI : MonoBehaviour
                     depositAmount = betAmount - accountManager.UserBalanceCache.Balance;
             }
             
-            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+            if (solanaManager.useEphemeralRollups)
             {
                 bool userBalanceIsDelegated = await solanaManager.CheckIfDelegated(userBalancePk);
 
@@ -719,7 +729,7 @@ public class UserUI : MonoBehaviour
                 }
 
                 var placeBetIx = crashBuilder.PlaceBet(betAmount);
-                await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, $"placing bet {betAmount}...", placeBetIx);
+                await solanaManager.SendAndConfirmTransaction(true, 300000u, 20000ul, $"placing bet {ConvertToDisplayAmount(betAmount)}...", placeBetIx);
             }
             else
             {
@@ -740,7 +750,7 @@ public class UserUI : MonoBehaviour
                 }
 
                 var placeBetIx = crashBuilder.PlaceBet(betAmount);
-                await solanaManager.SendAndConfirmTransaction(false, 300000u, 20000ul, $"placing bet {betAmount}...", placeBetIx);
+                await solanaManager.SendAndConfirmTransaction(false, 300000u, 20000ul, $"placing bet {ConvertToDisplayAmount(betAmount)}...", placeBetIx);
             }
             
             feedbackManager?.PlaySuccessSound();
@@ -754,10 +764,12 @@ public class UserUI : MonoBehaviour
 
     public async void ClaimBet()
     {
+        if (!accountManager.enableCrash) return;
+        
         try
         {
             var claimBetIx = crashBuilder.ClaimBet();
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 300000u, 20000ul, "claiming bet...", claimBetIx);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 300000u, 20000ul, "claiming bet...", claimBetIx);
             
             feedbackManager?.PlaySuccessSound();
             feedbackManager?.PlayCashFountainSound();
@@ -771,7 +783,7 @@ public class UserUI : MonoBehaviour
 
     public async void Ante(byte seatId, ulong[] betAmounts)
     {
-        if (betAmounts == null || betAmounts.Length == 0) return;
+        if (!accountManager.enableBlackjack || betAmounts == null || betAmounts.Length == 0) return;
         
         try
         {
@@ -807,7 +819,7 @@ public class UserUI : MonoBehaviour
             ulong existingBalance = accountManager.UserBalanceCache?.Balance ?? 0;
             ulong depositAmount = totalBet > existingBalance ? totalBet - existingBalance : 0;
             
-            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+            if (solanaManager.useEphemeralRollups)
             {
                 var handsToDelegate = new List<byte>(handsToInit);
                 
@@ -907,10 +919,12 @@ public class UserUI : MonoBehaviour
 
     public async void BlackjackHit(byte handId)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         try
         {
             var ix = blackjackBuilder.PlayerHit(1, handId);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "hitting...", ix);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 400000u, 20000ul, "hitting...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -922,10 +936,12 @@ public class UserUI : MonoBehaviour
 
     public async void BlackjackStand(byte handId)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         try
         {
             var ix = blackjackBuilder.PlayerStand(1, handId);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "standing...", ix);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 400000u, 20000ul, "standing...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -937,6 +953,8 @@ public class UserUI : MonoBehaviour
 
     public async void BlackjackDouble(byte handId)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         try
         {
             var handPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, handId);
@@ -949,7 +967,7 @@ public class UserUI : MonoBehaviour
             await EnsureDepositAndDelegation(hand.OriginalBet);
             
             var ix = blackjackBuilder.PlayerDouble(1, handId);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "doubling...", ix);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 400000u, 20000ul, "doubling...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -961,6 +979,8 @@ public class UserUI : MonoBehaviour
 
     public async void BlackjackSplit(byte handId)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         try
         {
             var existingHandPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, handId);
@@ -972,13 +992,13 @@ public class UserUI : MonoBehaviour
             
             byte newHandId = accountManager.GetNextUnusedHandId();
             var handSetup = new List<TransactionInstruction> { blackjackBuilder.InitializePlayerHand(newHandId) };
-            if (SolanaManager.USE_EPHEMERAL_ROLLUPS)
+            if (solanaManager.useEphemeralRollups)
                 handSetup.Add(blackjackBuilder.DelegateBlackjackHand(newHandId));
             
             await EnsureDepositAndDelegation(hand.OriginalBet, handSetup);
             
             var splitIx = blackjackBuilder.PlayerSplit(1, handId, newHandId);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "splitting...", splitIx);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 400000u, 20000ul, "splitting...", splitIx);
             
             var newHandPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, newHandId);
             accountManager.TrackUserHand(newHandPk);
@@ -994,6 +1014,8 @@ public class UserUI : MonoBehaviour
 
     public async void BlackjackAcceptInsurance(byte handId)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         try
         {
             var handPk = BlackjackTransactionBuilder.DeriveBlackjackHandAccount(Web3.Account.PublicKey, handId);
@@ -1006,7 +1028,7 @@ public class UserUI : MonoBehaviour
             await EnsureDepositAndDelegation(hand.CurrentBet / 2);
             
             var ix = blackjackBuilder.AcceptInsurance(1, handId);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "accepting insurance...", ix);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 400000u, 20000ul, "accepting insurance...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)
@@ -1018,10 +1040,12 @@ public class UserUI : MonoBehaviour
 
     public async void BlackjackSettleHand(byte handId)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         try
         {
             var ix = blackjackBuilder.SettleHand(1, handId, Web3.Account.PublicKey);
-            await solanaManager.SendAndConfirmTransaction(SolanaManager.USE_EPHEMERAL_ROLLUPS, 400000u, 20000ul, "settling...", ix);
+            await solanaManager.SendAndConfirmTransaction(solanaManager.useEphemeralRollups, 400000u, 20000ul, "settling...", ix);
             feedbackManager?.PlaySuccessSound();
         }
         catch (Exception ex)

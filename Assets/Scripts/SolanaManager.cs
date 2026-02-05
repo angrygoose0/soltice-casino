@@ -23,8 +23,9 @@ using Blackjack;
 
 public class SolanaManager : MonoBehaviour
 {
+    [Header("Ephemeral Rollups")]
     // Set to false to disable ephemeral rollups (no delegation/undelegation)
-    public const bool USE_EPHEMERAL_ROLLUPS = false;
+    public bool useEphemeralRollups = true;
 
     [Header("Dependencies")]
     [SerializeField] private InteractableObjects interactableObjects;

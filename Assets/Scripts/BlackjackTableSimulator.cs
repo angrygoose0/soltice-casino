@@ -141,7 +141,7 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void OnEnable()
     {
-        if (accountManager == null) return;
+        if (accountManager == null || !accountManager.enableBlackjack) return;
         accountManager.OnBlackjackGameUpdated += OnGameUpdated;
         accountManager.OnBlackjackHandUpdated += OnHandUpdated;
         accountManager.OnBlackjackHandRemoved += RemoveHand;
@@ -216,6 +216,8 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void OnGameUpdated(BlackJackGame game)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         if (_seats.Length > game.MaxPlayers)
             Debug.LogWarning($"Seat count ({_seats.Length}) exceeds game maxPlayers ({game.MaxPlayers}), ignoring excess seats");
 
@@ -250,6 +252,8 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     private void OnHandUpdated(PublicKey handPk, BlackJackHand hand, bool isNew)
     {
+        if (!accountManager.enableBlackjack) return;
+        
         bool isInSubscribedGame = accountManager.SubscribedBlackjackPk != null 
             && hand.Blackjack.Equals(accountManager.SubscribedBlackjackPk)
             && (accountManager.BlackjackGameCache == null || hand.GameNo >= accountManager.BlackjackGameCache.GameNo);
@@ -926,6 +930,8 @@ public class BlackjackTableSimulator : MonoBehaviour
 
     public void SubmitAnte()
     {
+        if (!accountManager.enableBlackjack) return;
+        
         var betAmounts = _anteBuffer.Where(a => a > 0).ToArray();
         if (betAmounts.Length == 0) return;
         

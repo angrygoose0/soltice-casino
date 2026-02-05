@@ -1,5 +1,5 @@
 {
-  "address": "9V3SvTsSo77xHnwKRmuR2edBYPDrZ25wgt9nCyGRkjnE",
+  "address": "C27Md3GYx2gRe8yp7Zs1wheQGKJjPHsVZEabFCHqWj2p",
   "metadata": {
     "name": "treasury",
     "version": "0.1.0",
@@ -8,55 +8,120 @@
   },
   "instructions": [
     {
-      "name": "credit_player",
+      "name": "admin_withdraw",
       "discriminator": [
-        112,
-        133,
-        114,
-        77,
-        67,
-        54,
-        51,
-        111
+        160,
+        166,
+        147,
+        222,
+        46,
+        220,
+        75,
+        224
       ],
       "accounts": [
         {
           "name": "signer",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "address": "91fVsu7vLqT7P2djQuvqjUuM3ZBbDzHpKH4uJFQc5RcB"
         },
         {
-          "name": "user_balance",
+          "name": "token_mint",
+          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+        },
+        {
+          "name": "admin_token_account",
           "writable": true,
           "pda": {
             "seeds": [
               {
+                "kind": "account",
+                "path": "signer"
+              },
+              {
                 "kind": "const",
                 "value": [
-                  85,
-                  83,
-                  69,
-                  82,
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
                   95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
-                  67,
-                  69
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
                 ]
               },
               {
                 "kind": "account",
-                "path": "signer"
+                "path": "token_mint"
               }
-            ]
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
           }
         },
         {
           "name": "treasury",
-          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -70,6 +135,33 @@
                   85,
                   82,
                   89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
                 ]
               }
             ]
@@ -131,22 +223,153 @@
           }
         },
         {
-          "name": "authority",
-          "signer": true
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
-          "name": "magic_program",
-          "address": "Magic11111111111111111111111111111111111111"
+          "name": "token_program"
         },
         {
-          "name": "magic_context",
-          "writable": true,
-          "address": "MagicContext1111111111111111111111111111111"
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
           "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "apply_deposit",
+      "docs": [
+        "Reads deposit_buffer, updates balance + treasury.user_owned_amount (ER)"
+      ],
+      "discriminator": [
+        47,
+        209,
+        221,
+        214,
+        89,
+        10,
+        126,
+        71
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_balance",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "credit_player",
+      "discriminator": [
+        112,
+        133,
+        114,
+        77,
+        67,
+        54,
+        51,
+        111
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_balance",
+          "writable": true
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "buffer_to_release",
           "type": "u64"
         }
       ]
@@ -220,8 +443,34 @@
           }
         },
         {
+          "name": "treasury_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "treasury_token_account",
-          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -277,15 +526,6 @@
         {
           "name": "authority",
           "signer": true
-        },
-        {
-          "name": "magic_program",
-          "address": "Magic11111111111111111111111111111111111111"
-        },
-        {
-          "name": "magic_context",
-          "writable": true,
-          "address": "MagicContext1111111111111111111111111111111"
         }
       ],
       "args": [
@@ -296,6 +536,200 @@
         {
           "name": "possible_payout",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "delegate_treasury",
+      "discriminator": [
+        220,
+        230,
+        45,
+        56,
+        92,
+        223,
+        162,
+        169
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buffer_treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "treasury"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                163,
+                185,
+                82,
+                191,
+                81,
+                163,
+                224,
+                216,
+                120,
+                112,
+                238,
+                114,
+                144,
+                47,
+                157,
+                47,
+                41,
+                101,
+                185,
+                58,
+                233,
+                170,
+                204,
+                191,
+                181,
+                83,
+                17,
+                48,
+                158,
+                232,
+                179,
+                153
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "treasury"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "treasury"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner_program",
+          "address": "C27Md3GYx2gRe8yp7Zs1wheQGKJjPHsVZEabFCHqWj2p"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "DelegateParams"
+            }
+          }
         }
       ]
     },
@@ -341,38 +775,38 @@
             "program": {
               "kind": "const",
               "value": [
-                126,
-                12,
-                134,
-                90,
-                60,
-                67,
-                174,
-                187,
-                157,
-                154,
-                62,
-                230,
-                184,
-                176,
-                87,
-                44,
-                201,
-                47,
-                229,
-                204,
-                10,
-                249,
-                22,
-                135,
-                168,
-                94,
-                64,
-                60,
-                43,
+                163,
+                185,
+                82,
+                191,
+                81,
+                163,
+                224,
+                216,
                 120,
-                71,
-                63
+                112,
+                238,
+                114,
+                144,
+                47,
+                157,
+                47,
+                41,
+                101,
+                185,
+                58,
+                233,
+                170,
+                204,
+                191,
+                181,
+                83,
+                17,
+                48,
+                158,
+                232,
+                179,
+                153
               ]
             }
           }
@@ -479,7 +913,7 @@
         },
         {
           "name": "owner_program",
-          "address": "9V3SvTsSo77xHnwKRmuR2edBYPDrZ25wgt9nCyGRkjnE"
+          "address": "C27Md3GYx2gRe8yp7Zs1wheQGKJjPHsVZEabFCHqWj2p"
         },
         {
           "name": "delegation_program",
@@ -502,26 +936,25 @@
       ]
     },
     {
-      "name": "initialize_balance",
+      "name": "deposit_tokens",
+      "docs": [
+        "Transfers tokens, updates deposit_buffer and config.user_owned_amount (mainnet)"
+      ],
       "discriminator": [
-        43,
-        149,
-        254,
-        230,
-        40,
-        2,
-        185,
-        145
+        176,
+        83,
+        229,
+        18,
+        191,
+        143,
+        176,
+        150
       ],
       "accounts": [
         {
           "name": "signer",
           "writable": true,
           "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
         },
         {
           "name": "user_balance",
@@ -551,30 +984,103 @@
               }
             ]
           }
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initialize_treasury",
-      "discriminator": [
-        124,
-        186,
-        211,
-        195,
-        85,
-        165,
-        129,
-        166
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
         },
         {
-          "name": "treasury",
+          "name": "token_mint",
+          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+        },
+        {
+          "name": "user_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "signer"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "treasury_config",
           "writable": true,
           "pda": {
             "seeds": [
@@ -588,52 +1094,14 @@
                   83,
                   85,
                   82,
-                  89
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
-        },
-        {
-          "name": "staking_token_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  84,
-                  65,
-                  75,
-                  69,
+                  89,
                   95,
-                  77,
-                  73,
+                  67,
+                  79,
                   78,
-                  84
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116,
-                  95,
-                  118,
-                  49
+                  70,
+                  73,
+                  71
                 ]
               }
             ]
@@ -695,19 +1163,157 @@
           }
         },
         {
-          "name": "treasury_stake_token_account",
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_balance",
+      "discriminator": [
+        43,
+        149,
+        254,
+        230,
+        40,
+        2,
+        185,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_balance",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  85,
                   83,
-                  84,
-                  65,
-                  75,
                   69,
+                  82,
                   95,
+                  66,
+                  65,
+                  76,
+                  65,
+                  78,
+                  67,
+                  69
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_treasury",
+      "discriminator": [
+        124,
+        186,
+        211,
+        195,
+        85,
+        165,
+        129,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  82,
+                  69,
+                  65,
+                  83,
+                  85,
+                  82,
+                  89,
+                  95,
+                  67,
+                  79,
+                  78,
+                  70,
+                  73,
+                  71
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+        },
+        {
+          "name": "treasury_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
                   84,
                   79,
                   75,
@@ -718,20 +1324,38 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  116,
+                  102,
+                  50,
+                  98,
+                  49,
                   97,
-                  107,
+                  102,
+                  55,
+                  57,
+                  50,
+                  50,
+                  55,
+                  50,
+                  51,
                   101,
-                  95,
-                  116,
-                  111,
-                  107,
+                  49,
+                  54,
+                  51,
+                  54,
+                  97,
+                  48,
+                  54,
+                  49,
+                  52,
                   101,
-                  110,
-                  95,
-                  118,
-                  49
+                  48,
+                  99,
+                  50,
+                  52,
+                  97,
+                  53,
+                  101,
+                  98
                 ]
               }
             ]
@@ -785,16 +1409,19 @@
       ]
     },
     {
-      "name": "settle_loss",
+      "name": "request_withdraw",
+      "docs": [
+        "Updates balance and sets withdraw_buffer (ER)"
+      ],
       "discriminator": [
-        68,
-        231,
-        216,
-        6,
-        143,
-        183,
-        234,
-        33
+        137,
+        95,
+        187,
+        96,
+        250,
+        138,
+        31,
+        182
       ],
       "accounts": [
         {
@@ -851,9 +1478,35 @@
               }
             ]
           }
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "undelegate_treasury",
+      "discriminator": [
+        203,
+        188,
+        100,
+        72,
+        202,
+        136,
+        195,
+        42
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
         },
         {
-          "name": "treasury_token_account",
+          "name": "treasury",
           "writable": true,
           "pda": {
             "seeds": [
@@ -861,55 +1514,17 @@
                 "kind": "const",
                 "value": [
                   84,
-                  79,
-                  75,
+                  82,
                   69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
+                  65,
+                  83,
+                  85,
+                  82,
+                  89
                 ]
               }
             ]
           }
-        },
-        {
-          "name": "authority",
-          "signer": true
         },
         {
           "name": "magic_program",
@@ -983,16 +1598,19 @@
       "args": []
     },
     {
-      "name": "user_deposit",
+      "name": "withdraw_tokens",
+      "docs": [
+        "Transfers tokens from treasury to user (mainnet)"
+      ],
       "discriminator": [
-        186,
-        198,
-        140,
-        233,
-        129,
-        39,
-        98,
-        153
+        2,
+        4,
+        225,
+        61,
+        19,
+        182,
+        106,
+        170
       ],
       "accounts": [
         {
@@ -1125,7 +1743,6 @@
         },
         {
           "name": "treasury",
-          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -1145,324 +1762,7 @@
           }
         },
         {
-          "name": "treasury_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "user_stake",
-      "discriminator": [
-        114,
-        200,
-        186,
-        75,
-        1,
-        228,
-        118,
-        99
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
-        },
-        {
-          "name": "staking_token_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  84,
-                  65,
-                  75,
-                  69,
-                  95,
-                  77,
-                  73,
-                  78,
-                  84
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116,
-                  95,
-                  118,
-                  49
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "user_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "user_stake_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "staking_token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "treasury",
+          "name": "treasury_config",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1476,580 +1776,14 @@
                   83,
                   85,
                   82,
-                  89
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "user_stake_withdraw",
-      "discriminator": [
-        81,
-        113,
-        24,
-        13,
-        108,
-        46,
-        118,
-        159
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
-        },
-        {
-          "name": "staking_token_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  83,
-                  84,
-                  65,
-                  75,
-                  69,
+                  89,
                   95,
-                  77,
-                  73,
-                  78,
-                  84
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116,
-                  95,
-                  118,
-                  49
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "user_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "user_stake_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "staking_token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "treasury",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  82,
-                  69,
-                  65,
-                  83,
-                  85,
-                  82,
-                  89
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  79,
-                  75,
-                  69,
-                  78
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  50,
-                  98,
-                  49,
-                  97,
-                  102,
-                  55,
-                  57,
-                  50,
-                  50,
-                  55,
-                  50,
-                  51,
-                  101,
-                  49,
-                  54,
-                  51,
-                  54,
-                  97,
-                  48,
-                  54,
-                  49,
-                  52,
-                  101,
-                  48,
-                  99,
-                  50,
-                  52,
-                  97,
-                  53,
-                  101,
-                  98
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "share_amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "user_withdraw",
-      "discriminator": [
-        53,
-        254,
-        26,
-        242,
-        119,
-        237,
-        73,
-        33
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "user_balance",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  85,
-                  83,
-                  69,
-                  82,
-                  95,
-                  66,
-                  65,
-                  76,
-                  65,
-                  78,
                   67,
-                  69
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
-        },
-        {
-          "name": "user_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
+                  79,
+                  78,
                   70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "treasury",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  84,
-                  82,
-                  69,
-                  65,
-                  83,
-                  85,
-                  82,
-                  89
+                  73,
+                  71
                 ]
               }
             ]
@@ -2122,12 +1856,7 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
+      "args": []
     }
   ],
   "accounts": [
@@ -2145,6 +1874,19 @@
       ]
     },
     {
+      "name": "TreasuryConfig",
+      "discriminator": [
+        124,
+        54,
+        212,
+        227,
+        213,
+        189,
+        168,
+        41
+      ]
+    },
+    {
       "name": "UserBalance",
       "discriminator": [
         187,
@@ -2159,6 +1901,19 @@
     }
   ],
   "events": [
+    {
+      "name": "AdminWithdrawn",
+      "discriminator": [
+        12,
+        67,
+        18,
+        232,
+        19,
+        82,
+        237,
+        212
+      ]
+    },
     {
       "name": "BalanceInitialized",
       "discriminator": [
@@ -2212,6 +1967,19 @@
       ]
     },
     {
+      "name": "TreasuryDelegated",
+      "discriminator": [
+        227,
+        67,
+        31,
+        141,
+        211,
+        78,
+        128,
+        204
+      ]
+    },
+    {
       "name": "TreasuryInitialized",
       "discriminator": [
         199,
@@ -2222,6 +1990,19 @@
         145,
         55,
         179
+      ]
+    },
+    {
+      "name": "TreasuryUndelegated",
+      "discriminator": [
+        39,
+        56,
+        240,
+        6,
+        168,
+        44,
+        208,
+        103
       ]
     },
     {
@@ -2251,6 +2032,19 @@
       ]
     },
     {
+      "name": "UserDepositBuffered",
+      "discriminator": [
+        120,
+        93,
+        35,
+        134,
+        187,
+        238,
+        107,
+        182
+      ]
+    },
+    {
       "name": "UserDeposited",
       "discriminator": [
         83,
@@ -2264,29 +2058,16 @@
       ]
     },
     {
-      "name": "UserStakeWithdrawn",
+      "name": "UserWithdrawBuffered",
       "discriminator": [
-        168,
-        61,
-        63,
-        29,
-        209,
-        124,
-        52,
-        65
-      ]
-    },
-    {
-      "name": "UserStaked",
-      "discriminator": [
-        13,
-        66,
-        173,
-        212,
-        39,
-        10,
-        205,
-        241
+        167,
+        93,
+        144,
+        58,
+        32,
+        143,
+        131,
+        20
       ]
     },
     {
@@ -2316,36 +2097,33 @@
     },
     {
       "code": 6002,
-      "name": "InvalidOwner",
-      "msg": "Invalid owner for balance account"
-    },
-    {
-      "code": 6003,
-      "name": "InvalidPlayerBalanceType",
-      "msg": "Invalid player balance type"
-    },
-    {
-      "code": 6004,
       "name": "InvalidAmount",
       "msg": "Invalid amount"
     },
     {
-      "code": 6005,
-      "name": "InvalidStakeAmount",
-      "msg": "Invalid stake amount"
-    },
-    {
-      "code": 6006,
-      "name": "ActiveBetInProgress",
-      "msg": "Active bet in progress"
-    },
-    {
-      "code": 6007,
+      "code": 6003,
       "name": "InsufficientTreasuryFunds",
       "msg": "Insufficient treasury funds"
+    },
+    {
+      "code": 6004,
+      "name": "UnauthorizedGame",
+      "msg": "Unauthorized game program"
     }
   ],
   "types": [
+    {
+      "name": "AdminWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
     {
       "name": "BalanceInitialized",
       "type": {
@@ -2442,32 +2220,48 @@
             "type": "u8"
           },
           {
-            "name": "fee_percentage",
-            "type": "u64"
-          },
-          {
             "name": "buffer_amount",
             "type": "u64"
           },
           {
             "name": "user_owned_amount",
-            "type": "u64"
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TreasuryConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "treasury_bump",
+            "type": "u8"
           },
           {
             "name": "treasury_token_account_bump",
             "type": "u8"
           },
           {
-            "name": "treasury_stake_token_account_bump",
-            "type": "u8"
-          },
-          {
-            "name": "staking_token_mint_bump",
-            "type": "u8"
-          },
-          {
-            "name": "withdrawal_time",
+            "name": "user_owned_amount",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TreasuryDelegated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "commit_frequency_ms",
+            "type": "u32"
           }
         ]
       }
@@ -2478,14 +2272,17 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "staking_mint",
-            "type": "pubkey"
-          },
-          {
             "name": "treasury_token_account",
             "type": "pubkey"
           }
         ]
+      }
+    },
+    {
+      "name": "TreasuryUndelegated",
+      "type": {
+        "kind": "struct",
+        "fields": []
       }
     },
     {
@@ -2503,6 +2300,14 @@
           },
           {
             "name": "buffer_amount",
+            "type": "u64"
+          },
+          {
+            "name": "deposit_buffer",
+            "type": "u64"
+          },
+          {
+            "name": "withdraw_buffer",
             "type": "u64"
           },
           {
@@ -2541,6 +2346,22 @@
       }
     },
     {
+      "name": "UserDepositBuffered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "UserDeposited",
       "type": {
         "kind": "struct",
@@ -2561,27 +2382,7 @@
       }
     },
     {
-      "name": "UserStakeWithdrawn",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "shares_burned",
-            "type": "u64"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UserStaked",
+      "name": "UserWithdrawBuffered",
       "type": {
         "kind": "struct",
         "fields": [
@@ -2591,10 +2392,6 @@
           },
           {
             "name": "amount",
-            "type": "u64"
-          },
-          {
-            "name": "shares_minted",
             "type": "u64"
           }
         ]

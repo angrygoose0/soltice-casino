@@ -14,11 +14,7 @@ public class BalloonSimulator : MonoBehaviour
     [SerializeField] private FeedbackManager feedbackManager;
     [SerializeField] private InteractableObjects interactableObjects;
 
-    [SerializeField] private double currentTick = 0;
-    
-    private const float DEFAULT_ACTION_DURATION = 5f;
-    
-    private Game _currentGame;
+    [SerializeField] private ulong currentTick = 0;
 
     private GameObject spawnedBalloon;
     private ParticleSystem popParticle;
@@ -27,7 +23,6 @@ public class BalloonSimulator : MonoBehaviour
     private TMP_Text multiplierText;
     private TMP_Text playerCountText;
     private TMP_Text totalBetText;
-    private ProgressCircle progressCircle;
 
     private Coroutine smoothScaleCoroutineRef;
     private Coroutine multiplierCountCoroutineRef;
@@ -68,18 +63,13 @@ public class BalloonSimulator : MonoBehaviour
             accountManager.OnGameUpdated -= HandleGameUpdate;
     }
 
-    void Update()
-    {
-        if (_currentGame != null)
-            UpdateProgressCircle(_currentGame);
-    }
-
     private void HandleGameUpdate(Game oldData, Game newData)
     {
+        if (!accountManager.enableCrash) return;
         UpdateBalloon(newData);
     }
 
-    private void BalloonBasedOnTick(double tick)
+    private void BalloonBasedOnTick(ulong tick)
     {
         double fromMultiplier = currentTick == 0 ? 0 : Math.Pow(1.11, currentTick);
         double toMultiplier = Math.Pow(1.11, tick);
@@ -198,12 +188,6 @@ public class BalloonSimulator : MonoBehaviour
         multiplierText.enabled = false;
         playerCountText.enabled = false;
         totalBetText.enabled = false;
-        
-        Transform progressCircleTransform = spawnedBalloon.transform.Find("progressCircle");
-        if (progressCircleTransform != null)
-        {
-            progressCircle = progressCircleTransform.GetComponent<ProgressCircle>();
-        }
 
         if (interactableObjects != null)
         {
@@ -213,8 +197,6 @@ public class BalloonSimulator : MonoBehaviour
 
     private void UpdateBalloon(Game game)
     {
-        _currentGame = game;
-        
         if (!balloonRenderer.enabled)
         {
             if (game.State == 0) return;
@@ -259,25 +241,6 @@ public class BalloonSimulator : MonoBehaviour
                 bobBalloonCoroutineRef = StartCoroutine(BobBalloonCoroutine(spawnedBalloon));
             }
             BalloonBasedOnTick(game.Tick);
-        }
-    }
-    
-    private void UpdateProgressCircle(Game game)
-    {
-        if (progressCircle == null || game == null) return;
-
-        if (game.State == 1)
-        {
-            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            long startTime = game.NextActionTime - (long)DEFAULT_ACTION_DURATION;
-            long elapsed = currentTime - startTime;
-            float progress = Mathf.Clamp(elapsed / DEFAULT_ACTION_DURATION * 100f, 0f, 100f);
-            
-            progressCircle.SetProgress(progress);
-        }
-        else
-        {
-            progressCircle.SetProgress(0f);
         }
     }
 

@@ -149,7 +149,7 @@ public class CrashTransactionBuilder : MonoBehaviour
 		var game = DeriveGameAccount();
 		var accounts = new StartGameAccounts
 		{
-			Signer = user,
+			Payer = user,
 			Game = game
 		};
         var ix = CrashProgram.StartGame(accounts);
@@ -240,33 +240,19 @@ public class CrashTransactionBuilder : MonoBehaviour
         return ix;
 	}
 
-    public TransactionInstruction Tick()
-	{
-        if (CurrentUser() == null) return null;
-		var user = CurrentUserPk();
-		var game = DeriveGameAccount();
-		var accounts = new TickAccounts
-		{
-			Signer = user,
-			Game = game
-		};
-        var ix = CrashProgram.Tick(accounts);
-        return ix;
-	}
-
-    public TransactionInstruction RequestRandomness(byte clientSeed)
+    public TransactionInstruction RequestTick(byte clientSeed)
 	{
         if (CurrentUser() == null) return null;
 		var user = CurrentUserPk();
 		var game = DeriveGameAccount();
 		var programIdentity = DeriveProgramIdentity();
-		var accounts = new RequestRandomnessAccounts
+		var accounts = new RequestTickAccounts
 		{
 			Signer = user,
 			Game = game,
 			ProgramIdentity = programIdentity
 		};
-        var ix = CrashProgram.RequestRandomness(accounts, clientSeed);
+        var ix = CrashProgram.RequestTick(accounts, clientSeed);
         return ix;
 	}
 

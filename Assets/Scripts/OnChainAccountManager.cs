@@ -19,6 +19,18 @@ using System.Linq;
 /// </summary>
 public class OnChainAccountManager : MonoBehaviour
 {
+    [Header("Game Features")]
+    [Tooltip("Enable Crash game subscriptions and functionality")]
+    public bool enableCrash = true;
+    [Tooltip("Root objects to disable when Crash is not enabled")]
+    [SerializeField] private GameObject[] crashObjects;
+    
+    [Tooltip("Enable Blackjack game subscriptions and functionality")]
+    public bool enableBlackjack = false;
+    [Tooltip("Root objects to disable when Blackjack is not enabled")]
+    [SerializeField] private GameObject[] blackjackObjects;
+
+    [Header("References")]
     [SerializeField] private SolanaManager solanaManager;
 
     // Cached account data
@@ -52,10 +64,26 @@ public class OnChainAccountManager : MonoBehaviour
     public event Action<PublicKey, BlackJackHand, bool> OnBlackjackHandUpdated; // (handPk, hand, isNew)
     public event Action<PublicKey> OnBlackjackHandRemoved;
 
+    private void Awake()
+    {
+        SetGameObjectsActive(crashObjects, enableCrash);
+        SetGameObjectsActive(blackjackObjects, enableBlackjack);
+    }
+
+    private void SetGameObjectsActive(GameObject[] objects, bool active)
+    {
+        if (objects == null) return;
+        foreach (var obj in objects)
+            if (obj != null) obj.SetActive(active);
+    }
+
     private void Start()
     {
-        SetupGameSubscription();
-        SetupBlackjackGameSubscription();
+        if (enableCrash)
+            SetupGameSubscription();
+        
+        if (enableBlackjack)
+            SetupBlackjackGameSubscription();
     }
 
     private void OnEnable()
@@ -75,15 +103,21 @@ public class OnChainAccountManager : MonoBehaviour
         try
         {
             // Retry game subscriptions now that wallet is connected (for WebSocket)
-            SetupGameSubscription();
-            SetupBlackjackGameSubscription();
+            if (enableCrash)
+                SetupGameSubscription();
+            
+            if (enableBlackjack)
+                SetupBlackjackGameSubscription();
             
             await SetupTreasurySubscription();
             await SetupUserAccountSubscriptions();
             
-            _userBlackjackHands = await GetBlackjackHands(Web3.Account.PublicKey, 40);
-            Debug.Log($"Found {_userBlackjackHands.Count} blackjack hands owned by player");
-            await SubscribeToBlackjackHands(_userBlackjackHands);
+            if (enableBlackjack)
+            {
+                _userBlackjackHands = await GetBlackjackHands(Web3.Account.PublicKey, 40);
+                Debug.Log($"Found {_userBlackjackHands.Count} blackjack hands owned by player");
+                await SubscribeToBlackjackHands(_userBlackjackHands);
+            }
         }
         catch (Exception ex)
         {
@@ -120,7 +154,7 @@ public class OnChainAccountManager : MonoBehaviour
             gamePk,
             HandleGameUpdate,
             data => Game.Deserialize(data),
-            forceDelegated: SolanaManager.USE_EPHEMERAL_ROLLUPS
+            forceDelegated: solanaManager.useEphemeralRollups
         );
 
         if (string.IsNullOrEmpty(id))
@@ -136,7 +170,7 @@ public class OnChainAccountManager : MonoBehaviour
             blackjackPk,
             HandleBlackjackGameUpdate,
             data => BlackJackGame.Deserialize(data),
-            forceDelegated: SolanaManager.USE_EPHEMERAL_ROLLUPS
+            forceDelegated: solanaManager.useEphemeralRollups
         );
 
         if (string.IsNullOrEmpty(id))
@@ -178,12 +212,15 @@ public class OnChainAccountManager : MonoBehaviour
         PlayerBetCache = null;
         UserBalanceCache = null;
 
-        _playerBetSubscriptionId = await SetupAccountSubscription(
-            "PlayerBet",
-            CrashTransactionBuilder.DerivePlayerBetAccount(Web3.Account.PublicKey),
-            HandlePlayerBetUpdate,
-            data => PlayerBet.Deserialize(data)
-        );
+        if (enableCrash)
+        {
+            _playerBetSubscriptionId = await SetupAccountSubscription(
+                "PlayerBet",
+                CrashTransactionBuilder.DerivePlayerBetAccount(Web3.Account.PublicKey),
+                HandlePlayerBetUpdate,
+                data => PlayerBet.Deserialize(data)
+            );
+        }
 
         _userBalanceSubscriptionId = await SetupAccountSubscription(
             "UserBalance",
@@ -199,7 +236,7 @@ public class OnChainAccountManager : MonoBehaviour
         Action<T> callback,
         Func<byte[], T> deserializer)
     {
-        if (!SolanaManager.USE_EPHEMERAL_ROLLUPS)
+        if (!solanaManager.useEphemeralRollups)
         {
             // Non-ephemeral mode: just load and subscribe via mainnet
             return await SubscriptionManager.Instance.SubscribeAndLoad<T>(
@@ -250,7 +287,7 @@ public class OnChainAccountManager : MonoBehaviour
     // BlackJackHand offsets: discriminator=0, blackjack=8, player=40
     public async Task<List<PublicKey>> GetBlackjackHands(PublicKey filterKey, ulong offset)
     {
-        var rpcClient = SolanaManager.USE_EPHEMERAL_ROLLUPS 
+        var rpcClient = solanaManager.useEphemeralRollups 
             ? SolanaManager.EphemeralWallet?.ActiveRpcClient 
             : Web3.Rpc;
         if (rpcClient == null) return new List<PublicKey>();
@@ -291,7 +328,7 @@ public class OnChainAccountManager : MonoBehaviour
                 handPk,
                 data => HandleBlackjackHandUpdate(handPk, data),
                 data => BlackJackHand.Deserialize(data),
-                forceDelegated: SolanaManager.USE_EPHEMERAL_ROLLUPS
+                forceDelegated: solanaManager.useEphemeralRollups
             );
             
             if (!string.IsNullOrEmpty(subId))
@@ -366,6 +403,8 @@ public class OnChainAccountManager : MonoBehaviour
 
     private async void HandleBlackjackGameUpdate(BlackJackGame newData)
     {
+        if (!enableBlackjack) return;
+        
         BlackjackGameCache = newData;
         OnBlackjackGameUpdated?.Invoke(newData);
         

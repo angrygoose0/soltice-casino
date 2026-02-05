@@ -118,8 +118,9 @@ public class TextAnimationManager : MonoBehaviour
 
             float t = elapsed / duration;
             float easedT = 1f - Mathf.Pow(1f - t, 3f); // ease-out cubic
-            double current = Mathf.Lerp((float)startValue, (float)endValue, easedT);
-            ulong currentValue = (ulong)current;
+            // Use double precision lerp to avoid float precision loss with large ulong values
+            double current = (double)startValue + ((double)endValue - (double)startValue) * easedT;
+            ulong currentValue = (ulong)Math.Max(0, current);
             label.text = prefix + (formatted ? FormatShortAmount(currentValue) : currentValue.ToString(CultureInfo.InvariantCulture)) + suffix;
             elapsed += Time.deltaTime;
             yield return null;

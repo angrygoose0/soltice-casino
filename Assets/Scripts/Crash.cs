@@ -207,10 +207,9 @@ namespace Crash
             GameAlreadyStarted = 6004U,
             InsufficientBalance = 6005U,
             ActiveBetInProgress = 6006U,
-            RandomnessNotResolved = 6007U,
-            AlreadyClaimed = 6008U,
-            TickNotReady = 6009U,
-            StartTooSoon = 6010U
+            AlreadyClaimed = 6007U,
+            TickNotReady = 6008U,
+            StartTooSoon = 6009U
         }
     }
 
@@ -400,15 +399,16 @@ namespace Crash
 
         protected override Dictionary<uint, ProgramError<CrashErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.RandomnessNotResolved, "Randomness not resolved")}, {6008U, new ProgramError<CrashErrorKind>(CrashErrorKind.AlreadyClaimed, "Bet already claimed")}, {6009U, new ProgramError<CrashErrorKind>(CrashErrorKind.TickNotReady, "Tick not ready")}, {6010U, new ProgramError<CrashErrorKind>(CrashErrorKind.StartTooSoon, "Too soon to start a new game after crash")}, };
+            return new Dictionary<uint, ProgramError<CrashErrorKind>>{{6000U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidAmount, "Invalid bet amount")}, {6001U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameCrashed, "Game crashed")}, {6002U, new ProgramError<CrashErrorKind>(CrashErrorKind.InvalidGame, "Invalid game")}, {6003U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameHasNotStarted, "Game has not started")}, {6004U, new ProgramError<CrashErrorKind>(CrashErrorKind.GameAlreadyStarted, "Game already started")}, {6005U, new ProgramError<CrashErrorKind>(CrashErrorKind.InsufficientBalance, "Insufficient balance")}, {6006U, new ProgramError<CrashErrorKind>(CrashErrorKind.ActiveBetInProgress, "Active bet in progress for current game")}, {6007U, new ProgramError<CrashErrorKind>(CrashErrorKind.AlreadyClaimed, "Bet already claimed")}, {6008U, new ProgramError<CrashErrorKind>(CrashErrorKind.TickNotReady, "Tick not ready")}, {6009U, new ProgramError<CrashErrorKind>(CrashErrorKind.StartTooSoon, "Too soon to start a new game after crash")}, };
         }
     }
 
     namespace Program
     {
-        public class CallbackRandomnessAccounts
+        public class CallbackTickAccounts
         {
             public PublicKey VrfProgramIdentity { get; set; } = new PublicKey("9irBy75QS2BN81FUgXuHcjqceJJRuc9oDkAe8TKVvvAw");
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
             public PublicKey Game { get; set; }
         }
 
@@ -432,7 +432,7 @@ namespace Crash
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -448,7 +448,7 @@ namespace Crash
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("7qtxZHTZ8dtCM5bnPLsg121HDsQ2VQkCBQVMiuvxCziB");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("DSCfBKfJoGkX3SfDHKL6wyvBHDrwm63jjBoNXEopWmb9");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -465,7 +465,7 @@ namespace Crash
 
             public PublicKey Game { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("7qtxZHTZ8dtCM5bnPLsg121HDsQ2VQkCBQVMiuvxCziB");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("DSCfBKfJoGkX3SfDHKL6wyvBHDrwm63jjBoNXEopWmb9");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -482,7 +482,7 @@ namespace Crash
 
             public PublicKey PlayerBet { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("7qtxZHTZ8dtCM5bnPLsg121HDsQ2VQkCBQVMiuvxCziB");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("DSCfBKfJoGkX3SfDHKL6wyvBHDrwm63jjBoNXEopWmb9");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -536,7 +536,7 @@ namespace Crash
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -551,7 +551,7 @@ namespace Crash
             public PublicKey SystemProgram { get; set; }
         }
 
-        public class RequestRandomnessAccounts
+        public class RequestTickAccounts
         {
             public PublicKey Signer { get; set; }
 
@@ -567,15 +567,10 @@ namespace Crash
 
         public class StartGameAccounts
         {
-            public PublicKey Signer { get; set; }
+            public PublicKey Payer { get; set; }
 
-            public PublicKey Game { get; set; }
-        }
-
-        public class TickAccounts
-        {
-            public PublicKey Signer { get; set; }
-
+            public PublicKey MagicProgram { get; set; } = new PublicKey("Magic11111111111111111111111111111111111111");
+            public PublicKey OracleQueue { get; set; } = new PublicKey("5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc");
             public PublicKey Game { get; set; }
         }
 
@@ -611,15 +606,15 @@ namespace Crash
 
         public static class CrashProgram
         {
-            public const string ID = "7qtxZHTZ8dtCM5bnPLsg121HDsQ2VQkCBQVMiuvxCziB";
-            public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackRandomness(CallbackRandomnessAccounts accounts, byte[] randomness, PublicKey programId = null)
+            public const string ID = "DSCfBKfJoGkX3SfDHKL6wyvBHDrwm63jjBoNXEopWmb9";
+            public static Solana.Unity.Rpc.Models.TransactionInstruction CallbackTick(CallbackTickAccounts accounts, byte[] randomness, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.VrfProgramIdentity, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.VrfProgramIdentity, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
-                _data.WriteU64(3935360171388153382UL, offset);
+                _data.WriteU64(16113558022330142815UL, offset);
                 offset += 8;
                 _data.WriteSpan(randomness, offset);
                 offset += randomness.Length;
@@ -769,14 +764,14 @@ namespace Crash
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction RequestRandomness(RequestRandomnessAccounts accounts, byte client_seed, PublicKey programId = null)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction RequestTick(RequestTickAccounts accounts, byte client_seed, PublicKey programId = null)
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.OracleQueue, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.ProgramIdentity, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.VrfProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SlotHashes, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.OracleQueue, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.ProgramIdentity, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.VrfProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SlotHashes, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
-                _data.WriteU64(1306022063415035349UL, offset);
+                _data.WriteU64(5973632605860841202UL, offset);
                 offset += 8;
                 _data.WriteU8(client_seed, offset);
                 offset += 1;
@@ -789,24 +784,10 @@ namespace Crash
             {
                 programId ??= new(ID);
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false)};
+                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Payer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.MagicProgram, false), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.OracleQueue, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false)};
                 byte[] _data = new byte[1200];
                 int offset = 0;
                 _data.WriteU64(1077946599884992505UL, offset);
-                offset += 8;
-                byte[] resultData = new byte[offset];
-                Array.Copy(_data, resultData, offset);
-                return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
-            }
-
-            public static Solana.Unity.Rpc.Models.TransactionInstruction Tick(TickAccounts accounts, PublicKey programId = null)
-            {
-                programId ??= new(ID);
-                List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
-                {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Game, false)};
-                byte[] _data = new byte[1200];
-                int offset = 0;
-                _data.WriteU64(1098685228960730972UL, offset);
                 offset += 8;
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);

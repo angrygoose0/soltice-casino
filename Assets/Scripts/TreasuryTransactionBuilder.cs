@@ -60,22 +60,6 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         return pda;
     }
 
-    public static PublicKey DeriveStakingTokenMint()
-    {
-        byte[] seed1 = Encoding.UTF8.GetBytes("STAKE_MINT");
-        byte[] seed2 = Encoding.UTF8.GetBytes("stake_mint_v1");
-        PublicKey.TryFindProgramAddress(new[] { seed1, seed2 }, _programId, out PublicKey pda, out _);
-        return pda;
-    }
-
-    public static PublicKey DeriveTreasuryStakeTokenAccount()
-    {
-        byte[] seed1 = Encoding.UTF8.GetBytes("STAKE_TOKEN");
-        byte[] seed2 = Encoding.UTF8.GetBytes("stake_token_v1");
-        PublicKey.TryFindProgramAddress(new[] { seed1, seed2 }, _programId, out PublicKey pda, out _);
-        return pda;
-    }
-
     public static PublicKey DeriveUserTokenAccount(PublicKey user, PublicKey mint)
     {
         return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(user, mint);
@@ -134,17 +118,13 @@ public class TreasuryTransactionBuilder : MonoBehaviour
         var treasury = DeriveTreasuryAccount();
         var treasuryConfig = DeriveTreasuryConfigAccount();
         var treasuryTokenAccount = DeriveTreasuryTokenAccount();
-        var stakingTokenMint = DeriveStakingTokenMint();
-        var treasuryStakeTokenAccount = DeriveTreasuryStakeTokenAccount();
 
         var accounts = new InitializeTreasuryAccounts
         {
             Signer = signer,
             Treasury = treasury,
             TreasuryConfig = treasuryConfig,
-            StakingTokenMint = stakingTokenMint,
             TreasuryTokenAccount = treasuryTokenAccount,
-            TreasuryStakeTokenAccount = treasuryStakeTokenAccount,
             TokenProgram = TOKEN_PROGRAM_ID,
         };
 
