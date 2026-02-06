@@ -115,13 +115,13 @@ public class OnChainAccountManager : MonoBehaviour
             if (enableBlackjack)
             {
                 _userBlackjackHands = await GetBlackjackHands(Web3.Account.PublicKey, 40);
-                Debug.Log($"Found {_userBlackjackHands.Count} blackjack hands owned by player");
+                GameLogger.Log($"Found {_userBlackjackHands.Count} blackjack hands owned by player");
                 await SubscribeToBlackjackHands(_userBlackjackHands);
             }
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"Subscription setup failed: {ex.Message}");
+            GameLogger.LogWarning($"Subscription setup failed: {ex.Message}");
         }
         finally
         {
@@ -158,7 +158,7 @@ public class OnChainAccountManager : MonoBehaviour
         );
 
         if (string.IsNullOrEmpty(id))
-            Debug.LogError("Failed to subscribe to game account");
+            GameLogger.LogError("Failed to subscribe to game account");
     }
 
     public async void SetupBlackjackGameSubscription()
@@ -174,10 +174,10 @@ public class OnChainAccountManager : MonoBehaviour
         );
 
         if (string.IsNullOrEmpty(id))
-            Debug.LogError("Failed to subscribe to blackjack game account");
+            GameLogger.LogError("Failed to subscribe to blackjack game account");
         
         var gameHands = await GetBlackjackHands(blackjackPk, 8);
-        Debug.Log($"Found {gameHands.Count} blackjack hands for game {blackjackPk}");
+        GameLogger.Log($"Found {gameHands.Count} blackjack hands for game {blackjackPk}");
         await SubscribeToBlackjackHands(gameHands);
     }
 
@@ -192,7 +192,7 @@ public class OnChainAccountManager : MonoBehaviour
         );
 
         if (string.IsNullOrEmpty(id))
-            Debug.LogError("Failed to subscribe to treasury account");
+            GameLogger.LogError("Failed to subscribe to treasury account");
     }
 
     public async Task SetupUserAccountSubscriptions()
@@ -250,7 +250,7 @@ public class OnChainAccountManager : MonoBehaviour
 
         if (initialData != null)
         {
-            Debug.Log($"{accountName} loaded via ER - setting up subscription");
+            GameLogger.Log($"{accountName} loaded via ER - setting up subscription");
             return await SubscriptionManager.Instance.SubscribeAndLoad<T>(
                 accountPk, callback, deserializer, forceDelegated: true
             );
@@ -260,7 +260,7 @@ public class OnChainAccountManager : MonoBehaviour
         
         if (isDelegated)
         {
-            Debug.Log($"{accountName} delegated but not ready - loading via RPC and subscribing via ER");
+            GameLogger.Log($"{accountName} delegated but not ready - loading via RPC and subscribing via ER");
             
             var normalData = await SubscriptionManager.Instance.LoadAccountData<T>(
                 accountPk, deserializer, forceDelegated: false
@@ -279,7 +279,7 @@ public class OnChainAccountManager : MonoBehaviour
                 accountPk, deserializer, forceDelegated: false
             );
             
-            Debug.Log($"{accountName} state: delegated={isDelegated}, initialized={baseLayerData != null}");
+            GameLogger.Log($"{accountName} state: delegated={isDelegated}, initialized={baseLayerData != null}");
             return null;
         }
     }
@@ -310,7 +310,7 @@ public class OnChainAccountManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error getting blackjack hands: {ex.Message}");
+            GameLogger.LogError($"Error getting blackjack hands: {ex.Message}");
             return new List<PublicKey>();
         }
     }
@@ -322,7 +322,7 @@ public class OnChainAccountManager : MonoBehaviour
             if (_blackjackHandSubscriptionIds.ContainsKey(handPk))
                 continue;
             
-            Debug.Log($"[OnChainAcctMgr] Setting up hand subscription - PK: {handPk}, SubscribedGame: {SubscribedBlackjackPk}");
+            GameLogger.Log($"[OnChainAcctMgr] Setting up hand subscription - PK: {handPk}, SubscribedGame: {SubscribedBlackjackPk}");
             
             var subId = await SubscriptionManager.Instance.SubscribeAndLoad<BlackJackHand>(
                 handPk,
@@ -334,7 +334,7 @@ public class OnChainAccountManager : MonoBehaviour
             if (!string.IsNullOrEmpty(subId))
             {
                 _blackjackHandSubscriptionIds[handPk] = subId;
-                Debug.Log($"Subscribed to blackjack hand: {handPk}");
+                GameLogger.Log($"Subscribed to blackjack hand: {handPk}");
             }
         }
     }
@@ -376,7 +376,7 @@ public class OnChainAccountManager : MonoBehaviour
         var oldData = GameCache;
         GameCache = newData;
         OnGameUpdated?.Invoke(oldData, newData);
-        Debug.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
+        GameLogger.Log($"State: {newData.State}, Tick: {newData.Tick}, CrashTick: {newData.CrashTick}, GameNo: {newData.GameNo}");
     }
 
     private void HandlePlayerBetUpdate(PlayerBet newData)
@@ -384,21 +384,21 @@ public class OnChainAccountManager : MonoBehaviour
         var oldData = PlayerBetCache;
         PlayerBetCache = newData;
         OnPlayerBetUpdated?.Invoke(oldData, newData);
-        Debug.Log($"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}");
+        GameLogger.Log($"Game: {newData.Game}, Amount: {newData.Amount}, Player: {newData.Player}");
     }
 
     private void HandleUserBalanceUpdate(UserBalance newData)
     {
         UserBalanceCache = newData;
         OnUserBalanceUpdated?.Invoke(newData);
-        Debug.Log($"Balance: {newData.Balance}, User: {newData.User}");
+        GameLogger.Log($"Balance: {newData.Balance}, User: {newData.User}");
     }
 
     private void HandleTreasuryUpdate(TreasuryAccount newData)
     {
         TreasuryCache = newData;
         OnTreasuryUpdated?.Invoke(newData);
-        Debug.Log($"Treasury BufferAmount: {newData.BufferAmount}, UserOwnedAmount: {newData.UserOwnedAmount}");
+        GameLogger.Log($"Treasury BufferAmount: {newData.BufferAmount}, UserOwnedAmount: {newData.UserOwnedAmount}");
     }
 
     private async void HandleBlackjackGameUpdate(BlackJackGame newData)
@@ -414,7 +414,7 @@ public class OnChainAccountManager : MonoBehaviour
             await SubscribeToBlackjackHands(gameHands);
         }
         
-        Debug.Log($"Blackjack GameId: {newData.GameId}, ActiveHands: {newData.ActiveHands}");
+        GameLogger.Log($"Blackjack GameId: {newData.GameId}, ActiveHands: {newData.ActiveHands}");
     }
 
     private async void HandleBlackjackHandUpdate(PublicKey handPk, BlackJackHand newData)
@@ -426,7 +426,7 @@ public class OnChainAccountManager : MonoBehaviour
         
         if (!isInSubscribedGame && !isPlayerOwnHand)
         {
-            Debug.Log($"Hand {handPk} not in subscribed game - unsubscribing");
+            GameLogger.Log($"Hand {handPk} not in subscribed game - unsubscribing");
             
             if (_blackjackHandSubscriptionIds.TryGetValue(handPk, out string subId))
             {
@@ -446,7 +446,7 @@ public class OnChainAccountManager : MonoBehaviour
         
         OnBlackjackHandUpdated?.Invoke(handPk, newData, isNew);
         
-        Debug.Log($"Blackjack Hand {handPk}: State={newData.State}, CurrentBet={newData.CurrentBet}");
+        GameLogger.Log($"Blackjack Hand {handPk}: State={newData.State}, CurrentBet={newData.CurrentBet}");
     }
 }
 

@@ -1,0 +1,17 @@
+# Cloudflare Pages headers for Unity WebGL
+
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/*.wasm
+  Content-Type: application/wasm
+
+/*.data
+  Content-Type: application/octet-stream
+
+/*.gz
+  Content-Encoding: gzip
+
+/*.br
+  Content-Encoding: br

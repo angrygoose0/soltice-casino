@@ -230,7 +230,7 @@ public class SimpleWorldJoin : MonoBehaviour
 
     private void OnConnected(CoherenceBridge _)
     {
-        Debug.Log("Connected! Starting fade out...");
+        GameLogger.Log("Connected! Starting fade out...");
         OnGameJoined?.Invoke();
         SetButtonEnabled(false);
         

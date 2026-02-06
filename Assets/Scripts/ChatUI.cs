@@ -35,7 +35,7 @@ public class ChatUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("ChatUI: UltimateChatBox not found in scene!");
+            GameLogger.LogError("ChatUI: UltimateChatBox not found in scene!");
         }
 
         coherenceBridge = FindFirstObjectByType<CoherenceBridge>();
@@ -93,7 +93,7 @@ public class ChatUI : MonoBehaviour
         if (chatBox != null)
         {
             UIFader.FadeIn(chatBox.gameObject);
-            Debug.Log($"ChatUI: Connected to Coherence. ChatBox enabled on client {bridge.ClientID}");
+            GameLogger.Log($"ChatUI: Connected to Coherence. ChatBox enabled on client {bridge.ClientID}");
         }
     }
 

@@ -219,7 +219,7 @@ public class BlackjackTableSimulator : MonoBehaviour
         if (!accountManager.enableBlackjack) return;
         
         if (_seats.Length > game.MaxPlayers)
-            Debug.LogWarning($"Seat count ({_seats.Length}) exceeds game maxPlayers ({game.MaxPlayers}), ignoring excess seats");
+            GameLogger.LogWarning($"Seat count ({_seats.Length}) exceeds game maxPlayers ({game.MaxPlayers}), ignoring excess seats");
 
         _seatPlayers = game.Players;
         _antedGameNo = game.AntedGameNo;
@@ -266,7 +266,7 @@ public class BlackjackTableSimulator : MonoBehaviour
 
         bool isLocalPlayer = Web3.Account != null && hand.Player.Equals(Web3.Account.PublicKey);
 
-        Debug.Log($"[BJTable] Hand update - PK: {handPk}, GameNo: {hand.GameNo}, CurrentBet: {hand.CurrentBet}, State: {hand.State}, CardCount: {hand.CardCount}, isNew: {!_hands.ContainsKey(handPk)}");
+        GameLogger.Log($"[BJTable] Hand update - PK: {handPk}, GameNo: {hand.GameNo}, CurrentBet: {hand.CurrentBet}, State: {hand.State}, CardCount: {hand.CardCount}, isNew: {!_hands.ContainsKey(handPk)}");
         
         if (_hands.TryGetValue(handPk, out var entry))
         {
@@ -278,7 +278,7 @@ public class BlackjackTableSimulator : MonoBehaviour
         else
         {
             var parent = GetParentForHand(hand);
-            Debug.Log($"[BJTable] Reparenting hand {handPk} to parent {parent}");
+            GameLogger.Log($"[BJTable] Reparenting hand {handPk} to parent {parent}");
             var prefab = Instantiate(handPrefab, parent);
             prefab.transform.localRotation = Quaternion.identity;
 

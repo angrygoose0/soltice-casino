@@ -109,7 +109,7 @@ public class UnityMainThreadDispatcher : MonoBehaviour
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"Error executing queued action: {ex.Message}\n{ex.StackTrace}");
+                    GameLogger.LogError($"Error executing queued action: {ex.Message}\n{ex.StackTrace}");
                 }
             }
         }

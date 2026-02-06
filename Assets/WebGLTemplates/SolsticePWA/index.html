@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="Solstice Casino - On-chain gaming on Solana">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0a0f;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #unity-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    #unity-canvas {
+      width: 100%;
+      height: 100%;
+      background: #0a0a0f;
+      display: block;
+    }
+    
+    /* Custom Loader */
+    #loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+      z-index: 100;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    #loader-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 40px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    #loader-logo svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+    
+    #loader-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    
+    #loader-subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    
+    #loader-bar-container {
+      width: 240px;
+    }
+    
+    #loader-bar-bg {
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    #loader-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #f7931a, #ffcc00);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 20px rgba(247, 147, 26, 0.5);
+    }
+    
+    #loader-percent {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #888;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    #loader-status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #444;
+    }
+
+    /* Error state */
+    #loader-error {
+      display: none;
+      color: #ff4444;
+      font-size: 14px;
+      text-align: center;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+    
+    #loader.error #loader-bar-container,
+    #loader.error #loader-percent,
+    #loader.error #loader-status {
+      display: none;
+    }
+    
+    #loader.error #loader-error {
+      display: block;
+    }
+
+    /* Install prompt */
+    #install-prompt {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%);
+      border: 1px solid rgba(247, 147, 26, 0.3);
+      border-radius: 12px;
+      padding: 16px 24px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    #install-prompt.visible {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #install-prompt span {
+      color: #fff;
+      font-size: 14px;
+    }
+
+    #install-btn {
+      background: linear-gradient(90deg, #f7931a, #ffcc00);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      color: #000;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    #install-btn:hover {
+      transform: scale(1.05);
+    }
+
+    #install-dismiss {
+      background: transparent;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    
+    <div id="loader">
+      <!-- Logo - Sun symbol for Solstice -->
+      <div id="loader-logo">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="20" fill="#f7931a"/>
+          <g stroke="#f7931a" stroke-width="3" stroke-linecap="round">
+            <line x1="50" y1="10" x2="50" y2="22"/>
+            <line x1="50" y1="78" x2="50" y2="90"/>
+            <line x1="10" y1="50" x2="22" y2="50"/>
+            <line x1="78" y1="50" x2="90" y2="50"/>
+            <line x1="21.7" y1="21.7" x2="30.2" y2="30.2"/>
+            <line x1="69.8" y1="69.8" x2="78.3" y2="78.3"/>
+            <line x1="21.7" y1="78.3" x2="30.2" y2="69.8"/>
+            <line x1="69.8" y1="30.2" x2="78.3" y2="21.7"/>
+          </g>
+        </svg>
+      </div>
+      
+      <div id="loader-title">SOLSTICE</div>
+      <div id="loader-subtitle">Casino</div>
+      
+      <div id="loader-bar-container">
+        <div id="loader-bar-bg">
+          <div id="loader-bar"></div>
+        </div>
+      </div>
+      
+      <div id="loader-percent">0%</div>
+      <div id="loader-status">Initializing...</div>
+      <div id="loader-error"></div>
+    </div>
+  </div>
+
+  <!-- Install prompt for PWA -->
+  <div id="install-prompt">
+    <span>Install Solstice Casino</span>
+    <button id="install-btn">Install</button>
+    <button id="install-dismiss">&times;</button>
+  </div>
+
+  <script>
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    const installPrompt = document.getElementById('install-prompt');
+    const installBtn = document.getElementById('install-btn');
+    const installDismiss = document.getElementById('install-dismiss');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installPrompt.classList.add('visible');
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installPrompt.classList.remove('visible');
+      }
+    });
+
+    installDismiss.addEventListener('click', () => {
+      installPrompt.classList.remove('visible');
+    });
+
+    // Unity Loader
+    const loader = document.getElementById("loader");
+    const loaderBar = document.getElementById("loader-bar");
+    const loaderPercent = document.getElementById("loader-percent");
+    const loaderStatus = document.getElementById("loader-status");
+    const loaderError = document.getElementById("loader-error");
+
+    const statusMessages = [
+      { threshold: 0, message: "Initializing..." },
+      { threshold: 0.1, message: "Loading framework..." },
+      { threshold: 0.3, message: "Loading assets..." },
+      { threshold: 0.6, message: "Preparing tables..." },
+      { threshold: 0.8, message: "Almost ready..." },
+      { threshold: 0.95, message: "Starting..." }
+    ];
+
+    function updateStatus(progress) {
+      for (let i = statusMessages.length - 1; i >= 0; i--) {
+        if (progress >= statusMessages[i].threshold) {
+          loaderStatus.textContent = statusMessages[i].message;
+          break;
+        }
+      }
+    }
+
+    const config = {
+      dataUrl: "{{{ DATA_URL }}}",
+      frameworkUrl: "{{{ FRAMEWORK_URL }}}",
+      codeUrl: "{{{ CODE_URL }}}",
+#if MEMORY_URL
+      memoryUrl: "{{{ MEMORY_URL }}}",
+#endif
+#if SYMBOLS_URL
+      symbolsUrl: "{{{ SYMBOLS_URL }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+    };
+
+    function startUnity() {
+      createUnityInstance(document.querySelector("#unity-canvas"), config, (progress) => {
+        const percent = Math.round(progress * 100);
+        loaderBar.style.width = percent + "%";
+        loaderPercent.textContent = percent + "%";
+        updateStatus(progress);
+      }).then((unityInstance) => {
+        loader.classList.add("hidden");
+        window.unityInstance = unityInstance;
+        
+        // Auto-fullscreen on first user interaction
+        const canvas = document.querySelector("#unity-canvas");
+        const requestFullscreen = () => {
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {});
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+          }
+          canvas.removeEventListener("click", requestFullscreen);
+          canvas.removeEventListener("touchstart", requestFullscreen);
+        };
+        canvas.addEventListener("click", requestFullscreen, { once: true });
+        canvas.addEventListener("touchstart", requestFullscreen, { once: true });
+      }).catch((error) => {
+        loader.classList.add("error");
+        loaderError.textContent = error.message || "Failed to load. Please refresh the page.";
+        console.error("Unity load error:", error);
+      });
+    }
+  </script>
+  <script src="{{{ LOADER_URL }}}" onload="startUnity()"></script>
+</body>
+</html>

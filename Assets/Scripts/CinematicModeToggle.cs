@@ -36,7 +36,7 @@ public class CinematicModeToggle : MonoBehaviour
             cachedComponents.AddRange(obj.GetComponentsInChildren<Canvas>(true));
         }
 
-        Debug.Log($"Cached {cachedComponents.Count} components for cinematic mode toggle");
+        GameLogger.Log($"Cached {cachedComponents.Count} components for cinematic mode toggle");
     }
 
     void ToggleCinematicMode()
@@ -58,7 +58,7 @@ public class CinematicModeToggle : MonoBehaviour
             }
         }
 
-        Debug.Log($"Cinematic mode: {(cinematicMode ? "ON" : "OFF")}");
+        GameLogger.Log($"Cinematic mode: {(cinematicMode ? "ON" : "OFF")}");
     }
 
     public void RefreshCache()

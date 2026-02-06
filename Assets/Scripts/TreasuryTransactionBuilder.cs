@@ -18,7 +18,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 {
     // Common Solana Program IDs
     public static readonly PublicKey SYSTEM_PROGRAM_ID = SystemProgram.ProgramIdKey;
-    public static readonly PublicKey TOKEN_PROGRAM_ID = TokenProgram.ProgramIdKey;
+    public static readonly PublicKey TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
     public static readonly PublicKey ASSOCIATED_TOKEN_PROGRAM_ID = AssociatedTokenAccountProgram.ProgramIdKey;
 
     // References
@@ -49,7 +49,8 @@ public class TreasuryTransactionBuilder : MonoBehaviour
     public static PublicKey DeriveTreasuryTokenAccount()
     {
         byte[] seed1 = Encoding.UTF8.GetBytes("TOKEN");
-        byte[] seed2 = Encoding.UTF8.GetBytes("f2b1af7922723e1636a0614e0c24a5eb");
+        // Secondary seed derived from 17293822569102704606u64.to_le_bytes() to get PDA starting with "BANK"
+        byte[] seed2 = new byte[] { 0xde, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef };
         PublicKey.TryFindProgramAddress(new[] { seed1, seed2 }, _programId, out PublicKey pda, out _);
         return pda;
     }
@@ -62,7 +63,14 @@ public class TreasuryTransactionBuilder : MonoBehaviour
 
     public static PublicKey DeriveUserTokenAccount(PublicKey user, PublicKey mint)
     {
-        return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(user, mint);
+        // Derive ATA for Token-2022 (uses Token-2022 program ID in seeds)
+        PublicKey.TryFindProgramAddress(
+            new[] { user.KeyBytes, TOKEN_2022_PROGRAM_ID.KeyBytes, mint.KeyBytes },
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            out PublicKey pda,
+            out _
+        );
+        return pda;
     }
 
     public static PublicKey DeriveDelegationMetadataAccount(PublicKey delegatedAccount)
@@ -125,7 +133,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             Treasury = treasury,
             TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
-            TokenProgram = TOKEN_PROGRAM_ID,
+            TokenProgram = TOKEN_2022_PROGRAM_ID,
         };
 
         var ix = TreasuryProgram.InitializeTreasury(accounts);
@@ -210,7 +218,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             UserTokenAccount = userAta,
             TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
-            TokenProgram = TOKEN_PROGRAM_ID,
+            TokenProgram = TOKEN_2022_PROGRAM_ID,
         };
 
         // amount is already in lamports
@@ -237,7 +245,7 @@ public class TreasuryTransactionBuilder : MonoBehaviour
             Treasury = treasury,
             TreasuryConfig = treasuryConfig,
             TreasuryTokenAccount = treasuryTokenAccount,
-            TokenProgram = TOKEN_PROGRAM_ID,
+            TokenProgram = TOKEN_2022_PROGRAM_ID,
         };
 
         var ix = TreasuryProgram.WithdrawTokens(accounts);

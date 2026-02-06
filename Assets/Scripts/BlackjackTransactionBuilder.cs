@@ -17,7 +17,7 @@ using System.Text;
 public class BlackjackTransactionBuilder : MonoBehaviour
 {
     public static readonly PublicKey SYSTEM_PROGRAM_ID = SystemProgram.ProgramIdKey;
-    public static readonly PublicKey TOKEN_PROGRAM_ID = TokenProgram.ProgramIdKey;
+    public static readonly PublicKey TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
     public static readonly PublicKey ASSOCIATED_TOKEN_PROGRAM_ID = AssociatedTokenAccountProgram.ProgramIdKey;
 
     [SerializeField] private SolanaManager solanaManager;

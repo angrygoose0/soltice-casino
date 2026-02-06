@@ -71,13 +71,13 @@ public class SubscriptionManager : MonoBehaviour
     {
         if (callback == null)
         {
-            Debug.LogError("Callback cannot be null");
+            GameLogger.LogError("Callback cannot be null");
             return null;
         }
 
         if (Web3.Instance == null)
         {
-            Debug.LogError("Web3 instance not initialized");
+            GameLogger.LogError("Web3 instance not initialized");
             return null;
         }
 
@@ -86,7 +86,7 @@ public class SubscriptionManager : MonoBehaviour
         // Check if already subscribed
         if (_subscriptions.ContainsKey(subscriptionId))
         {
-            Debug.LogWarning($"Already subscribed to {subscriptionId}. Unsubscribe first or use UpdateSubscription.");
+            GameLogger.LogWarning($"Already subscribed to {subscriptionId}. Unsubscribe first or use UpdateSubscription.");
             return subscriptionId;
         }
 
@@ -96,7 +96,7 @@ public class SubscriptionManager : MonoBehaviour
         // If forceDelegated is true but account isn't actually delegated, fail
         if (forceDelegated == true && !isDelegated)
         {
-            Debug.LogError($"Account {accountAddress} is not delegated but forceDelegated is true. Subscription failed.");
+            GameLogger.LogError($"Account {accountAddress} is not delegated but forceDelegated is true. Subscription failed.");
             return null;
         }
 
@@ -123,13 +123,13 @@ public class SubscriptionManager : MonoBehaviour
             );
 
             _subscriptions[subscriptionId] = subscription;
-            Debug.Log($"✓ Subscribed to account {subscriptionId} on {(isDelegated ? "delegated" : "mainnet")} endpoint");
+            GameLogger.Log($"✓ Subscribed to account {subscriptionId} on {(isDelegated ? "delegated" : "mainnet")} endpoint");
 
             return subscriptionId;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Failed to subscribe to {subscriptionId}: {ex.Message}");
+            GameLogger.LogError($"Failed to subscribe to {subscriptionId}: {ex.Message}");
             return null;
         }
     }
@@ -169,21 +169,21 @@ public class SubscriptionManager : MonoBehaviour
         // If forceDelegated is true but account isn't actually delegated, fail
         if (forceDelegated == true && !isDelegated)
         {
-            Debug.LogError($"Account {accountAddress} is not delegated but forceDelegated is true. LoadAccountData failed.");
+            GameLogger.LogError($"Account {accountAddress} is not delegated but forceDelegated is true. LoadAccountData failed.");
             return default;
         }
         
         var rpcClient = GetRpcClient(isDelegated);
         if (rpcClient == null)
         {
-            Debug.LogError($"RPC client not available for {(isDelegated ? "delegated" : "mainnet")} endpoint");
+            GameLogger.LogError($"RPC client not available for {(isDelegated ? "delegated" : "mainnet")} endpoint");
             return default;
         }
 
         var result = await rpcClient.GetAccountInfoAsync(accountAddress, Commitment.Confirmed);
         if (!result.WasSuccessful || result.Result.Value == null)
         {
-            Debug.LogWarning($"Failed to load account data for {accountAddress}");
+            GameLogger.LogWarning($"Failed to load account data for {accountAddress}");
             return default;
         }
 
@@ -196,7 +196,7 @@ public class SubscriptionManager : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Failed to deserialize account data for {accountAddress}: {ex.Message}");
+                GameLogger.LogWarning($"Failed to deserialize account data for {accountAddress}: {ex.Message}");
                 return default;
             }
         }
@@ -211,7 +211,7 @@ public class SubscriptionManager : MonoBehaviour
     {
         if (!_subscriptions.ContainsKey(subscriptionId))
         {
-            Debug.LogWarning($"No subscription found for {subscriptionId}");
+            GameLogger.LogWarning($"No subscription found for {subscriptionId}");
             return false;
         }
 
@@ -224,12 +224,12 @@ public class SubscriptionManager : MonoBehaviour
                 await subscription.SubscriptionState.UnsubscribeAsync();
             }
             _subscriptions.Remove(subscriptionId);
-            Debug.Log($"✓ Unsubscribed from {subscriptionId}");
+            GameLogger.Log($"✓ Unsubscribed from {subscriptionId}");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Failed to unsubscribe from {subscriptionId}: {ex.Message}");
+            GameLogger.LogError($"Failed to unsubscribe from {subscriptionId}: {ex.Message}");
             return false;
         }
     }
@@ -244,7 +244,7 @@ public class SubscriptionManager : MonoBehaviour
         {
             await Unsubscribe(id);
         }
-        Debug.Log($"✓ Unsubscribed from all {subscriptionIds.Count} subscriptions");
+        GameLogger.Log($"✓ Unsubscribed from all {subscriptionIds.Count} subscriptions");
     }
 
     /// <summary>
@@ -276,12 +276,12 @@ public class SubscriptionManager : MonoBehaviour
             var ephemeralWallet = SolanaManager.EphemeralWallet;
             if (ephemeralWallet == null)
             {
-                Debug.Log("Skipping subscription: ephemeral wallet not available");
+                GameLogger.Log("Skipping subscription: ephemeral wallet not available");
                 return null;
             }
             if (ephemeralWallet.ActiveStreamingRpcClient.State != WebSocketState.Open)
             {
-                Debug.Log("Waiting for ephemeral WebSocket connection...");
+                GameLogger.Log("Waiting for ephemeral WebSocket connection...");
                 await ephemeralWallet.AwaitWsRpcConnection();
             }
             return ephemeralWallet.ActiveStreamingRpcClient;
@@ -308,7 +308,7 @@ public class SubscriptionManager : MonoBehaviour
         // Get WebSocket URL from Web3 configuration
         if (Web3.Instance == null)
         {
-            Debug.LogError("Web3.Instance not initialized - cannot create standalone streaming client");
+            GameLogger.LogError("Web3.Instance not initialized - cannot create standalone streaming client");
             return null;
         }
 
@@ -316,22 +316,22 @@ public class SubscriptionManager : MonoBehaviour
         string wsUrl = GetWebSocketUrl();
         if (string.IsNullOrEmpty(wsUrl))
         {
-            Debug.LogError("Could not determine WebSocket URL for standalone streaming client");
+            GameLogger.LogError("Could not determine WebSocket URL for standalone streaming client");
             return null;
         }
 
         _standaloneClientConnecting = true;
         try
         {
-            Debug.Log($"Creating standalone streaming client: {wsUrl}");
+            GameLogger.Log($"Creating standalone streaming client: {wsUrl}");
             _standaloneStreamingClient = ClientFactory.GetStreamingClient(wsUrl);
             await _standaloneStreamingClient.ConnectAsync();
-            Debug.Log("✓ Standalone streaming client connected");
+            GameLogger.Log("✓ Standalone streaming client connected");
             return _standaloneStreamingClient;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Failed to connect standalone streaming client: {ex.Message}");
+            GameLogger.LogError($"Failed to connect standalone streaming client: {ex.Message}");
             _standaloneStreamingClient = null;
             return null;
         }
@@ -375,7 +375,7 @@ public class SubscriptionManager : MonoBehaviour
     {
         try
         {
-            Debug.Log($"📡 Account updated: {accountAddress}");
+            GameLogger.Log($"📡 Account updated: {accountAddress}");
 
             // Switch to main thread for Unity operations
             await UnityMainThreadDispatcher.Instance().EnqueueAsync(async () =>
@@ -391,7 +391,7 @@ public class SubscriptionManager : MonoBehaviour
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogWarning($"Failed to deserialize account update for {accountAddress}: {ex.Message}");
+                        GameLogger.LogWarning($"Failed to deserialize account update for {accountAddress}: {ex.Message}");
                         return;
                     }
                 }
@@ -405,7 +405,7 @@ public class SubscriptionManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error handling account update for {accountAddress}: {ex.Message}");
+            GameLogger.LogError($"Error handling account update for {accountAddress}: {ex.Message}");
         }
     }
 

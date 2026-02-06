@@ -61,7 +61,7 @@ public class SessionManager : MonoBehaviour
 
         if (SessionToken == null) return false;
 
-        Debug.Log("Session token valid until: " +
+        GameLogger.Log("Session token valid until: " +
                     (new DateTime(1970, 1, 1)).AddSeconds(SessionToken.ValidUntil) +
                     " Now: " + DateTimeOffset.UtcNow);
         SessionValidUntil = SessionToken.ValidUntil;
@@ -124,10 +124,10 @@ public class SessionManager : MonoBehaviour
 
         var res = await Web3.Wallet.SignAndSendTransaction(transaction, true, Commitment.Confirmed);
 
-        Debug.Log("Create session wallet: " + res.RawRpcResponse);
+        GameLogger.Log("Create session wallet: " + res.RawRpcResponse);
         await Web3.Wallet.ActiveRpcClient.ConfirmTransaction(res.Result, Commitment.Confirmed);
         var sessionValid = await UpdateSessionValid();
-        Debug.Log("After create session, the session is valid: " + sessionValid);
+        GameLogger.Log("After create session, the session is valid: " + sessionValid);
     }
 
     

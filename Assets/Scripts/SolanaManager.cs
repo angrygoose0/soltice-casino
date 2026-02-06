@@ -10,10 +10,13 @@ using Solana.Unity.Rpc.Types;
 using Solana.Unity.Rpc.Builders;
 using System.Threading.Tasks;
 using System;
+using System.Net.Http;
+using System.Text;
 using Solana.Unity.Programs;
 using Solana.Unity.Programs.Models;
 using Solana.Unity.Rpc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Crash.Program;
 using Crash;
 using Treasury.Program;
@@ -26,6 +29,14 @@ public class SolanaManager : MonoBehaviour
     [Header("Ephemeral Rollups")]
     // Set to false to disable ephemeral rollups (no delegation/undelegation)
     public bool useEphemeralRollups = true;
+    [SerializeField] private string ephemeralRpcUrl;
+    [SerializeField] private string ephemeralWsUrl;
+
+    [Header("Priority Fees")]
+    [SerializeField] private bool useDynamicPriorityFees = true;
+    [SerializeField] private string heliusRpcUrl; // e.g., https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
+    [SerializeField] private string priorityLevel = "Medium"; // Low, Medium, High, VeryHigh
+    [SerializeField] private ulong fallbackPriorityFee = 100000; // Fallback if API fails
 
     [Header("Dependencies")]
     [SerializeField] private InteractableObjects interactableObjects;
@@ -63,16 +74,31 @@ public class SolanaManager : MonoBehaviour
     private bool _gameJoined = false;
     private bool _isConnectingWallet = false;
     private bool _isWalletConnected = false;
+    private static readonly HttpClient _httpClient = new HttpClient();
     
     // Wallet adapter UI monitoring
     private GameObject _walletAdapterUI;
     private bool _wasWalletAdapterActive;
 
-    public static readonly InGameWallet EphemeralWallet = new(RpcCluster.DevNet, "https://devnet-as.magicblock.app/", "https://devnet-as.magicblock.app/", true);
+    public static InGameWallet EphemeralWallet { get; private set; }
 
     public PublicKey MintPublicKey => string.IsNullOrWhiteSpace(mintAddress) ? null : new PublicKey(mintAddress);
 
     
+
+    private void Awake()
+    {
+        // Initialize EphemeralWallet if ephemeral rollups are enabled
+        if (useEphemeralRollups)
+        {
+            if (string.IsNullOrEmpty(ephemeralRpcUrl) || string.IsNullOrEmpty(ephemeralWsUrl))
+            {
+                GameLogger.LogError("Ephemeral RPC URL and WebSocket URL must be configured when useEphemeralRollups is enabled");
+                throw new System.InvalidOperationException("Ephemeral RPC URL and WebSocket URL are required");
+            }
+            EphemeralWallet = new InGameWallet(RpcCluster.MainNet, ephemeralRpcUrl, ephemeralWsUrl, true);
+        }
+    }
 
     private void OnEnable()
     {
@@ -111,7 +137,7 @@ public class SolanaManager : MonoBehaviour
     {
         if (Web3.Instance?.WalletBase == null)
         {
-            Debug.LogWarning("Web3 instance or WalletBase not initialized yet");
+            GameLogger.LogWarning("Web3 instance or WalletBase not initialized yet");
             return;
         }
 
@@ -123,7 +149,7 @@ public class SolanaManager : MonoBehaviour
             var streamingClient = Web3.Instance.WalletBase.ActiveStreamingRpcClient;
             if (streamingClient == null)
             {
-                Debug.LogWarning("ActiveStreamingRpcClient is null");
+                GameLogger.LogWarning("ActiveStreamingRpcClient is null");
                 return;
             }
 
@@ -153,7 +179,7 @@ public class SolanaManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error initializing Clients: {ex.Message}");
+            GameLogger.LogError($"Error initializing Clients: {ex.Message}");
         }
     }
 
@@ -233,7 +259,7 @@ public class SolanaManager : MonoBehaviour
     private void OnGameJoined()
     {
         _gameJoined = true;
-        Debug.Log("Game joined - enabling wallet buttons");
+        GameLogger.Log("Game joined - enabling wallet buttons");
         
         // Show appropriate buttons based on wallet state
         if (interactableObjects != null)
@@ -272,14 +298,14 @@ public class SolanaManager : MonoBehaviour
 
         // Initialize clients when user logs in
         InitializeClients();
-        Debug.Log("Login successful");
+        GameLogger.Log("Login successful");
         
         feedbackManager?.PlaySuccessSound();
 
         // Update connect/disconnect buttons
         if (interactableObjects != null)
         {
-            Debug.Log("Setting interactable objects to hard disable connect wallet");
+            GameLogger.Log("Setting interactable objects to hard disable connect wallet");
             interactableObjects.SetInteractableHardEnabledByAction(InteractableObjects.ActionType.ConnectWallet, false);
             if (_gameJoined)
             {
@@ -380,22 +406,22 @@ public class SolanaManager : MonoBehaviour
 
     private async Task UpdateTokenBalance()
     {
-        Debug.Log($"Updating token balance: {mintAddress}, {Web3.Account}");
+        GameLogger.Log($"Updating token balance: {mintAddress}, {Web3.Account}");
         if (string.IsNullOrEmpty(mintAddress) || Web3.Account == null)
         {
-            Debug.LogWarning($"Cannot update token balance - mintAddress: {mintAddress}, Web3.Account: {Web3.Account}");
+            GameLogger.LogWarning($"Cannot update token balance - mintAddress: {mintAddress}, Web3.Account: {Web3.Account}");
             return;
         }
 
         try
         {
             double tokenBalance = await GetSPLTokenBalance();
-            Debug.Log($"Token balance: {tokenBalance}");
+            GameLogger.Log($"Token balance: {tokenBalance}");
             
             // Update all token balance texts
             foreach (var txt in tokenBalanceTexts)
             {
-                Debug.Log($"Token balance text: {txt.text}");
+                GameLogger.Log($"Token balance text: {txt.text}");
                 txt.text = FormatAmount(tokenBalance, applyTokenDecimals: true);
             }
         }
@@ -409,31 +435,53 @@ public class SolanaManager : MonoBehaviour
         }
     }
 
+    private static readonly PublicKey TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+    private static readonly PublicKey ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+
+    private static PublicKey DeriveToken2022ATA(PublicKey owner, PublicKey mint)
+    {
+        PublicKey.TryFindProgramAddress(
+            new[]
+            {
+                owner.KeyBytes,
+                TOKEN_2022_PROGRAM_ID.KeyBytes,
+                mint.KeyBytes
+            },
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            out var ata,
+            out _
+        );
+        return ata;
+    }
+
     public async Task<double> GetSPLTokenBalance()
     {
         try
         {
+            // First try regular SPL Token accounts
             var tokenAccounts = await Web3.Wallet.GetTokenAccounts(Commitment.Confirmed);
             var matchingAccount = tokenAccounts?.FirstOrDefault(t => 
                 t.Account.Data.Parsed.Info.Mint == mintAddress);
             
-            if (matchingAccount == null)
-                return 0.0;
-            
-            var tokenAmount = matchingAccount.Account.Data.Parsed.Info.TokenAmount;
-            
-            // Try to get the UI amount (properly decimalized)
-            if (!string.IsNullOrEmpty(tokenAmount.UiAmountString) &&
-                double.TryParse(tokenAmount.UiAmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out double balance))
+            if (matchingAccount != null)
             {
-                return balance * Math.Pow(10, tokenDecimals);
+                var tokenAmount = matchingAccount.Account.Data.Parsed.Info.TokenAmount;
+                if (!string.IsNullOrEmpty(tokenAmount.UiAmountString) &&
+                    double.TryParse(tokenAmount.UiAmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out double balance))
+                {
+                    return balance * Math.Pow(10, tokenDecimals);
+                }
+                return ulong.TryParse(tokenAmount.Amount, out ulong rawAmount) ? (double)rawAmount : 0.0;
             }
             
-            // Fallback to raw amount
-            return ulong.TryParse(tokenAmount.Amount, out ulong rawAmount) ? (double)rawAmount : 0.0;
+            // If not found, try Token-2022 ATA directly
+            var mint = new PublicKey(mintAddress);
+            var ata = DeriveToken2022ATA(Web3.Account.PublicKey, mint);
+            return (double)await GetTokenAccountBalance(ata);
         }
-        catch (System.Exception)
+        catch (System.Exception ex)
         {
+            GameLogger.LogWarning($"Failed to get SPL token balance: {ex.Message}");
             return 0.0;
         }
     }
@@ -456,6 +504,65 @@ public class SolanaManager : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Get priority fee estimate from Helius API using serialized transaction.
+    /// Returns the recommended priority fee in microlamports per compute unit.
+    /// </summary>
+    public async Task<ulong> GetPriorityFeeEstimate(string serializedTransaction)
+    {
+        if (!useDynamicPriorityFees || string.IsNullOrEmpty(heliusRpcUrl))
+        {
+            return fallbackPriorityFee;
+        }
+
+        try
+        {
+            var requestBody = new
+            {
+                jsonrpc = "2.0",
+                id = "1",
+                method = "getPriorityFeeEstimate",
+                @params = new object[]
+                {
+                    new
+                    {
+                        transaction = serializedTransaction,
+                        options = new
+                        {
+                            priorityLevel = priorityLevel,
+                            recommended = true
+                        }
+                    }
+                }
+            };
+
+            var content = new StringContent(
+                JsonConvert.SerializeObject(requestBody),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await _httpClient.PostAsync(heliusRpcUrl, content);
+            var responseString = await response.Content.ReadAsStringAsync();
+            var result = JObject.Parse(responseString);
+
+            if (result["error"] != null)
+            {
+                GameLogger.LogWarning($"Helius API error: {result["error"]}");
+                return fallbackPriorityFee;
+            }
+
+            var fee = result["result"]?["priorityFeeEstimate"]?.Value<ulong>() ?? fallbackPriorityFee;
+            GameLogger.Log($"Dynamic priority fee estimate: {fee} microlamports/CU ({priorityLevel})");
+            return fee;
+        }
+        catch (Exception ex)
+        {
+            GameLogger.LogWarning($"Failed to get priority fee estimate: {ex.Message}");
+            return fallbackPriorityFee;
+        }
+    }
+
     public async Task<string> SendAndConfirmTransaction(
         bool ephemeralFlag = false, // if true, tx is happening on ER.
         uint computeUnitLimit = 0,
@@ -477,6 +584,7 @@ public class SolanaManager : MonoBehaviour
 
             var blockHashResult = await rpcClient.GetLatestBlockHashAsync(Commitment.Confirmed);
 
+            // Step 1: Build transaction with just business logic for fee estimation
             var transaction = new Transaction
             {
                 FeePayer = baseWallet.Account.PublicKey,
@@ -485,16 +593,41 @@ public class SolanaManager : MonoBehaviour
                 Instructions = new List<TransactionInstruction>()
             };
 
-            // Add compute unit limit and price if specified
+            // Add business logic instructions first (for fee estimation)
+            if (additionalInstructions != null)
+                transaction.Instructions.AddRange(additionalInstructions);
+
+            // Step 2: Get dynamic priority fee estimate (only for mainnet, not ER)
+            ulong finalPriorityFee = computeUnitPrice;
+            if (!ephemeralFlag && useDynamicPriorityFees && !string.IsNullOrEmpty(heliusRpcUrl))
+            {
+                // Serialize for fee estimation (without compute budget instructions)
+                var estimationTx = await baseWallet.SignTransaction(transaction);
+                var serializedForEstimate = Convert.ToBase64String(estimationTx.Serialize());
+                finalPriorityFee = await GetPriorityFeeEstimate(serializedForEstimate);
+            }
+            else if (computeUnitPrice == 0)
+            {
+                finalPriorityFee = fallbackPriorityFee;
+            }
+
+            // Step 3: Rebuild transaction with compute budget instructions at the front
+            transaction.Instructions.Clear();
+            transaction.Signatures.Clear();
+            
             if (computeUnitLimit > 0)
                 transaction.Instructions.Add(ComputeBudgetProgram.SetComputeUnitLimit(computeUnitLimit));
             
-            if (computeUnitPrice > 0)
-                transaction.Instructions.Add(ComputeBudgetProgram.SetComputeUnitPrice(computeUnitPrice));
+            if (finalPriorityFee > 0)
+                transaction.Instructions.Add(ComputeBudgetProgram.SetComputeUnitPrice(finalPriorityFee));
 
-            // Add any additional instructions
+            // Re-add business logic instructions
             if (additionalInstructions != null)
                 transaction.Instructions.AddRange(additionalInstructions);
+
+            // Get fresh blockhash before signing
+            blockHashResult = await rpcClient.GetLatestBlockHashAsync(Commitment.Confirmed);
+            transaction.RecentBlockHash = blockHashResult.Result.Value.Blockhash;
             
             var signedTransaction = await baseWallet.SignTransaction(transaction);
 
@@ -506,7 +639,7 @@ public class SolanaManager : MonoBehaviour
                 commitment: Commitment.Confirmed
             );
 
-            Debug.Log($"Full simulation result: {JsonConvert.SerializeObject(simulationResult.Result, Formatting.Indented)}");
+            GameLogger.Log($"Full simulation result: {JsonConvert.SerializeObject(simulationResult.Result, Formatting.Indented)}");
             
             var result = await rpcClient.SendTransactionAsync(
                 Convert.ToBase64String(serializedTransaction),
@@ -553,7 +686,7 @@ public class SolanaManager : MonoBehaviour
             
             feedbackManager?.PlayErrorSound();
             
-            Debug.LogError($"Error in SendAndConfirmTransaction: {ex.Message}");
+            GameLogger.LogError($"Error in SendAndConfirmTransaction: {ex.Message}");
             throw;
         }
     }
@@ -574,7 +707,7 @@ public class SolanaManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"Failed to check delegation status for {accountAddress}: {ex.Message}");
+            GameLogger.LogWarning($"Failed to check delegation status for {accountAddress}: {ex.Message}");
             return false;
         }
     }
@@ -592,7 +725,7 @@ public class SolanaManager : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Wallet connection failed: {ex.Message}");
+            GameLogger.LogError($"Wallet connection failed: {ex.Message}");
             CancelWalletConnection();
             
             if (loadingTextComponent != null)

@@ -494,21 +494,21 @@ public class InteractableObjects : MonoBehaviour
         // Play shake feedback on beforeBettingGroup
         feedbackManager.PlayMaxBetShake();
         
-        // Flash all chip buttons red
-        List<GameObject> chipObjects = new List<GameObject>();
+        // Flash all chip buttons and bet button red
+        List<GameObject> objectsToFlash = new List<GameObject>();
         for (int i = 0; i < interactables.Count; i++)
         {
             InteractableEntry entry = interactables[i];
             if (entry != null && entry.gameObject != null && 
-                (entry.actionType == ActionType.Add || entry.actionType == ActionType.Set))
+                (entry.actionType == ActionType.Add || entry.actionType == ActionType.Set || entry.actionType == ActionType.PlaceBet))
             {
-                chipObjects.Add(entry.gameObject);
+                objectsToFlash.Add(entry.gameObject);
             }
         }
         
-        if (chipObjects.Count > 0)
+        if (objectsToFlash.Count > 0)
         {
-            feedbackManager.FlashGlowRed(chipObjects, 0.5f);
+            feedbackManager.FlashGlowRed(objectsToFlash, 0.5f);
         }
     }
 

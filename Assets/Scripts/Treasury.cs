@@ -310,8 +310,8 @@ namespace Treasury
     {
         public class AdminWithdrawAccounts
         {
-            public PublicKey Signer { get; set; } = new PublicKey("91fVsu7vLqT7P2djQuvqjUuM3ZBbDzHpKH4uJFQc5RcB");
-            public PublicKey TokenMint { get; set; } = new PublicKey("CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z");
+            public PublicKey Signer { get; set; } = new PublicKey("Fn1XAMy3qdqxkyTViJca2gBqTDjXJH6GYsthQggjweCP");
+            public PublicKey TokenMint { get; set; } = new PublicKey("FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump");
             public PublicKey AdminTokenAccount { get; set; }
 
             public PublicKey Treasury { get; set; }
@@ -401,7 +401,7 @@ namespace Treasury
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z");
+            public PublicKey TokenMint { get; set; } = new PublicKey("FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump");
             public PublicKey UserTokenAccount { get; set; }
 
             public PublicKey TreasuryConfig { get; set; }
@@ -431,7 +431,7 @@ namespace Treasury
 
             public PublicKey TreasuryConfig { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z");
+            public PublicKey TokenMint { get; set; } = new PublicKey("FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump");
             public PublicKey TreasuryTokenAccount { get; set; }
 
             public PublicKey TokenProgram { get; set; }
@@ -485,7 +485,7 @@ namespace Treasury
 
             public PublicKey UserBalance { get; set; }
 
-            public PublicKey TokenMint { get; set; } = new PublicKey("CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z");
+            public PublicKey TokenMint { get; set; } = new PublicKey("FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump");
             public PublicKey UserTokenAccount { get; set; }
 
             public PublicKey Treasury { get; set; }

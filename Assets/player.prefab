@@ -27,7 +27,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 247979791346170859}
-  m_LocalRotation: {x: -0.062001314, y: 0.74246985, z: -0.06939281, w: -0.6633846}
+  m_LocalRotation: {x: -0.04041089, y: 0.95460504, z: -0.15278028, w: -0.25249618}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1555,8 +1555,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8456648292231124267}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.04900398, y: 0.66484064, z: 0.043784864, w: 0.74408907}
-  m_LocalPosition: {x: -4.347395, y: 0.175, z: -0.4906936}
+  m_LocalRotation: {x: -0.13065313, y: 0.25336358, z: 0.034558177, w: 0.9578844}
+  m_LocalPosition: {x: -2.163215, y: -0.43730742, z: -3.803113}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1635,11 +1635,11 @@ MonoBehaviour:
       Height: 2.25
     Bottom:
       Radius: 2.5
-      Height: 0.1
+      Height: -0.25
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 83.56051
+    Value: 29.631264
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -1649,7 +1649,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: -10
+    Value: -9.997796
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -1681,7 +1681,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineRotationComposer
   Composition:
-    ScreenPosition: {x: 0, y: 0.15}
+    ScreenPosition: {x: 0, y: 0.1500001}
     DeadZone:
       Enabled: 0
       Size: {x: 0.2, y: 0.2}
@@ -1789,7 +1789,7 @@ MonoBehaviour:
     AmplitudeGain: 1
     FrequencyGain: 1
     Duration: 1
-    m_NoiseOffsets: {x: 0, y: 0, z: 0}
+    m_NoiseOffsets: {x: 76.51602, y: -803.1964, z: 130.92151}
 --- !u!1001 &7736649631211945895
 PrefabInstance:
   m_ObjectHideFlags: 0

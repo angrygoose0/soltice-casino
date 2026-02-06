@@ -28,7 +28,7 @@
         },
         {
           "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+          "address": "FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump"
         },
         {
           "name": "admin_token_account",
@@ -987,7 +987,7 @@
         },
         {
           "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+          "address": "FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump"
         },
         {
           "name": "user_token_account",
@@ -1304,7 +1304,7 @@
         },
         {
           "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+          "address": "FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump"
         },
         {
           "name": "treasury_token_account",
@@ -1649,7 +1649,7 @@
         },
         {
           "name": "token_mint",
-          "address": "CYPCGLgf2r6TA53y14YpR4RzAL9i2JfGTEZYEeabyh6z"
+          "address": "FH8ictEPGdf11kpKyj8hX2fTnWSaW8WqVcYEHU8Apump"
         },
         {
           "name": "user_token_account",
