@@ -394,7 +394,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -428,7 +428,7 @@ namespace Blackjack
 
             public PublicKey Authority { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("DU6pebtJjq9PyUnwhLnHDszu5BQYxA9tpQ7PV5EUrm47");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("2fTip6YttfvTAjBCEukccVoNUJVrq5Z1w5Mq7G9w6UDp");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -445,7 +445,7 @@ namespace Blackjack
 
             public PublicKey Blackjack { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("DU6pebtJjq9PyUnwhLnHDszu5BQYxA9tpQ7PV5EUrm47");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("2fTip6YttfvTAjBCEukccVoNUJVrq5Z1w5Mq7G9w6UDp");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -462,7 +462,7 @@ namespace Blackjack
 
             public PublicKey BlackjackHand { get; set; }
 
-            public PublicKey OwnerProgram { get; set; } = new PublicKey("DU6pebtJjq9PyUnwhLnHDszu5BQYxA9tpQ7PV5EUrm47");
+            public PublicKey OwnerProgram { get; set; } = new PublicKey("2fTip6YttfvTAjBCEukccVoNUJVrq5Z1w5Mq7G9w6UDp");
             public PublicKey DelegationProgram { get; set; } = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
@@ -514,7 +514,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -545,7 +545,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -580,7 +580,7 @@ namespace Blackjack
 
             public PublicKey TreasuryTokenAccount { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -620,7 +620,7 @@ namespace Blackjack
 
             public PublicKey Treasury { get; set; }
 
-            public PublicKey TreasuryProgram { get; set; } = new PublicKey("397FG8GVJ9CfyrrGwaf63Kvzdu3sqAjmWS6rAnTGRCRm");
+            public PublicKey TreasuryProgram { get; set; } = new PublicKey("7zLv8e92WYyXoxBvAhNND8P9UPRoyfm6iW1E4ZYtcSss");
             public PublicKey SystemProgram { get; set; } = new PublicKey("11111111111111111111111111111111");
         }
 
@@ -656,7 +656,7 @@ namespace Blackjack
 
         public static class BlackjackProgram
         {
-            public const string ID = "DU6pebtJjq9PyUnwhLnHDszu5BQYxA9tpQ7PV5EUrm47";
+            public const string ID = "2fTip6YttfvTAjBCEukccVoNUJVrq5Z1w5Mq7G9w6UDp";
             public static Solana.Unity.Rpc.Models.TransactionInstruction AcceptInsurance(AcceptInsuranceAccounts accounts, PublicKey programId = null)
             {
                 programId ??= new(ID);
