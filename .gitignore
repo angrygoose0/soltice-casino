@@ -84,3 +84,6 @@ DerivedData/
 
 
 
+
+node_modules/
+.wrangler/

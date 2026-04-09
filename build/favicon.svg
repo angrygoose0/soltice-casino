@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A855F7" />
+      <stop offset="100%" style="stop-color:#7C3AED" />
+    </linearGradient>
+    <linearGradient id="crescentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C084FC" />
+      <stop offset="100%" style="stop-color:#A855F7" />
+    </linearGradient>
+    <!-- Diamond gradients -->
+    <linearGradient id="diamondMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5D0FE" />
+      <stop offset="50%" style="stop-color:#E9D5FF" />
+      <stop offset="100%" style="stop-color:#D8B4FE" />
+    </linearGradient>
+    <linearGradient id="diamondLeft" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#C084FC" />
+      <stop offset="100%" style="stop-color:#A855F7" />
+    </linearGradient>
+    <linearGradient id="diamondRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E9D5FF" />
+      <stop offset="100%" style="stop-color:#C084FC" />
+    </linearGradient>
+    <linearGradient id="diamondShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF" />
+      <stop offset="100%" style="stop-color:#F5D0FE" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circle -->
+  <circle cx="256" cy="256" r="160" fill="url(#sunGradient)"/>
+  
+  <!-- Eclipse shadow -->
+  <circle cx="310" cy="210" r="130" fill="#0C0A1D"/>
+  
+  <!-- Crescent highlight -->
+  <path d="M 150 180 A 140 140 0 0 0 200 370 A 120 120 0 0 1 150 180" 
+        fill="url(#crescentGradient)" opacity="0.9"/>
+  
+  <!-- Diamond gem -->
+  <!-- Crown (top portion) -->
+  <polygon points="256,168 320,240 256,256 192,240" fill="url(#diamondShine)"/>
+  
+  <!-- Left crown facet -->
+  <polygon points="256,168 256,256 192,240" fill="url(#diamondLeft)" opacity="0.7"/>
+  
+  <!-- Right crown facet -->
+  <polygon points="256,168 320,240 256,256" fill="url(#diamondRight)" opacity="0.9"/>
+  
+  <!-- Pavilion (bottom portion) -->
+  <polygon points="192,240 256,256 256,344" fill="url(#diamondLeft)"/>
+  <polygon points="320,240 256,256 256,344" fill="url(#diamondMain)"/>
+  
+  <!-- Table (top flat surface) -->
+  <polygon points="256,180 296,220 256,232 216,220" fill="white" opacity="0.6"/>
+  
+  <!-- Shine highlight -->
+  <polygon points="256,180 276,210 256,220 236,210" fill="white" opacity="0.8"/>
+  
+  <!-- Sparkle -->
+  <circle cx="248" cy="200" r="4" fill="white"/>
+  <circle cx="268" cy="212" r="2" fill="white" opacity="0.7"/>
+</svg>
